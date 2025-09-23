@@ -167,7 +167,7 @@ repositories {
   		name = "Jared Maven"
   		url = "https://maven.blamejared.com/"
   			}
- 	 maven {
+ 	maven {
   		  // location of a maven mirror for JEI files, as a fallback
     	name = "ModMaven"
    		url = "https://modmaven.dev"
@@ -188,9 +188,9 @@ dependencies {
     }
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
+    /*compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
-    runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
+    runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")*/
 	
 	//implementation fg.deobf("curse.maven:bettercombat-639842:5625757")
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
