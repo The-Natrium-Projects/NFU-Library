@@ -1,8 +1,5 @@
 package net.sodiumzh.nfu.entity.vanillatrade;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.JsonElement;
@@ -22,6 +19,11 @@ import net.sodiumzh.nfu.util.NFUDebugStatics;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A {@link VanillaTradeRegistry} is a mapping from each {@link ResourceLocation} key and each {@link VillagerProfession} to

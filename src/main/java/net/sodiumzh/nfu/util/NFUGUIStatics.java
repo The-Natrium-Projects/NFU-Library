@@ -1,8 +1,8 @@
-package net.sodiumzh.nfu.client;
+package net.sodiumzh.nfu.util;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-
-import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.sodiumzh.nfu.math.GuiPos;
@@ -22,9 +22,8 @@ public class NFUGUIStatics
 	 * @param uvOffset UV (XY) offset on texture (i.e. UV/XY position of the top-left corner of the sprite on texture)
 	 * @param uvSize Sprite UV/XY size.
 	 */
-	public static void drawSprite(GuiGraphics graphics, ResourceLocation atlasLocation, 
-			GuiPos xy, int blitOffset, GuiPos uvOffset, GuiPos uvSize, GuiPos textureSize)
+	public static void drawSprite(PoseStack GuiGraphics, GuiPos xy, int blitOffset, GuiPos uvOffset, GuiPos uvSize, GuiPos textureSize)
 	{
-		graphics.blit(atlasLocation, xy.x, xy.y, blitOffset, uvOffset.x, uvOffset.y, uvSize.x, uvSize.y, textureSize.x, textureSize.y);
+		GuiComponent.blit(GuiGraphics, xy.x, xy.y, blitOffset, uvOffset.x, uvOffset.y, uvSize.x, uvSize.y, textureSize.x, textureSize.y);
 	}
 }

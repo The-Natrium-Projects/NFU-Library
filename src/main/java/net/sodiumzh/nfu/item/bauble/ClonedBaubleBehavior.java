@@ -1,14 +1,13 @@
 package net.sodiumzh.nfu.item.bauble;
 
-import java.util.function.BiPredicate;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.function.BiPredicate;
 
 /**
  * A {@code ClonedBaubleBehavior} is a {@link BaubleBehavior} of which all behaviors are copied from another {@link IBaubleRegistryEntry},
@@ -21,23 +20,23 @@ public class ClonedBaubleBehavior extends BaubleBehavior
 
 	private final IBaubleRegistryEntry source;
 	
-	private ClonedBaubleBehavior(IBaubleRegistryEntry source, ResourceLocation key, 
-			@Nullable Item item, @Nullable BiPredicate<Item, ItemStack> multiItemCondition, 
-			BaubleEquippingCondition equippingCondition)
+	private ClonedBaubleBehavior(IBaubleRegistryEntry source, ResourceLocation key,
+                                 @Nullable Item item, @Nullable BiPredicate<Item, ItemStack> multiItemCondition,
+                                 BaubleEquippingCondition equippingCondition)
 	{
 		super(key, item, multiItemCondition, equippingCondition);
 		this.source = source;
 	}
 
-	public static ClonedBaubleBehavior clone(IBaubleRegistryEntry source, 
-			@Nonnull Item item, ResourceLocation key, BaubleEquippingCondition equippingCondition)
+	public static ClonedBaubleBehavior clone(IBaubleRegistryEntry source,
+                                             @Nonnull Item item, ResourceLocation key, BaubleEquippingCondition equippingCondition)
 	{
 		return new ClonedBaubleBehavior(source, key, item, null, equippingCondition);
 	}
 	
-	public static ClonedBaubleBehavior clone(IBaubleRegistryEntry source, 
-			@Nonnull BiPredicate<Item, ItemStack> condition, ResourceLocation key,
-			BaubleEquippingCondition equippingCondition)
+	public static ClonedBaubleBehavior clone(IBaubleRegistryEntry source,
+                                             @Nonnull BiPredicate<Item, ItemStack> condition, ResourceLocation key,
+                                             BaubleEquippingCondition equippingCondition)
 	{
 		return new ClonedBaubleBehavior(source, key, null, condition, equippingCondition);
 	}

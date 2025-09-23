@@ -1,7 +1,5 @@
 package net.sodiumzh.nfu.entity.vanillatrade;
 
-import javax.annotation.Nullable;
-
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.RandomSource;
@@ -12,6 +10,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
+
+import javax.annotation.Nullable;
 
 /**
  * <b>Abstract</b> implementation of {@code CVanillaMerchant}. This class doesn't allow to instantiate directly. 
@@ -55,7 +55,7 @@ public abstract class VanillaMerchant implements CVanillaMerchant
 		{
 			this.offers = new MerchantOffers();
 		}
-		if (this.offers.isEmpty() && !this.getMob().level().isClientSide)
+		if (this.offers.isEmpty() && !this.getMob().getLevel().isClientSide)
 		{
 			this.generateTrades();
 		}
@@ -110,7 +110,7 @@ public abstract class VanillaMerchant implements CVanillaMerchant
 
 	@Override
 	public boolean isClientSide() {
-		return this.getMob().level().isClientSide();
+		return this.getMob().getLevel().isClientSide();
 	}
 
 	@Override

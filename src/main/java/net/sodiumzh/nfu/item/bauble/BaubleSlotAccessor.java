@@ -9,6 +9,10 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.sodiumzh.nfu.container.NaUtilsImmutableMap;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
 /**
  * An accessor for dynamically getting current bauble ItemStacks from slots.
  * Each mob has one instance.

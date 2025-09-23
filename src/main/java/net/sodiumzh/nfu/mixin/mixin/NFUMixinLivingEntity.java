@@ -11,7 +11,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.llamalad7.mixinextras.sugar.Local;
-
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.MinecraftForge;
@@ -21,7 +20,7 @@ import net.sodiumzh.nfu.mixin.NFUMixin;
 @Mixin(LivingEntity.class)
 public abstract class NFUMixinLivingEntity implements NFUMixin<LivingEntity>
 {
-	@Shadow public abstract void indicateDamage(double p_270514_, double p_270826_);
+	//@Shadow public abstract void indicateDamage(double p_270514_, double p_270826_);
 
 	@Inject(method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V",
 			at = @At(value = "INVOKE",

@@ -7,8 +7,8 @@ import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
-import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
 import net.sodiumzh.nfu.capability.CEntityDataCapability;
+import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
 import net.sodiumzh.nfu.entity.anger.CMobAngerHandlerProvider;
 import net.sodiumzh.nfu.entity.anger.IUsesDefaultAngerHandler;
 
@@ -23,11 +23,11 @@ public class NFUCapabilityAttachment {
     @SubscribeEvent
     public static void attachCaps(AttachCapabilitiesEvent<Entity> event) {
         event.addCapability(KEY_DATA_CAPABILITY, new NFUEntitySerializableCapProvider<>(
-                event.getObject(), NFUCapabilities.CAP_ENTITY_DATA, CEntityDataCapability.Impl::new));
+                event.getObject(), NFUCaps.CAP_ENTITY_DATA, CEntityDataCapability.Impl::new));
 
         if (event.getObject() instanceof Mob mob && event.getObject() instanceof IUsesDefaultAngerHandler uses) {
             event.addCapability(KEY_DEFAULT_ANGER_HANDLER,
-                    new CMobAngerHandlerProvider(mob, NFUCapabilities.CAP_MOB_DEFAULT_ANGER_HANDLER, uses.getAngerRules()));
+                    new CMobAngerHandlerProvider(mob, NFUCaps.CAP_MOB_DEFAULT_ANGER_HANDLER, uses.getAngerRules()));
         }
 
 

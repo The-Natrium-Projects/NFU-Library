@@ -32,6 +32,15 @@ import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.math.RandomSelection;
 import net.sodiumzh.nfu.util.NFUContainerStatics;
 
+import javax.annotation.Nonnull;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * A {@code RandomEnchantmentSelector} provides a set of enchantments for generating random offers of enchantment books.
  */

@@ -11,7 +11,9 @@ import net.sodiumzh.nfu.capability.CEntityTickingCapability;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 /*
  * {@code CMobAngerHandler} is a capability handling mechanics that mob can be angry with other living entities when some

@@ -8,6 +8,7 @@ import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraftforge.common.util.INBTSerializable;
 
 /**
@@ -73,7 +74,7 @@ public interface CVanillaMerchant extends Merchant, INBTSerializable<CompoundTag
 	public default void playTradeSound()
 	{
 		Mob mob = getMob();
-		mob.level().playLocalSound(mob.getX(), mob.getY(), mob.getZ(), this.getNotifyTradeSound(), SoundSource.NEUTRAL, 1.0F, 1.0F, false);
+		mob.getLevel().playLocalSound(mob.getX(), mob.getY(), mob.getZ(), this.getNotifyTradeSound(), SoundSource.NEUTRAL, 1.0F, 1.0F, false);
 	}
 
 }

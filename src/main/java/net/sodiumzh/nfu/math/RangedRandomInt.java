@@ -1,12 +1,11 @@
 package net.sodiumzh.nfu.math;
 
-import java.util.List;
-import java.util.function.Supplier;
-
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-
 import net.minecraft.util.RandomSource;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * A {@code RangedRandomInt} is a random integer generator with a range and
@@ -241,11 +240,11 @@ public class RangedRandomInt implements Supplier<Integer>
                     return DataResult.success(RangedRandomInt.poisson((int) Math.round(inst.get(0)),
                             (int) Math.round(inst.get(1)), inst.get(2)));
                 default:
-                    return DataResult.error(() -> "RangedRandomInt: invalid length. Size 1 = fixed, 2 = uniform, 3 = poisson.");
+                    return DataResult.error("RangedRandomInt: invalid length. Size 1 = fixed, 2 = uniform, 3 = poisson.");
             }
         } catch (IllegalArgumentException e)
         {
-            return DataResult.error(() -> "RangedRandomInt: invalid value.");
+            return DataResult.error("RangedRandomInt: invalid value.");
         }
     }, inst ->
     {

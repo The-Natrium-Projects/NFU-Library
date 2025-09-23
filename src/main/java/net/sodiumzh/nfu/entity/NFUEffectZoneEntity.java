@@ -5,7 +5,6 @@ import com.google.common.collect.Multimap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -13,8 +12,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
@@ -102,7 +99,7 @@ public class NFUEffectZoneEntity extends Projectile implements IChainModifiable<
     }
 
     public static NFUEffectZoneEntity create(LivingEntity owner) {
-        var res = new NFUEffectZoneEntity(NFUEntityTypes.DEFAULT_EFFECT_ZONE.get(), owner.level());
+        var res = new NFUEffectZoneEntity(NFUEntityTypes.DEFAULT_EFFECT_ZONE.get(), owner.level);
         res.setOwner(owner);
         return res;
     }
@@ -175,13 +172,13 @@ public class NFUEffectZoneEntity extends Projectile implements IChainModifiable<
     public void tick() {
         super.tick();
         // Handle server actions
-        if (!this.level().isClientSide) {
+        if (!this.level.isClientSide) {
             if (this.lifetime >= 0 && this.tickCount > this.lifetime)
                 this.discard();
             if (this.onServerTick != null)
                 this.onServerTick.accept(this);
             if (this.onOverlapEntity != null || this.onOverlapLiving != null) {
-                this.level().getEntities(this, this.getBoundingBox().inflate(20)).stream()
+                this.level.getEntities(this, this.getBoundingBox().inflate(20)).stream()
                     .filter(e -> e.getBoundingBox().intersects(this.getBoundingBox()) && this.canOverlapEntity(e))
                     .forEach(e -> {
                         if (this.onOverlapEntity != null)
@@ -192,7 +189,7 @@ public class NFUEffectZoneEntity extends Projectile implements IChainModifiable<
             }
             if (this.onOverlapBlock != null) {
                 var stream = BlockPos.betweenClosedStream(this.getBoundingBox());
-                Level level = this.level();
+                Level level = this.level;
                 if (this.blockOverlapFilter != null)
                     stream = stream.filter(p -> blockOverlapFilter.test(this, p, level.getBlockState(p)));
                 stream.forEach(p -> this.onOverlapBlock.accept(this, p, level.getBlockState(p)));
@@ -216,13 +213,13 @@ public class NFUEffectZoneEntity extends Projectile implements IChainModifiable<
                 if (particlePosRel == null) continue;
                 Vec3 particlePosAbs = NFUMathStatics.relToAbs(particlePosRel, this.getBoundingBox());
                 Vec3 speed = speedFunction.apply(particlePosRel);
-                this.level().addParticle(particleOptions, particlePosAbs.x, particlePosAbs.y, particlePosAbs.z,
+                this.level.addParticle(particleOptions, particlePosAbs.x, particlePosAbs.y, particlePosAbs.z,
                     speed.x, speed.y, speed.z);
             }
         }
         // Handle motion
         this.setPos(this.position().add(this.getDeltaMovement()));
-        this.addDeltaMovement(new Vec3(0.0, -this.getGravity(), 0.0));
+        this.setDeltaMovement(this.getDeltaMovement().subtract(0.0, -this.getGravity(), 0.0));
         this.updateEntitySize();
     }
 
@@ -367,7 +364,7 @@ public class NFUEffectZoneEntity extends Projectile implements IChainModifiable<
      */
     public NFUEffectZoneEntity alignCenterTo(Vec3 center, boolean shouldSync) {
         Vec3 targetPos = center.subtract(0, this.getBoundingBox().getYsize() / 2d, 0);
-        if (shouldSync && !this.level().isClientSide)
+        if (shouldSync && !this.level.isClientSide)
             ServerEntityMotion.movement(targetPos.subtract(this.position())).apply(this);
         else if (!shouldSync)
             this.setPos(targetPos);
@@ -476,8 +473,4 @@ public class NFUEffectZoneEntity extends Projectile implements IChainModifiable<
         return NFUInfoStatics.createTranslatable("entity." + id.getNamespace() + ".effect_zone." + id.getPath());
     }
 
-    public DamageSource createDamageSource(ResourceKey<DamageType> type) {
-        return new DamageSource(this.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(type),
-            this, this.getOwner(), this.position());
-    }
 }

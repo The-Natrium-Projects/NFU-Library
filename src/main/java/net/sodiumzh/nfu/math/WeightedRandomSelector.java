@@ -1,11 +1,10 @@
 package net.sodiumzh.nfu.math;
 
-import java.util.HashMap;
-import java.util.Map;
+import net.minecraft.util.RandomSource;
 
 import javax.annotation.Nullable;
-
-import net.minecraft.util.RandomSource;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A {@code WeightedRandomSelector} contains a set of objects with probability weights. It will randomly pick one of the elements with

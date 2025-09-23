@@ -1,6 +1,6 @@
 package net.sodiumzh.nfu.entity.anger;
 
-import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.damagesource.EntityDamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -30,7 +30,7 @@ public class MobAngerEventListeners {
                 && event.getSource().getEntity() != null
                 && event.getSource().getEntity() instanceof LivingEntity src) {
             for (var cap : CMobAngerHandler.ALL_HANDLERS) {
-                if (event.getSource().is(DamageTypes.THORNS))
+                if (event.getSource() instanceof EntityDamageSource eds && eds.isThorns())
                 {
                     event.getEntity().getCapability(cap).ifPresent(c -> {
                         if (event.getAmount() > c.getDamageThreshold())

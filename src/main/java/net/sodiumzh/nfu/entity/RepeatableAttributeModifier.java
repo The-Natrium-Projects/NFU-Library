@@ -1,12 +1,12 @@
 package net.sodiumzh.nfu.entity;
 
-import java.util.ArrayList;
-import java.util.UUID;
-
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+
+import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * A {@code RepeatableAttributeModifier} represents an attribute modifier which can be applied multiple times.

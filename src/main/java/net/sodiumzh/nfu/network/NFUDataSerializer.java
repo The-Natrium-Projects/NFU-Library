@@ -90,8 +90,8 @@ public interface NFUDataSerializer<T>
 	 * (E.g. by calling the class owning the instances somehow in the mod main class constructor)
 	 */
 	public static <O> NFUDataSerializer<O> create(Class<O> objClass,
-                                                  BiConsumer<FriendlyByteBuf, O> write, Function<FriendlyByteBuf, O> read,
-                                                  Function<O, Tag> toTag, Function<Tag, O> fromTag)
+												  BiConsumer<FriendlyByteBuf, O> write, Function<FriendlyByteBuf, O> read,
+												  Function<O, Tag> toTag, Function<Tag, O> fromTag)
 	{
 		NFUDataSerializer<O> res = new NFUDataSerializer<O>()
 		{
@@ -136,8 +136,8 @@ public interface NFUDataSerializer<T>
 	
 	@SuppressWarnings("unchecked")
 	public static <O, T extends Tag> NFUDataSerializer<O> create(Class<O> objClass, Class<T> tagClass,
-                                                                 BiConsumer<FriendlyByteBuf, O> write, Function<FriendlyByteBuf, O> read,
-                                                                 Function<O, T> toTag, Function<T, O> fromTag)
+																 BiConsumer<FriendlyByteBuf, O> write, Function<FriendlyByteBuf, O> read,
+																 Function<O, T> toTag, Function<T, O> fromTag)
 	{
 		return create(objClass, write, read, o -> toTag.apply(o), t -> fromTag.apply((T)t));
 	}
@@ -177,7 +177,7 @@ public interface NFUDataSerializer<T>
 	}
 	
 	public static <A, B> NFUDataSerializer<B> castTo(Class<B> clazzB,
-                                                     NFUDataSerializer<A> original, Function<A, B> aToB, Function<B, A> bToA)
+													 NFUDataSerializer<A> original, Function<A, B> aToB, Function<B, A> bToA)
 	{
 		return NFUDataSerializer.create(clazzB,
 				(buf, b) -> original.write(buf, bToA.apply(b)),

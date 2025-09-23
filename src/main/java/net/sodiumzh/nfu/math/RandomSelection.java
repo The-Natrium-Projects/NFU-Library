@@ -1,8 +1,8 @@
 package net.sodiumzh.nfu.math;
 
-import java.util.ArrayList;
-
 import net.minecraft.util.RandomSource;
+
+import java.util.ArrayList;
 
 /**
  * A {@code RandomSelection} is a series of objects that will be randomly selected.

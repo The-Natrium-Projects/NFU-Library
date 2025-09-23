@@ -1,14 +1,5 @@
 package net.sodiumzh.nfu.util;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -18,6 +9,13 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.common.util.NonNullSupplier;
 import net.minecraftforge.registries.IForgeRegistry;
 import org.apache.commons.lang3.mutable.MutableObject;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Function;
 
 
 public class NFUMiscStatics {
@@ -184,19 +182,7 @@ public class NFUMiscStatics {
 	{
 		return getValueFromCapability(target, holder, access, null);
 	}
-	
-	/** Try an action with boolean result for given times. Once the action returns true, it will break and return true. 
-	 Otherwise if the action returns all false for given times, it returns false. */
-	public static boolean tryFor(int times, Supplier<Boolean> action) {
-		if (times <= 0)
-			return false;
-		for (int i = 0; i < times; ++i) {
-			boolean res = action.get();
-			if (res)
-				return true;
-		}
-		return false;
-	}
+
 	/**
 	 * Get entry from Forge registry if present, otherwise return empty instead of registry default value.
 	 */

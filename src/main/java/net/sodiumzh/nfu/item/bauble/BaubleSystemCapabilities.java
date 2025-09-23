@@ -9,7 +9,7 @@ class BaubleSystemCapabilities
 	/**
 	 * Capability on mobs to handle baubles. 
 	 * <p>This capability isn't API-visible to prevent accident manual attachment. Register the mob type in
-	 * {@link RegisterEaubleEvent} to attach.
+	 * {@link RegisterBaubleEvent} to attach.
 	 * <p>To access, use {@link NFUBaubleAPI#getCapability},
 	 * {@link NFUBaubleAPI#isCapabilityPresent} and {@link NFUBaubleAPI#ifCapabilityPresent} instead.
 	 */

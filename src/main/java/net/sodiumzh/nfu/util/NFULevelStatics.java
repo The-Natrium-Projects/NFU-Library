@@ -22,10 +22,24 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
+import org.apache.commons.lang3.mutable.MutableObject;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class NFULevelStatics
 {
@@ -33,17 +47,17 @@ public class NFULevelStatics
 	// Check if a block position is right under sun, i.e. can see sky, not raining, and is day
 	public static boolean isUnderSun(BlockPos pos, Entity levelContext)
 	{
-		return levelContext.level().canSeeSky(pos) && levelContext.level().isDay() && !levelContext.level().isRaining();
+		return levelContext.level.canSeeSky(pos) && levelContext.level.isDay() && !levelContext.level.isRaining();
 	}
 	
 	public static boolean isEntityUnderSun(Entity test)
 	{
-		return isUnderSun(NFUMathStatics.getBlockPos(test.position()), test);
+		return isUnderSun(new BlockPos(test.position()), test);
 	}
 	
 	public static boolean isAboveWater(BlockPos pos, Entity levelContext)
 	{
-		Level level = levelContext.level();
+		Level level = levelContext.level;
 		for (int y = pos.getY(); y > -70; --y)
 		{
 			BlockPos currentPos = new BlockPos(pos.getX(), y, pos.getZ());
@@ -57,12 +71,12 @@ public class NFULevelStatics
 	
 	public static boolean isEntityAboveWater(Entity test)
 	{
-		return isAboveWater(NFUMathStatics.getBlockPos(test.position()), test);
+		return isAboveWater(new BlockPos(test.position()), test);
 	}
 	
 	public static boolean isAboveVoid(BlockPos pos, Entity levelContext)
 	{
-		Level level = levelContext.level();
+		Level level = levelContext.level;
 		for (int y = pos.getY(); y > -70; --y)
 		{
 			BlockPos currentPos = new BlockPos(pos.getX(), y, pos.getZ());
@@ -74,7 +88,7 @@ public class NFULevelStatics
 	
 	public static boolean isEntityAboveVoid(Entity test)
 	{
-		return isAboveVoid(NFUMathStatics.getBlockPos(test.position()), test);
+		return isAboveVoid(new BlockPos(test.position()), test);
 	}
 	
 	/** Get the height of a position to the standable block or liquid below.
@@ -83,16 +97,16 @@ public class NFULevelStatics
 	*/
 	public static int getHeightToGround(BlockPos pos, Entity context)
 	{
-		Level level = context.level();
+		Level level = context.level;
 		BlockPos pos1 = new BlockPos(pos);
 		if (level.getBlockState(pos1).entityCanStandOn(level, pos1, context)
-				|| level.getBlockState(pos1).liquid())
+				|| level.getBlockState(pos1).getMaterial().isLiquid())
 			return 0;
 		else 
 		{
 			int i = 0;
 			while (!level.getBlockState(pos1).entityCanStandOn(level, pos1, context)
-				&& !level.getBlockState(pos1).liquid())
+				&& !level.getBlockState(pos1).getMaterial().isLiquid())
 			{
 				i++;
 				pos1 = pos1.below();
@@ -109,9 +123,9 @@ public class NFULevelStatics
 	*/
 	public static int getHeightToGround(Vec3 v, Entity context)
 	{
-		return getHeightToGround(NFUMathStatics.getBlockPos(v), context);
+		return getHeightToGround(new BlockPos(v), context);
 	}
-
+	
 	/**
 	 * Get all {@link BlockPos} in a given area fulfilling given conditions.
 	 * <p> WARNING: It would be slow if the area is too large! It will invoke {@link ArrayList#add(Object)} for times of the area volume at most.
@@ -142,18 +156,15 @@ public class NFULevelStatics
 	 * @param considersMobGriefingGameRule If true, it will consider MobGriefing game rule to determine whether to break blocks. If the source isn't a {@link Mob} it's ignored.
 	 * @return {@link Explosion} instance, or {@code null} on client.
 	 */
-	@SuppressWarnings("resource")
 	public static Explosion explode(Entity source, Vec3 position, float power, boolean causesFire, boolean breaksBlocks, boolean alwaysDropsItemsOnBreaking, boolean considersMobGriefingGameRule)
 	{
-		if (source.level().isClientSide)
+		if (source.level.isClientSide)
 			return null;
 		boolean canBreak = breaksBlocks;
 		if (canBreak && source instanceof Mob && considersMobGriefingGameRule)
-			canBreak = ForgeEventFactory.getMobGriefingEvent(source.level(), source);
-		return source.level().explode(source, position.x, position.y, position.z, power, causesFire, 
-				(!canBreak) ? Level.ExplosionInteraction.NONE : (
-				(alwaysDropsItemsOnBreaking ? Level.ExplosionInteraction.TNT : (
-				source == null ? Level.ExplosionInteraction.BLOCK : Level.ExplosionInteraction.MOB))));
+			canBreak = ForgeEventFactory.getMobGriefingEvent(source.level, source);
+		return source.level.explode(source, position.x, position.y, position.z, power, causesFire, 
+				canBreak ? (alwaysDropsItemsOnBreaking ? Explosion.BlockInteraction.BREAK : Explosion.BlockInteraction.DESTROY) : Explosion.BlockInteraction.NONE);
 	}
 	
 	/**
@@ -237,7 +248,7 @@ public class NFULevelStatics
 		if (level.isClientSide)
 			return null;
 		return level.explode(null, position.x, position.y, position.z, power, causesFire, 
-				breaksBlocks ? (alwaysDropsItemsOnBreaking ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.BLOCK) : Level.ExplosionInteraction.NONE);
+				breaksBlocks ? (alwaysDropsItemsOnBreaking ? Explosion.BlockInteraction.BREAK : Explosion.BlockInteraction.DESTROY) : Explosion.BlockInteraction.NONE);
 	}
 	
 	/**
@@ -285,7 +296,7 @@ public class NFULevelStatics
 	
 	public static <T> T selectByDifficulty(Entity levelContext, T peaceful, T easy, T normal, T hard)
 	{
-		return selectByDifficulty(levelContext.level(), peaceful, easy, normal, hard);
+		return selectByDifficulty(levelContext.level, peaceful, easy, normal, hard);
 	}
 
 	/**
@@ -300,7 +311,7 @@ public class NFULevelStatics
 			double maxDistance, boolean includeFluid) {
 		Vec3 endPoint = startPoint.add(direction.normalize().scale(maxDistance));
 		// Search block
-		HitResult blockResult = entityContext.level().clip(new ClipContext(startPoint, endPoint, ClipContext.Block.OUTLINE,
+		HitResult blockResult = entityContext.level.clip(new ClipContext(startPoint, endPoint, ClipContext.Block.OUTLINE,
 				includeFluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, entityContext));
 		// Search entity
 		AABB entitySearchBound = entityContext.getBoundingBox()
@@ -347,22 +358,22 @@ public class NFULevelStatics
 	}
 
 	public static boolean hasBlockCollision(BlockPos pos, @Nonnull Entity context) {
-		return !context.level().getBlockState(pos).getShape(context.level(), pos, CollisionContext.of(context)).isEmpty();
+		return !context.level.getBlockState(pos).getShape(context.level, pos, CollisionContext.of(context)).isEmpty();
 	}
 
 	/**
 	 * Check if a pos is solid-collision (i.e. non-empty collision) to an entity.
 	 */
 	public static boolean isSolidCollision(BlockPos pos, @Nonnull Entity context) {
-		return !context.level().getBlockState(pos).getBlock()
-			.getCollisionShape(context.level().getBlockState(pos),
-				context.level(), pos, CollisionContext.of(context)).isEmpty();
+		return !context.level.getBlockState(pos).getBlock()
+			.getCollisionShape(context.level.getBlockState(pos),
+				context.level, pos, CollisionContext.of(context)).isEmpty();
 	}
 	/**
 	 * Check if a pos is water-collision (i.e. water, no collision) to an entity.
 	 */
 	public static boolean isWaterCollision(BlockPos pos, @Nonnull Entity context) {
-		BlockState state = context.level().getBlockState(pos);
+		BlockState state = context.level.getBlockState(pos);
 		if (state.is(Blocks.WATER)) return true;
 		else if (!state.hasProperty(BlockStateProperties.WATERLOGGED) ||
 			!state.getValue(BlockStateProperties.WATERLOGGED)) return false;
@@ -373,14 +384,14 @@ public class NFULevelStatics
 	 * Check if a pos is liquid-collision (i.e. any liquid, no collision) to an entity.
 	 */
 	public static boolean isLiquidCollision(BlockPos pos, @Nonnull Entity context) {
-		return isWaterCollision(pos, context) || (context.level().getBlockState(pos).liquid() && !hasBlockCollision(pos, context));
+		return isWaterCollision(pos, context) || (context.level.getBlockState(pos).getMaterial().isLiquid() && !hasBlockCollision(pos, context));
 	}
 
 	/**
 	 * Check if a pos is air-collision (i.e. non-liquid, no collision) to an entity.
 	 */
 	public static boolean isAirCollision(BlockPos pos, @Nonnull Entity context) {
-		return !context.level().getBlockState(pos).liquid() && !isSolidCollision(pos, context);
+		return !context.level.getBlockState(pos).getMaterial().isLiquid() && !isSolidCollision(pos, context);
 	}
 
 	/**

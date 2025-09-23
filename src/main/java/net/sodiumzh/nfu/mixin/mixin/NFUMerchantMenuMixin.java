@@ -1,19 +1,17 @@
 package net.sodiumzh.nfu.mixin.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.inventory.MerchantMenu;
+import net.minecraft.world.item.trading.Merchant;
 import net.sodiumzh.nfu.entity.vanillatrade.CVanillaMerchant;
+import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.inventory.MerchantMenu;
-import net.minecraft.world.item.trading.Merchant;
-import net.sodiumzh.nfu.mixin.NFUMixin;
 
 @Mixin(MerchantMenu.class)
 public class NFUMerchantMenuMixin implements NFUMixin<MerchantMenu>

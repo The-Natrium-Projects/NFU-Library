@@ -15,6 +15,11 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.container.Tuple3;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.UUID;
+import java.util.function.Predicate;
+
 /**
  * A {@code BaubleAttributeModifier} is a wrapped attribute modifier which is dynamically added and removed in bauble ticks. 
  * Unlike {@link AttributeModifier}s, although it contains an {@link AttributeModifier}, it's not single-instance, and will be dynamically created & removed during bauble ticks.
@@ -131,8 +136,8 @@ public class BaubleAttributeModifier
 	 * and it creates a 2-element array.
 	 * <p>The AttributeModifier argument can accept various forms:
 	 * <p>(a) {@link AttributeModifier.Operation} enum.
-	 * <p>(b) String: "+", "a", "add" or "addition" for ADDITION; "*", "m", "mb", "multiply_base" for MULTIPLY_BASE;
-	 * "**", "mt" or "multiply_total" for MULTIPLY_TOTAL.
+	 * <p>(b) String: "a", "add" or "addition" for ADDITION; "m", "mb", "multiply_base" for MULTIPLY_BASE;
+	 * "mt" or "multiply_total" for MULTIPLY_TOTAL.
 	 * <p>(c) Index: 0 for ADDITION, 1 for MULTIPLY_BASE, 2 for MULTIPLY_TOTAL.
 	 * <p>(d) Omitted: ADDITION by default.
 	 */
@@ -189,7 +194,6 @@ public class BaubleAttributeModifier
 						current.c = AttributeModifier.Operation.MULTIPLY_BASE;
 					else if (strl.equals("mt") || strl.equals("multiply_total") || strl.equals("multiply total")
 						|| strl.equals("multiplytotal") || strl.equals("**") || strl.equals("*+") || strl.equals("+*"))
-
 						current.c = AttributeModifier.Operation.MULTIPLY_TOTAL;
 					else throw new IllegalArgumentException("BaubleAttributeModifier#makeModifiers: Illegal string argument at position " + Integer.toString(i)
 					+ ": \"" + str + "\"");

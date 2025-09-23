@@ -3,13 +3,13 @@ package net.sodiumzh.nfu.registry;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.sodiumzh.nfu.capability.CEntityTickingCapability;
 import net.sodiumzh.nfu.capability.CEntityDataCapability;
+import net.sodiumzh.nfu.capability.CEntityTickingCapability;
 import net.sodiumzh.nfu.entity.anger.CMobAngerHandler;
 import net.sodiumzh.nfu.entity.taming.CVanillaAnimalTamingProcessHandler;
 import net.sodiumzh.nfu.entity.taming.VanillaAnimalTamingProcess;
 
-public class NFUCapabilities {
+public class NFUCaps {
 
     /**
      * A default anger handler.

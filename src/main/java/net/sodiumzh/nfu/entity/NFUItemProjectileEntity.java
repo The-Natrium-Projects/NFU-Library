@@ -5,15 +5,11 @@ import com.google.common.collect.Multimap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.ItemSupplier;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -24,7 +20,10 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.TheEndGatewayBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.*;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;
 import net.sodiumzh.nfu.object.IChainModifiable;
 import net.sodiumzh.nfu.registry.NFUEntityDataSerializers;
@@ -112,7 +111,7 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
     }
 
     public static NFUItemProjectileEntity create(LivingEntity owner) {
-        NFUItemProjectileEntity res = new NFUItemProjectileEntity(NFUEntityTypes.DEFAULT_ITEM_PROJECTILE.get(), owner.level());
+        NFUItemProjectileEntity res = new NFUItemProjectileEntity(NFUEntityTypes.DEFAULT_ITEM_PROJECTILE.get(), owner.level);
         res.setOwner(owner);
         return res;
     }
@@ -238,37 +237,37 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
         super.tick();
         this.tickHit();
         this.tickMotion();
-        if (!this.level().isClientSide && this.lifetime >= 0 && this.tickCount > this.lifetime)
+        if (!this.level.isClientSide && this.lifetime >= 0 && this.tickCount > this.lifetime)
             this.discard();
-        if (this.level().isClientSide && this.entityData.get(PARTICLE_AMOUNT) > 0) {
+        if (this.level.isClientSide && this.entityData.get(PARTICLE_AMOUNT) > 0) {
             Vec3 center = this.getBoundingBox().getCenter();
             for (int i = 0 ; i < this.entityData.get(PARTICLE_AMOUNT); ++i) {
                 Vec3 speed = this.getEntityData().get(PARTICLE_SPEED);
-                this.level().addParticle(this.getEntityData().get(PARTICLE),
+                this.level.addParticle(this.getEntityData().get(PARTICLE),
                     center.x, center.y, center.z, speed.x, speed.y, speed.z);
             }
         }
         if (this.onTick != null)
             this.onTick.accept(this);
-        if (!this.level().isClientSide) {
+        if (!this.level.isClientSide) {
             this.scheduledServerActions.get(this.tickCount).forEach(c -> c.accept(this));
         }
     }
 
     protected void tickHit() {
         super.tick();
-        HitResult hitresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+        HitResult hitresult = ProjectileUtil.getHitResult(this, this::canHitEntity);
         boolean enteredPortal = false;
         if (hitresult.getType() == HitResult.Type.BLOCK) {
             BlockPos blockpos = ((BlockHitResult)hitresult).getBlockPos();
-            BlockState blockstate = this.level().getBlockState(blockpos);
+            BlockState blockstate = this.level.getBlockState(blockpos);
             if (!this.ignoresPortals() && blockstate.is(Blocks.NETHER_PORTAL)) {
                 this.handleInsidePortal(blockpos);
                 enteredPortal = true;
             } else if (!this.ignoresPortals() && blockstate.is(Blocks.END_GATEWAY)) {
-                BlockEntity blockentity = this.level().getBlockEntity(blockpos);
+                BlockEntity blockentity = this.level.getBlockEntity(blockpos);
                 if (blockentity instanceof TheEndGatewayBlockEntity && TheEndGatewayBlockEntity.canEntityTeleport(this)) {
-                    TheEndGatewayBlockEntity.teleportEntity(this.level(), blockpos, blockstate, this, (TheEndGatewayBlockEntity)blockentity);
+                    TheEndGatewayBlockEntity.teleportEntity(this.level, blockpos, blockstate, this, (TheEndGatewayBlockEntity)blockentity);
                 }
                 enteredPortal = true;
             }
@@ -294,7 +293,7 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
         // Handle gravity
         if (!this.isNoGravity()) {
             Vec3 vec31 = this.getDeltaMovement();
-            this.addDeltaMovement(new Vec3(0.0, -this.getGravity(), 0.0));
+            this.setDeltaMovement(this.getDeltaMovement().subtract(0.0, -this.getGravity(), 0.0));
         }
 
         // Handle motion
@@ -305,7 +304,7 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
     @Override
     protected void onHitEntity(EntityHitResult pResult) {
         super.onHitEntity(pResult);
-        if (!this.level().isClientSide) {
+        if (!this.level.isClientSide) {
             if (this.ignoresOwner && pResult.getEntity().equals(this.getOwner())) return;
             if (ignoresEntityIf != null && ignoresEntityIf.test(this, pResult.getEntity())) return;
             if (ignoresLivingIf != null && pResult.getEntity() instanceof LivingEntity l && ignoresLivingIf.test(this, l)) return;
@@ -321,7 +320,7 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
     @Override
     protected void onHitBlock(BlockHitResult pResult) {
         super.onHitBlock(pResult);
-        if (!this.level().isClientSide) {
+        if (!this.level.isClientSide) {
             Optional.ofNullable(this.onHitBlock).ifPresent(action -> action.accept(this, pResult));
             Optional.ofNullable(this.onHitBlockOrEntity).ifPresent(action -> action.accept(this, pResult));
             Optional.ofNullable(this.onHitBlockOrLiving).ifPresent(action -> action.accept(this, pResult));
@@ -497,8 +496,4 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
         return NFUInfoStatics.createTranslatable("entity." + id.getNamespace() + ".item_projectile." + id.getPath());
     }
 
-    public DamageSource createDamageSource(ResourceKey<DamageType> type) {
-        return new DamageSource(this.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(type),
-            this, this.getOwner(), this.position());
-    }
 }

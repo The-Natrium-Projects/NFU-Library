@@ -238,7 +238,7 @@ class CBaubleEquippableMobImpl implements CBaubleEquippableMob
 	@Override
 	public void tick()
 	{
-		if (this.getMob().level().isClientSide)
+		if (this.getMob().getLevel().isClientSide)
 			return;
 		updateStacks();
 		Set<String> changedSlots = this.getChangedSlots();

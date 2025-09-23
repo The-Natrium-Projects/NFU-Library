@@ -6,7 +6,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.mojang.logging.LogUtils;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -14,6 +13,11 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.sodiumzh.nfu.math.ThreadSafeRandomSource;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class NFUMathStatics
 {
@@ -297,7 +301,6 @@ public class NFUMathStatics
 	public static Optional<Integer> getFibonacci(int index) {
 		return (index >= 0 && index < FIBONACCI_SEQUENCE.size()) ? Optional.of(FIBONACCI_SEQUENCE.get(index)) : Optional.empty();
 	}
-
 	/**
 	 * Randomly pick a given amount of integers from the range [0, maxEx) successively and fill into a list.
 	 * @param maxEx Upper bound of the integers (excluding, i.e. range = [0, maxEx))

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
@@ -14,6 +14,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
+
+import java.util.ArrayList;
 
 public class NFUTagStatics
 {
@@ -134,17 +136,17 @@ public class NFUTagStatics
 	
 	public static TagKey<Block> createBlockTag(String modId, String name)
 	{
-		return TagKey.create(Registries.BLOCK, new ResourceLocation(modId, name));
+		return TagKey.create(Registry.BLOCK_REGISTRY, new ResourceLocation(modId, name));
 	}
 	
 	public static TagKey<Item> createItemTag(String modId, String name)
 	{
-		return TagKey.create(Registries.ITEM, new ResourceLocation(modId, name));
+		return TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation(modId, name));
 	}
 	
 	public static TagKey<EntityType<?>> createEntityTypeTag(String modId, String name)
 	{
-		return TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation(modId, name));
+		return TagKey.create(Registry.ENTITY_TYPE_REGISTRY, new ResourceLocation(modId, name));
 	}
 
 	public static <T> List<TagKey<T>> getAllTags(T block, IForgeRegistry<T> registry) {

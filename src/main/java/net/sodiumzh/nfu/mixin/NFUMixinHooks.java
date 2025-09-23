@@ -1,17 +1,12 @@
 package net.sodiumzh.nfu.mixin;
 
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraftforge.common.MinecraftForge;
-import net.sodiumzh.nfu.mixin.event.entity.ItemEntityHurtEvent;
-import net.sodiumzh.nfu.mixin.event.entity.ItemEntityOutOfWorldEvent;
-import net.sodiumzh.nfu.mixin.event.entity.MobSunBurnTickEvent;
-import net.sodiumzh.nfu.mixin.event.entity.NonLivingEntityHurtEvent;
-import net.sodiumzh.nfu.mixin.event.entity.NonLivingEntityOutOfWorldEvent;
+import net.sodiumzh.nfu.mixin.event.entity.*;
 
 public class NFUMixinHooks
 {
@@ -22,11 +17,11 @@ public class NFUMixinHooks
 	 */
 	public static boolean onNonLivingEntityHurt(Entity entity, DamageSource source, float amount)
 	{
-		if (!entity.level().isClientSide
+		if (!entity.level.isClientSide
 				&& !(entity instanceof LivingEntity)
 				&& !(entity instanceof ItemEntity))
 		{
-			if (source.is(DamageTypes.FELL_OUT_OF_WORLD) && amount != Integer.MAX_VALUE)
+			if (source == DamageSource.OUT_OF_WORLD && amount != Integer.MAX_VALUE)
 			{
 				if (MinecraftForge.EVENT_BUS.post(new NonLivingEntityOutOfWorldEvent(entity, amount)))
 					return true;
@@ -46,14 +41,14 @@ public class NFUMixinHooks
 	 */
 	public static boolean onItemEntityHurt(ItemEntity entity, DamageSource source, float amount)
 	{
-		if (entity.level().isClientSide || entity.isRemoved()) //Forge: Fixes MC-53850
+		if (entity.level.isClientSide || entity.isRemoved()) //Forge: Fixes MC-53850
 		{
 			// This case will be blocked after the mixin hook invoked in vanilla code
 			return false;
 		}
 		else
 		{
-			if (source.is(DamageTypes.FELL_OUT_OF_WORLD) && amount != Integer.MAX_VALUE)
+			if (source == DamageSource.OUT_OF_WORLD && amount != Integer.MAX_VALUE)
 			{
 				if (MinecraftForge.EVENT_BUS.post(new ItemEntityOutOfWorldEvent(entity, amount)))
 					return true;

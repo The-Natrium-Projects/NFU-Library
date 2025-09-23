@@ -1,7 +1,5 @@
 package net.sodiumzh.nfu.savedata.redirector;
 
-import java.util.Set;
-
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -14,6 +12,7 @@ import net.sodiumzh.nfu.mixin.event.level.LevelCapabilityDataLoadEvent;
 import net.sodiumzh.nfu.util.NFUContainerStatics;
 import net.sodiumzh.nfu.util.NFUNBTStatics;
 
+import java.util.Set;
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class SaveDataLocationRedirectorEventListeners
 {
@@ -91,9 +90,9 @@ public class SaveDataLocationRedirectorEventListeners
 			original.putString("id", key.toString());
 	}
 
-	public static String doPortNamespace(String original) {
+	public static String[] doPortNamespace(String[] original) {
 		if (SaveDataLocationRedirectorRegistries.NAMESPACE_MAPPING.isEmpty()) return original;
-		String res = SaveDataLocationRedirectorRegistries.NAMESPACE_MAPPING.get(original);
-		return res != null ? res : original;
+		String res = SaveDataLocationRedirectorRegistries.NAMESPACE_MAPPING.get(original[0]);
+		return res != null ? new String[]{res, original[1]} : original;
 	}
 }

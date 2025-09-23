@@ -12,6 +12,8 @@ import net.sodiumzh.nfu.util.NFUInfoStatics;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import java.util.function.Predicate;
+
 /**
  * A checker for if a bauble item can be equipped in a given bauble slot of a given living entity.
  */

@@ -1,11 +1,5 @@
 package net.sodiumzh.nfu.util;
 
-import java.util.*;
-import java.util.function.Predicate;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
@@ -22,11 +16,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -52,6 +42,11 @@ import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.*;
+import java.util.function.Predicate;
+
 // Static function library for befriending-related actions.
 public class NFUEntityStatics
 {
@@ -66,10 +61,10 @@ public class NFUEntityStatics
 	 */
 	@Deprecated
 	public static Entity replaceLivingEntity(EntityType<?> newType, LivingEntity from, boolean allowNewEntityDespawn) {
-		if (from.level().isClientSide())
+		if (from.level.isClientSide())
 			return null;
 
-		Entity newEntity = newType.create(from.level());
+		Entity newEntity = newType.create(from.level);
 		newEntity.moveTo(from.getX(), from.getY(), from.getZ(), from.getYRot(), from.getXRot());
 
 		if (from.hasCustomName())
@@ -96,7 +91,7 @@ public class NFUEntityStatics
 		}
 
 		newEntity.setInvulnerable(from.isInvulnerable());
-		from.level().addFreshEntity(newEntity);
+		from.level.addFreshEntity(newEntity);
 		from.discard();
 		return newEntity;
 	}
@@ -125,11 +120,10 @@ public class NFUEntityStatics
 		return replaceMob(newType, from, false);
 	}
 
-	@SuppressWarnings("resource")
 	@Deprecated // Use sendParticlesToEntity() instead
 	public static void sendParticlesToMob(LivingEntity entity, ParticleOptions options, Vec3 offset, int amount,
 			double speed, double positionRndScale, double speedRndScale) {
-		if (entity.level().isClientSide)
+		if (entity.level.isClientSide)
 			return;
 		Vec3 pos = entity.position();
 		for (int i = 0; i < amount; ++i)
@@ -138,7 +132,7 @@ public class NFUEntityStatics
 			double d1 = new Random().nextGaussian() * 0.2 * positionRndScale;
 			double d2 = new Random().nextGaussian() * 0.1 * positionRndScale;
 			double d3 = new Random().nextGaussian() * 0.5 * speedRndScale + 1;
-			((ServerLevel) (entity.level())).sendParticles(options, pos.x + offset.x + d0,
+			((ServerLevel) (entity.level)).sendParticles(options, pos.x + offset.x + d0,
 					pos.y + entity.getBbHeight() + offset.y + d1, pos.z + offset.z + d2, 1, 0, 0, 0, speed * d3);
 		}
 	}
@@ -175,10 +169,10 @@ public class NFUEntityStatics
 	@Deprecated
 	public static void sendParticlesToEntity(Entity entity, ParticleOptions options, Vec3 positionOffset, Vec3 rndScale,
 			int amount, double speed) {
-		if (entity.level().isClientSide)
+		if (entity.level.isClientSide)
 			return;
 		Vec3 pos = entity.position();
-		((ServerLevel) (entity.level())).sendParticles(options, pos.x + positionOffset.x, pos.y + positionOffset.y,
+		((ServerLevel) (entity.level)).sendParticles(options, pos.x + positionOffset.x, pos.y + positionOffset.y,
 				pos.z + positionOffset.z, amount, rndScale.x, rndScale.y, rndScale.z, speed);
 	}
 
@@ -323,7 +317,7 @@ public class NFUEntityStatics
 
 	// Teleport a living entity as if it ate a chorus fruit
 	public static boolean chorusLikeTeleport(LivingEntity living) {
-		if (!living.level().isClientSide)
+		if (!living.level.isClientSide)
 		{
 
 			double atX = living.getX();
@@ -334,8 +328,8 @@ public class NFUEntityStatics
 			{
 				double tryX = living.getX() + (living.getRandom().nextDouble() - 0.5D) * 16.0D;
 				double tryY = Mth.clamp(living.getY() + (double) (living.getRandom().nextInt(16) - 8),
-						(double) living.level().getMinBuildHeight(), (double) (living.level().getMinBuildHeight()
-								+ ((ServerLevel) (living.level())).getLogicalHeight() - 1));
+						(double) living.level.getMinBuildHeight(), (double) (living.level.getMinBuildHeight()
+								+ ((ServerLevel) (living.level)).getLogicalHeight() - 1));
 				double tryZ = living.getZ() + (living.getRandom().nextDouble() - 0.5D) * 16.0D;
 				if (living.isPassenger())
 				{
@@ -350,7 +344,7 @@ public class NFUEntityStatics
 				{
 					SoundEvent soundevent = living instanceof Fox ? SoundEvents.FOX_TELEPORT
 							: SoundEvents.CHORUS_FRUIT_TELEPORT;
-					living.level().playSound((Player) null, atX, atY, atZ, soundevent, SoundSource.PLAYERS, 1.0F, 1.0F);
+					living.level.playSound((Player) null, atX, atY, atZ, soundevent, SoundSource.PLAYERS, 1.0F, 1.0F);
 					living.playSound(soundevent, 1.0F, 1.0F);
 					return true;
 				}
@@ -362,15 +356,15 @@ public class NFUEntityStatics
 	
 	// Random teleport an entity with given radius
 	public static boolean tryTeleportOntoGround(Entity entity, Vec3 radius, int tryTimes) {
-		if (!entity.level().isClientSide)
+		if (!entity.level.isClientSide)
 		{
 			for (int i = 0; i < tryTimes; ++i)
 			{
 				Random rnd = new Random();
 				double tryX = entity.getX() + (rnd.nextDouble() - 0.5D) * radius.x * 2d;
 				double tryY = Mth.clamp(entity.getY() + (rnd.nextDouble() - 0.5D) * radius.y * 2d,
-						(double) entity.level().getMinBuildHeight(), (double) (entity.level().getMinBuildHeight()
-								+ ((ServerLevel) (entity.level())).getLogicalHeight() - 1));
+						(double) entity.level.getMinBuildHeight(), (double) (entity.level.getMinBuildHeight()
+								+ ((ServerLevel) (entity.level)).getLogicalHeight() - 1));
 				double tryZ = entity.getZ() + (rnd.nextDouble() - 0.5D) * radius.z * 2d;
 				if (entity.isPassenger())
 				{
@@ -467,8 +461,8 @@ public class NFUEntityStatics
 		double atZ = entity.getZ();
 		double actualY = inY;
 		boolean noCollision = false;
-		BlockPos currentPos = NFUMathStatics.getBlockPos(inX, inY, inZ);
-		Level level = entity.level();
+		BlockPos currentPos = new BlockPos(inX, inY, inZ);
+		Level level = entity.level;
 		if (level.hasChunkAt(currentPos))
 		{
 			boolean solidBlockFound = false;
@@ -476,7 +470,7 @@ public class NFUEntityStatics
 			{
 				BlockPos nextPos = currentPos.below();
 				BlockState blockstate = level.getBlockState(nextPos);
-				if (blockstate.blocksMotion())
+				if (blockstate.getMaterial().blocksMotion())
 				{
 					solidBlockFound = true;
 				} else
@@ -703,7 +697,7 @@ public class NFUEntityStatics
 	public static <T extends Entity> List<T> sortWithDistance(List<T> entities, Entity distanceTo)
 	{
 		return entities.stream()
-				.filter(e -> e.isAlive() && e.level() == distanceTo.level())
+				.filter(e -> e.isAlive() && e.level == distanceTo.level)
 				.sorted(Comparator.comparingDouble(e -> e.distanceToSqr(distanceTo)))
 				.toList();
 	}
@@ -722,12 +716,12 @@ public class NFUEntityStatics
 		if (targetUUID != null)
 		{
 			// Try finding player first because it's fast
-			out = mob.level().getPlayerByUUID(targetUUID);
+			out = mob.level.getPlayerByUUID(targetUUID);
 			// When player is not found, search around
 			if (out == null)
 			{
 				double radius = mob.getAttributeValue(Attributes.FOLLOW_RANGE);
-				List<Entity> targets = mob.level().getEntities(
+				List<Entity> targets = mob.level.getEntities(
 					mob, NFUEntityStatics.getNeighboringArea(mob, radius), (Entity e) ->
 					{
 						return e != null 
@@ -814,7 +808,7 @@ public class NFUEntityStatics
 
 	public static BlockState getEyePositionBlock(LivingEntity living)
 	{
-		return living.level().getBlockState(NFUMathStatics.getBlockPos(living.getEyePosition()));
+		return living.level.getBlockState(new BlockPos(living.getEyePosition()));
 	}
 	
 	/**
@@ -835,7 +829,7 @@ public class NFUEntityStatics
 		}
 		if (amount1 > 0f)
 		{
-            target.getCombatTracker().recordDamage(damageSource, amount1);
+            target.getCombatTracker().recordDamage(damageSource, target.getHealth(), amount1);
             target.setHealth(target.getHealth() - amount1);
             target.gameEvent(GameEvent.ENTITY_DAMAGE);
             if (target.getHealth() <= 0)
@@ -894,11 +888,11 @@ public class NFUEntityStatics
 	 * Add a mob's delta motion on server. Client motion will be auto synched. Do nothing on client.
 	 */
 	public static void addMotionOnServer(Entity target, Vec3 deltaPos, Vec3 deltaVelocity) {
-		if (target.level().isClientSide) return;
+		if (target.level.isClientSide) return;
 		target.setPos(target.position().add(deltaPos));
-		target.addDeltaMovement(deltaVelocity);
+		target.setDeltaMovement(target.getDeltaMovement().add(deltaVelocity));
 		ClientboundEntityMotionUpdatePacket packet = new ClientboundEntityMotionUpdatePacket(target.getId(), deltaPos, deltaVelocity);
-		NFUNetworkStatics.sendToAllPlayers(target.level(), NFUNetworkChannels.CHANNEL, packet);
+		NFUNetworkStatics.sendToAllPlayers(target.level, NFUNetworkChannels.CHANNEL, packet);
 	}
 
 	/**
@@ -919,7 +913,7 @@ public class NFUEntityStatics
 		Vec3 deltaPos = target.position().subtract(oldPos);
 		ClientboundEntityMotionUpdatePacket packet =
 			new ClientboundEntityMotionUpdatePacket(target.getId(), deltaPos, deltaVelocity);
-		NFUNetworkStatics.sendToAllPlayers(target.level(), NFUNetworkChannels.CHANNEL, packet);
+		NFUNetworkStatics.sendToAllPlayers(target.level, NFUNetworkChannels.CHANNEL, packet);
 	}
 
 }

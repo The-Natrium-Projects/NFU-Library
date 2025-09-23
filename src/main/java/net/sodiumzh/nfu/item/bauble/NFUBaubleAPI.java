@@ -16,6 +16,12 @@ import net.minecraft.world.item.ItemStack;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.registry.NFURegistry;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+
 /**
  * NFFServices - BaubleSystem is a system for equipping "bauble" items on <b>mobs</b> just like for players in Curios API.
  * <p>This class involves some common static methods.

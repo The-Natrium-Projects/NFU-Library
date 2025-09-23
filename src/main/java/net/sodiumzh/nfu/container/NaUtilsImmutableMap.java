@@ -1,12 +1,12 @@
 package net.sodiumzh.nfu.container;
 
+import com.google.common.collect.ImmutableMap;
+import com.mojang.logging.LogUtils;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableMap;
-import com.mojang.logging.LogUtils;
 
 /**
  * An immutable map implementation that can be directly created from a generic map or an element collection.
@@ -15,12 +15,13 @@ import com.mojang.logging.LogUtils;
  * @deprecated Use {@link ImmutableMap} instead
  */
 @Deprecated
-public class NaUtilsImmutableMap<K, V> implements Map<K, V> {
+public class NaUtilsImmutableMap<K, V> implements Map<K, V>
+{
 
 	private final Map<K, V> internal;
 	private final boolean suppressException;
 	private final boolean silent;
-
+	
 	/**
 	 * Make from entry iterable.
 	 * @param suppressException If true, modification attempts will just do nothing and print an error information but won't trigger exceptions.
@@ -38,7 +39,7 @@ public class NaUtilsImmutableMap<K, V> implements Map<K, V> {
 		this.suppressException = suppressException;
 		this.silent = silent;
 	}
-
+	
 	/**
 	 * Make from entry iterable.
 	 * @param suppressException If true, modification attempts will just do nothing and print an error information but won't trigger exceptions.
@@ -47,7 +48,7 @@ public class NaUtilsImmutableMap<K, V> implements Map<K, V> {
 	{
 		this(from, suppressException, false);
 	}
-
+	
 	/**
 	 * Make from entry iterable. Don't suppress exceptions.
 	 */
@@ -55,7 +56,7 @@ public class NaUtilsImmutableMap<K, V> implements Map<K, V> {
 	{
 		this(from, false, false);
 	}
-
+	
 	/**
 	 * Make from a generic map.
 	 * @param suppressException If true, modification attempts will just do nothing and print an error information but won't trigger exceptions.
@@ -67,7 +68,7 @@ public class NaUtilsImmutableMap<K, V> implements Map<K, V> {
 		this.suppressException = suppressException;
 		this.silent = silent;
 	}
-
+	
 	/**
 	 * Make from a generic map.
 	 * @param suppressException If true, modification attempts will just do nothing and print an error information but won't trigger exceptions.
@@ -76,7 +77,7 @@ public class NaUtilsImmutableMap<K, V> implements Map<K, V> {
 	{
 		this(from, suppressException, false);
 	}
-
+	
 	/**
 	 * Copy from a generic map. Don't suppress exceptions.
 	 */
@@ -85,7 +86,7 @@ public class NaUtilsImmutableMap<K, V> implements Map<K, V> {
 		this(from, false, false);
 	}
 
-
+	
 	@Override
 	public int size() {
 		return internal.size();

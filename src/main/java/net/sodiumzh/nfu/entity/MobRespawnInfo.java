@@ -1,7 +1,5 @@
 package net.sodiumzh.nfu.entity;
 
-import javax.annotation.Nullable;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -20,6 +18,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.util.NFUEntityStatics;
 import net.sodiumzh.nfu.util.NFUInfoStatics;
 import net.sodiumzh.nfu.util.NFUNBTStatics;
+
+import javax.annotation.Nullable;
 
 /**
  * A {@code MobRespawnInfo} is a serializable data piece for respawning a mob.

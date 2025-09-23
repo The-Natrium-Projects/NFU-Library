@@ -57,9 +57,9 @@ public interface ITamingProcess<T extends Mob> {
     @DontOverride
     public default boolean isInAnyProcess(T mob)
     {
-        if (mob.level().isClientSide)
+        if (mob.level.isClientSide)
             return false;
-        for (Player player: mob.level().players())
+        for (Player player: mob.level.players())
         {
             if (isInProcess(player, mob))
                 return true;
@@ -101,7 +101,7 @@ public interface ITamingProcess<T extends Mob> {
     @DontOverride
     public default void forAllPlayersInProcess(T mob, Consumer<Player> todo)
     {
-        for (Player player: mob.level().players())
+        for (Player player: mob.level.players())
         {
             if (isInProcess(player, mob))
                 todo.accept(player);

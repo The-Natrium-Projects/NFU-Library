@@ -12,14 +12,18 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-
-import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
+import net.sodiumzh.nfu.item.INFUItem;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.entity.LivingEntitySweepHurtEvent;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(Player.class)
 public abstract class NFUMixinPlayer implements NFUMixin<Player>
@@ -31,18 +35,20 @@ public abstract class NFUMixinPlayer implements NFUMixin<Player>
 
 	// Last condition is "this.distanceToSqr(livingentity) < entityReachSq", so make it false if cancelled
 	@WrapOperation(method = "attack(Lnet/minecraft/world/entity/Entity;)V",
-			at = @At(
-					value = "INVOKE",
-					target = "Lnet/minecraft/world/entity/player/Player;distanceToSqr(Lnet/minecraft/world/entity/Entity;)D"
-					)
-			)
-	private double acceptSweepDamage(Player caller, Entity entity, Operation<Double> original)
+			at = @At(value = "INVOKE",
+					target = "Lnet/minecraft/world/entity/player/Player;canHit(Lnet/minecraft/world/entity/Entity;D)Z",
+			remap = false))
+	private boolean acceptSweepDamage(Player caller, Entity entity, double amount, Operation<Boolean> original)
 	{
-		if (entity instanceof LivingEntity living
-				&& original.call(caller, entity) < Mth.square(caller.getEntityReach())
-				&& MinecraftForge.EVENT_BUS.post(new LivingEntitySweepHurtEvent(living, this.caller())))
-			return Double.MAX_VALUE;
-		else return original.call(caller, entity);
+		// If originally true, all sweeping conditions are satisfied, so post event and check if cancelled
+		if (original.call(caller, entity, amount))
+		{
+			if (entity instanceof LivingEntity living && MinecraftForge.EVENT_BUS.post(new LivingEntitySweepHurtEvent(living, this.caller())))
+				return false;
+			else return true;
+		}
+		// If originally false, it shouldn't take sweep hurt at all, so no posting and return false
+		else return false;
 	}
 
 	// INaUtilsItem usage skipping features

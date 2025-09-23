@@ -2,10 +2,13 @@ package net.sodiumzh.nfu.object;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
- * {@code FilteredMapper} receives an input, test if it meets a certain condition, and
+ * {@code NaUtilsMapper} receives an input, test if it meets a certain condition, and
  * map it to an {@link Optional} instance of the output type.
  * @param <T> Input type.
  * @param <R> Output type.

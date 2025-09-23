@@ -28,7 +28,7 @@ public class DebugMobRemoverItem extends NFUItem {
 
     @Override
     public InteractionResult interactLivingEntity(Player player, LivingEntity target, InteractionHand hand) {
-        if (!player.level().isClientSide()
+        if (!player.level.isClientSide()
                 && target instanceof Mob
                 && !player.isShiftKeyDown()) {
             ItemStack stack = player.getItemInHand(hand);
@@ -41,7 +41,7 @@ public class DebugMobRemoverItem extends NFUItem {
                 stack.getOrCreateTag().putUUID(KEY_REMOVING_MOB_UUID, target.getUUID());
                 NFUInfoStatics.printMessageTranslatable(player, "info.nfulib.item.debug_mob_remover_selected",
                         target.getName().getString(), getModeInfo(stack).getString());
-                return InteractionResult.sidedSuccess(player.level().isClientSide);
+                return InteractionResult.sidedSuccess(player.level.isClientSide);
             }
             // Confirmed, remove
             else {
@@ -52,11 +52,11 @@ public class DebugMobRemoverItem extends NFUItem {
                     target.kill();
                 }
                 stack.getOrCreateTag().putUUID(KEY_REMOVING_MOB_UUID, EMPTY_UUID);
-                return InteractionResult.sidedSuccess(player.level().isClientSide);
+                return InteractionResult.sidedSuccess(player.level.isClientSide);
             }
 
         }
-        return InteractionResult.sidedSuccess(player.level().isClientSide);
+        return InteractionResult.sidedSuccess(player.level.isClientSide);
     }
 
     @Nonnull

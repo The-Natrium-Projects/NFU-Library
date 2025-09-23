@@ -1,14 +1,14 @@
 package net.sodiumzh.nfu.item.bauble;
 
-import java.util.function.Function;
-import java.util.function.Predicate;
-
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.event.IModBusEvent;
 import net.sodiumzh.nfu.container.ArrayIterable;
+
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class RegisterBaubleEquippableMobsEvent extends Event implements IModBusEvent
 {

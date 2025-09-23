@@ -29,6 +29,16 @@ import net.sodiumzh.nfu.mixin.mixin.NFUMixinItemInput;
 import net.sodiumzh.nfu.object.ICastable;
 import net.sodiumzh.nfu.util.NFUInfoStatics;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
 /**
  * {@code NaUtilsItem} is an {@link Item} template with some simplifications, e.g. foiling, hovering descriptions, etc.
  */

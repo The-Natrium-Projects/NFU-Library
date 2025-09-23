@@ -29,6 +29,16 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.container.Tuple2;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.*;
+
 /**
  * A {@code MobApplicableItemTable} is a collection of information about if an {@link ItemStack}
  * is usable to a {@link Mob} and its usage result, including a double "amount" value for e.g. healing,

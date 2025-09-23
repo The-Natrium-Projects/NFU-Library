@@ -4,7 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.capabilities.AutoRegisterCapability;
 import net.minecraftforge.common.util.INBTSerializable;
-import net.sodiumzh.nfu.registry.NFUCapabilities;
+import net.sodiumzh.nfu.registry.NFUCaps;
 
 /**
  * A simple capability serving as an additional data container.
@@ -37,7 +37,7 @@ public interface CEntityDataCapability extends INBTSerializable<CompoundTag> {
     }
 
     public static CEntityDataCapability get(Entity e) {
-        return e.getCapability(NFUCapabilities.CAP_ENTITY_DATA).orElse(new Impl());
+        return e.getCapability(NFUCaps.CAP_ENTITY_DATA).orElse(new Impl());
     }
 
 }

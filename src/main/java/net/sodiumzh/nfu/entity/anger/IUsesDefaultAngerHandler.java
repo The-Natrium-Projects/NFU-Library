@@ -4,7 +4,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.sodiumzh.nfu.annotation.DontOverride;
 import net.sodiumzh.nfu.entity.IMobSpecific;
-import net.sodiumzh.nfu.registry.NFUCapabilities;
+import net.sodiumzh.nfu.registry.NFUCaps;
 
 import javax.annotation.Nonnull;
 
@@ -22,7 +22,7 @@ public interface IUsesDefaultAngerHandler extends IMobSpecific<Mob> {
     @Nonnull
     @DontOverride
     public default CMobAngerHandler getDefaultAngerHandler() {
-        return this.asMob().getCapability(NFUCapabilities.CAP_MOB_DEFAULT_ANGER_HANDLER)
+        return this.asMob().getCapability(NFUCaps.CAP_MOB_DEFAULT_ANGER_HANDLER)
                 .orElseGet(() -> new MobAngerHandler(this.asMob(), this.getAngerRules()));
     }
 

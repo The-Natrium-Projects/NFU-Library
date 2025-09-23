@@ -13,6 +13,8 @@ import net.sodiumzh.nfu.util.NFUContainerStatics;
 import net.sodiumzh.nfu.util.NFUInfoStatics;
 import org.spongepowered.asm.mixin.Mutable;
 
+import java.util.ArrayList;
+
 /**
  * A {@code ComponentBuilder} is a builder for simplifying the creation of complex {@link MutableComponent}s. It allows chain coding.
  * <p> Usage example: 
