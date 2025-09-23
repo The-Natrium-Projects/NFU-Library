@@ -33,6 +33,7 @@ import net.sodiumzh.nfu.math.RandomSelection;
 import net.sodiumzh.nfu.util.NFUContainerStatics;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -160,11 +161,16 @@ public class RandomEnchantmentSelector
 		MinecraftServer server = NFULibrary.getServer();
 		if (server == null) return this;
 		ResourceManager mgr = server.getResourceManager();
-		List<Resource> resources = mgr.getResourceStack(location);
+		List<Resource> resources;
+		try {
+			resources = mgr.getResources(location);
+		} catch (IOException e) {
+			throw new RuntimeException("NFUDataStatics#readJsonsServerSide: IOException thrown on getting resource stack.", e);
+		}
 		for (Resource r: resources)
 		{
 			try {
-				InputStream input = r.open();
+				InputStream input = r.getInputStream();
 				Reader reader = new InputStreamReader(input);
 				JsonElement json = JsonParser.parseReader(reader);
 				this.readSingleJson(json);

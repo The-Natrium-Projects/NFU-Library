@@ -8,11 +8,12 @@ import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.mixin.event.entity.EntityLoadEvent;
-import net.sodiumzh.nfu.mixin.event.level.LevelCapabilityDataLoadEvent;
+import net.sodiumzh.nfu.mixin.event.level.WorldCapabilityDataLoadEvent;
 import net.sodiumzh.nfu.util.NFUContainerStatics;
 import net.sodiumzh.nfu.util.NFUNBTStatics;
 
 import java.util.Set;
+
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class SaveDataLocationRedirectorEventListeners
 {
@@ -39,7 +40,7 @@ public class SaveDataLocationRedirectorEventListeners
 	}
 	
 	@SubscribeEvent
-	public static void doPortLevelCapabilities(LevelCapabilityDataLoadEvent event)
+	public static void doPortLevelCapabilities(WorldCapabilityDataLoadEvent event)
 	{
 		if (SaveDataLocationRedirectorRegistries.LEVEL_CAPABILITY_MAPPING.isEmpty() && SaveDataLocationRedirectorRegistries.NAMESPACE_MAPPING.isEmpty()) return;
 		Set<String> keys = NFUContainerStatics.iterableToSet(event.getNbt().getAllKeys());

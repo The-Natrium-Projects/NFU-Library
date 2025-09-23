@@ -1,4 +1,4 @@
-package net.sodiumzh.nfu.eventhandler;
+package net.sodiumzh.nfu.eventlistener;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent.Phase;
@@ -14,7 +14,7 @@ import net.sodiumzh.nfu.registry.NFURegistryGenerateValuesEvent;
 import java.util.List;
 
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class NFUServerEventHandlers {
+public class NFUServerEventListeners {
 
 	@SubscribeEvent
 	public static void onServerTick(ServerTickEvent event)

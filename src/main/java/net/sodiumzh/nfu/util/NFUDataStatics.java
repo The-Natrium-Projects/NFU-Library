@@ -20,10 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -60,17 +57,20 @@ public class NFUDataStatics {
     {
         ResourceManager mgr = getResourceManager(side).orElse(null);
         if (mgr == null) return;
-        List<Resource> resources = mgr.getResourceStack(location);
-        for (Resource r: resources)
-        {
-            try (InputStream input = r.open()){
-                Reader inputReader = new InputStreamReader(input);
-                JsonElement json = JsonParser.parseReader(inputReader);
-                reader.accept(json);
-            } catch (IOException | RuntimeException e) {
-                if (!suppressStackTrace)
-                    e.printStackTrace();
+        try {
+            List<Resource> resources = mgr.getResources(location);
+            for (Resource r : resources) {
+                try (InputStream input = r.getInputStream()) {
+                    Reader inputReader = new InputStreamReader(input);
+                    JsonElement json = JsonParser.parseReader(inputReader);
+                    reader.accept(json);
+                } catch (RuntimeException e) {
+                    if (!suppressStackTrace)
+                        e.printStackTrace();
+                }
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -257,7 +257,7 @@ public class NFUDataStatics {
     public static List<ResourceLocation> getJsonLocationsUnderPath(LogicalSide side, String path, Predicate<ResourceLocation> filter) {
         ResourceManager mgr = getResourceManager(side).orElse(null);
         if (mgr == null) return List.of();
-        return mgr.listResourceStacks(path, l -> filter.test(l) && l.getPath().endsWith(".json"))
+        return mgr.listResources(path, l -> filter.test(l) && l.getPath().endsWith(".json"))
             .keySet().stream().toList();
     }
 
@@ -280,7 +280,6 @@ public class NFUDataStatics {
         ResourceManager mgr = getResourceManager(side).orElse(null);
         if (mgr == null) return res;
         // Get all resource stacks
-
         mgr.listResourceStacks(path, l -> filter.test(l) && l.getPath().endsWith(".json"))
             // Try open each resource
             .forEach((key, value) ->

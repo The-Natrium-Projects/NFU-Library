@@ -5,6 +5,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class NFUItemStatics
@@ -120,7 +121,7 @@ public class NFUItemStatics
 	 */
 	public static int getItemEnchantmentLevel(ItemStack stack, Enchantment enchantment)
 	{
-		return stack.getEnchantmentLevel(enchantment);
+		return EnchantmentHelper.getItemEnchantmentLevel(enchantment, stack);
 	}
 	
 	public static void giveOrDropDefault(Player player, Item item)
@@ -150,7 +151,7 @@ public class NFUItemStatics
 	 */
 	public int getItemEnchantmentLevel(Enchantment enc, ItemStack stack)
 	{
-		return stack.getEnchantmentLevel(enc);
+		return EnchantmentHelper.getItemEnchantmentLevel(enc, stack);
 	}
 	
 	

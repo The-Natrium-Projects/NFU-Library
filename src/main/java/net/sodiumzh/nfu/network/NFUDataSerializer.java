@@ -10,6 +10,7 @@ import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.sodiumzh.nfu.annotation.DontOverride;
+import net.sodiumzh.nfu.registry.NFUEntityDataSerializers;
 import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.registry.NFURegistry;
 
@@ -52,7 +53,7 @@ public interface NFUDataSerializer<T>
 		try {
 			type.write(buf, (O)obj);
 		} catch (ClassCastException e) {
-			throw new IllegalArgumentException(String.format("NaUtilsDataSerializer#writeUnchecked: cast failed. Attempting to cast \"%s\" to \"%s\".", 
+			throw new IllegalArgumentException(String.format("NFUDataSerializer#writeUnchecked: cast failed. Attempting to cast \"%s\" to \"%s\".", 
 					obj.getClass().getSimpleName(), type.getClass().getSimpleName()), e);
 		}
 	}
@@ -67,7 +68,7 @@ public interface NFUDataSerializer<T>
 		try {
 			return type.toTag((O)obj);
 		} catch (ClassCastException e) {
-			throw new IllegalArgumentException(String.format("NaUtilsDataSerializer#toTagUnchecked: cast failed. Attempting to cast \"%s\" to \"%s\".", 
+			throw new IllegalArgumentException(String.format("NFUDataSerializer#toTagUnchecked: cast failed. Attempting to cast \"%s\" to \"%s\".", 
 					obj.getClass().getSimpleName(), type.getClass().getSimpleName()), e);
 		}
 	}
@@ -76,7 +77,7 @@ public interface NFUDataSerializer<T>
 	{
 		NFUDataSerializer<?> res = getFromRegistry(key);
 		if (res == null)
-			throw new IllegalStateException(String.format("NaUtilsDataSerializer: missing serializer \"%s\". If you are using custom data serializers, ensure the related classes are loaded on mod initialization!", 
+			throw new IllegalStateException(String.format("NFUDataSerializer: missing serializer \"%s\". If you are using custom data serializers, ensure the related classes are loaded on mod initialization!", 
 					key.toString()));
 		return res;
 	}
@@ -85,13 +86,13 @@ public interface NFUDataSerializer<T>
 	
 	/**
 	 * Create an instance with serialization/deserialization methods.
-	 * <p>Note: {@code NaUtilsDataSerializer} is auto-registered on create. <u>Ensure the class where the
+	 * <p>Note: {@code NFUDataSerializer} is auto-registered on create. <u>Ensure the class where the
 	 * serializers are defined is loaded on mod initialization!</u> 
 	 * (E.g. by calling the class owning the instances somehow in the mod main class constructor)
 	 */
 	public static <O> NFUDataSerializer<O> create(Class<O> objClass,
-												  BiConsumer<FriendlyByteBuf, O> write, Function<FriendlyByteBuf, O> read,
-												  Function<O, Tag> toTag, Function<Tag, O> fromTag)
+                                                  BiConsumer<FriendlyByteBuf, O> write, Function<FriendlyByteBuf, O> read,
+                                                  Function<O, Tag> toTag, Function<Tag, O> fromTag)
 	{
 		NFUDataSerializer<O> res = new NFUDataSerializer<O>()
 		{
@@ -128,7 +129,7 @@ public interface NFUDataSerializer<T>
 			@Override
 			public String toString()
 			{
-				return String.format("NaUtilsDataSerializer<%s>", this.getKey().toString());
+				return String.format("NFUDataSerializer<%s>", this.getKey().toString());
 			}
 		};
 		return res;
@@ -136,15 +137,15 @@ public interface NFUDataSerializer<T>
 	
 	@SuppressWarnings("unchecked")
 	public static <O, T extends Tag> NFUDataSerializer<O> create(Class<O> objClass, Class<T> tagClass,
-																 BiConsumer<FriendlyByteBuf, O> write, Function<FriendlyByteBuf, O> read,
-																 Function<O, T> toTag, Function<T, O> fromTag)
+                                                                 BiConsumer<FriendlyByteBuf, O> write, Function<FriendlyByteBuf, O> read,
+                                                                 Function<O, T> toTag, Function<T, O> fromTag)
 	{
 		return create(objClass, write, read, o -> toTag.apply(o), t -> fromTag.apply((T)t));
 	}
 	
 	/**
 	 * Create a list serializer from element serializer.
-	 * <p>Note: {@code NaUtilsDataSerializer} is auto-registered on create. <u>Ensure the class where the
+	 * <p>Note: {@code NFUDataSerializer} is auto-registered on create. <u>Ensure the class where the
 	 * serializers are defined is loaded on mod initialization!</u> 
 	 * (E.g. by calling the class owning the instances somehow in the mod main class constructor)
 	 */
@@ -177,7 +178,7 @@ public interface NFUDataSerializer<T>
 	}
 	
 	public static <A, B> NFUDataSerializer<B> castTo(Class<B> clazzB,
-													 NFUDataSerializer<A> original, Function<A, B> aToB, Function<B, A> bToA)
+                                                     NFUDataSerializer<A> original, Function<A, B> aToB, Function<B, A> bToA)
 	{
 		return NFUDataSerializer.create(clazzB,
 				(buf, b) -> original.write(buf, bToA.apply(b)),
@@ -212,7 +213,7 @@ public interface NFUDataSerializer<T>
 
 	@DontOverride
 	public default EntityDataSerializer<T> asEntityDataSerializer() {
-		return EntityDataSerializer.simple(this::write, this::read);
+		return NFUEntityDataSerializers.create(this::write, this::read);
 	}
 
 }

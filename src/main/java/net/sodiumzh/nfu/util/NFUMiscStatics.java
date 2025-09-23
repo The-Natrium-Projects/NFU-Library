@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
-
+import java.util.function.Supplier;
 
 public class NFUMiscStatics {
 
@@ -26,7 +26,7 @@ public class NFUMiscStatics {
 	@Deprecated
 	public static void printToScreen(Component text, Player receiver, Entity sender)
 	{
-		printToScreen(text, receiver);
+		receiver.sendMessage(text, sender.getUUID());
 	}
 
 	/**
@@ -35,7 +35,7 @@ public class NFUMiscStatics {
 	@Deprecated
 	public static void printToScreen(String text, Player receiver, Entity sender)
 	{
-		printToScreen(text, receiver);
+		receiver.sendMessage(NFUInfoStatics.createText(text), sender.getUUID());
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class NFUMiscStatics {
 	{
 		if (receiver == null)
 			return;
-		receiver.sendSystemMessage(text);
+		receiver.sendMessage(text, receiver.getUUID());
 	}
 
 	/**
@@ -55,7 +55,7 @@ public class NFUMiscStatics {
 	@Deprecated
 	public static void printToScreen(String text, Player receiver)
 	{
-		NFUMiscStatics.printToScreen(NFUInfoStatics.createText(text), receiver);
+		printToScreen(NFUInfoStatics.createText(text), receiver);
 	}
 	
 	/** @deprecated Useless function */
@@ -183,10 +183,26 @@ public class NFUMiscStatics {
 		return getValueFromCapability(target, holder, access, null);
 	}
 
+	/** Try an action with boolean result for given times. Once the action returns true, it will break and return true. 
+	 Otherwise if the action returns all false for given times, it returns false. */
+	public static boolean tryFor(int times, Supplier<Boolean> action)
+	{
+		if (times <= 0)
+			return false;
+		for (int i = 0; i < times; ++i)
+		{
+			boolean res = action.get();
+			if (res)
+				return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Get entry from Forge registry if present, otherwise return empty instead of registry default value.
 	 */
-	public static <T> Optional<T> getEntryOptional(IForgeRegistry<T> reg, ResourceLocation key)
+	public static <T extends net.minecraftforge.registries.IForgeRegistryEntry<T>> Optional<T> getEntryOptional(
+		IForgeRegistry<T> reg, ResourceLocation key)
 	{
 		if (reg.containsKey(key)) return Optional.ofNullable(reg.getValue(key));
 		else return Optional.empty();

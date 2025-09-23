@@ -15,7 +15,7 @@ public class LinearColor
 
 	@SuppressWarnings("unchecked")
 	public static EntityDataSerializer<LinearColor> getEntityDataSerializer() {
-		return NFUEntityDataSerializers.LINEAR_COLOR.get();
+		return NFUEntityDataSerializers.LINEAR_COLOR;
 	};
 
 	public final double r;

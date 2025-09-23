@@ -51,7 +51,7 @@ public abstract class NFUMixinPlayer implements NFUMixin<Player>
 		else return false;
 	}
 
-	// INaUtilsItem usage skipping features
+	// INFUItem usage skipping features
 
 	@WrapOperation(method = "interactOn(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;",
 			at = @At(value = "INVOKE",
@@ -78,8 +78,8 @@ public abstract class NFUMixinPlayer implements NFUMixin<Player>
 			at = @At(value = "INVOKE",
 					target = "net/minecraft/world/item/ItemStack.interactLivingEntity (Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;"))
 	private InteractionResult cancelItemInteractLiving(ItemStack instance, Player player, LivingEntity entity, InteractionHand hand, Operation<InteractionResult> original){
-		if (player.getItemInHand(hand).getItem() instanceof INaUtilsItem item
-				&& item.shouldSkipUsagePhase(INaUtilsItem.UsagePhase.ITEM_X_INTERACTION_LIVING, INaUtilsItem.UsageContext.forInteractEntity(player, hand, entity)))
+		if (player.getItemInHand(hand).getItem() instanceof INFUItem item
+				&& item.shouldSkipUsagePhase(INFUItem.UsagePhase.ITEM_X_INTERACTION_LIVING, INFUItem.UsageContext.forInteractEntity(player, hand, entity)))
 			return InteractionResult.PASS;
 		return original.call(instance, player, entity, hand);
 	}

@@ -4,16 +4,18 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "nfulib.refmap.json",
   "mixins": [
-    "NFUMixinBlockItem",
+    "NFUBlockItemMixin",
+    "NFUMerchantMenuMixin",
+    "NFUMixinDeferredRegister",
     "NFUMixinEnderMan",
     "NFUMixinEntity",
     "NFUMixinEntityType",
+    "NFUMixinGameData",
     "NFUMixinGrindstoneMenuLowerSlot",
     "NFUMixinGrindstoneMenuUpperSlot",
     "NFUMixinItemEntity",
     "NFUMixinItemInput",
     "NFUMixinItemStack",
-    "NFUMixinLevelCapabilityData",
     "NFUMixinLivingEntity",
     "NFUMixinMob",
     "NFUMixinPlayer",
@@ -21,8 +23,9 @@
     "NFUMixinResourceLocation",
     "NFUMixinServerPlayer",
     "NFUMixinServerPlayerGameMode",
+    "NFUMixinTagBuilder",
     "NFUMixinThrownTrident",
-    "NFUMerchantMenuMixin"
+    "NFUMixinWorldCapabilityData"
   ],
   "client": [
     "NFUMerchantScreenMixin",

@@ -8,20 +8,18 @@ import java.util.stream.Stream;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.sodiumzh.nfu.math.ThreadSafeRandomSource;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Stream;
 
 public class NFUMathStatics
 {
-	public static final RandomSource RND = new ThreadSafeRandomSource();
+	public static final Random RND = new Random();
 
 	@Deprecated
 	public static double max(double... vals)
@@ -308,7 +306,7 @@ public class NFUMathStatics
 	 * @param unique If true, each element of the output sequence will be unique.
 	 * @param rnd Random source.
 	 */
-	public static List<Integer> getRandomIntegerSequence(int maxEx, int amount, boolean unique, RandomSource rnd) {
+	public static List<Integer> getRandomIntegerSequence(int maxEx, int amount, boolean unique, Random rnd) {
 		if (amount > maxEx && unique)
 			throw new IllegalArgumentException("getRandomIntegerSequence unique requires amount <= maxEx");
 		List<Integer> all = NFUContainerStatics.intRangeList(0, amount, 1);

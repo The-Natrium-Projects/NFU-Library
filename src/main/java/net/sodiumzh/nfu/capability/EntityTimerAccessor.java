@@ -90,7 +90,7 @@ public class EntityTimerAccessor {
      */
     public EntityTimerAccessor addOnExpireAction(Consumer<Entity> action) {
         if (!isCalledFromStaticInitializer())
-            throw new IllegalStateException("NaUtils#EntityTimerAccessor#addOnExpireAction can only be called in static initialization.");
+            throw new IllegalStateException("NFU#EntityTimerAccessor#addOnExpireAction can only be called in static initialization.");
         expireActions.add(action);
         return this;
 

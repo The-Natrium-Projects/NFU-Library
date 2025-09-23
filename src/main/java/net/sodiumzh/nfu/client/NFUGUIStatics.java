@@ -1,4 +1,4 @@
-package net.sodiumzh.nfu.util;
+package net.sodiumzh.nfu.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;

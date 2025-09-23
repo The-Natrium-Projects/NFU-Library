@@ -23,7 +23,7 @@ public class NFURegistries {
     public static void init(){}
 
     /**
-     * Registry for NaUtils data serializers. It's a handler for data that can be encoded/decoded both between NBT
+     * Registry for NFU data serializers. It's a handler for data that can be encoded/decoded both between NBT
      * and between byte buffer.
      */
     public static final NFURegistry<NFUDataSerializer<?>> DATA_SERIALIZERS =

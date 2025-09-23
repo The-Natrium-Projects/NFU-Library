@@ -2,28 +2,26 @@ package net.sodiumzh.nfu.mixin.event.client.entity;
 
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.ClientSideMerchant;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.item.trading.MerchantOffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.eventbus.api.Event;
+import net.sodiumzh.nfu.entity.vanillatrade.CVanillaMerchant;
+import net.sodiumzh.nfu.util.NFUMiscStatics;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
-/**
- * Posted on the player's mouse pointing on merchant menu's crossed arrow when the offer is not available.
- * By default it's "Villagers restock up to two times per day." (translation key = "merchant.deprecated").
- */
-@OnlyIn(Dist.CLIENT)
 public class MerchantOfferUnavailableInfoEvent extends Event
 {
 	public final Player player;
 	/**
-	 * Usually this is a {@link ClientSideMerchant}. Note it's probably not a {@code Mob}.
+	 * Usually this is a {@link ClientSideMerchant}. To search for the trading
 	 */
 	public final Merchant tradingMerchant;
 	public final MerchantScreen screen;
@@ -60,5 +58,17 @@ public class MerchantOfferUnavailableInfoEvent extends Event
 	{
 		return this.noInfo;
 	}
-
+	
+	/**
+	 * Search for merchant using the given vanilla merchant that's trading with the player around the mob.
+	 * If not found (not existing or not using this vanilla merchant system e.g. vanilla villager), returns null.
+	 */
+	@Nullable
+	public <T extends CVanillaMerchant> T searchOngoingMerchant(Capability<? extends T> cap, double range)
+	{
+		List<Entity> list = this.player.level.getEntities(player, player.getBoundingBox().inflate(range)).stream().filter(entity -> 
+			NFUMiscStatics.getValueFromCapability(entity, cap, CVanillaMerchant::getTradingPlayer) == player
+		).toList();
+		return list.isEmpty() ? null : NFUMiscStatics.getValueFromCapability(list.get(0), cap, c -> c);
+	}
 }

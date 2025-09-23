@@ -4,14 +4,12 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.JsonElement;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.container.Tuple3;
-import net.sodiumzh.nfu.math.ThreadSafeRandomSource;
 import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.registry.NFURegistry;
 import net.sodiumzh.nfu.util.NFUDataStatics;
@@ -19,10 +17,7 @@ import net.sodiumzh.nfu.util.NFUDebugStatics;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +30,7 @@ import java.util.stream.Collectors;
  */
 public class VanillaTradeRegistry
 {
-	private static final RandomSource RND = new ThreadSafeRandomSource();
+	private static final Random RND = new Random();
 	private final SetMultimap<Tuple2<ResourceLocation, VillagerProfession>, VanillaTradeListingCollection<?>> table;
 
 	@Nullable
@@ -185,7 +180,7 @@ public class VanillaTradeRegistry
 						VillagerProfession prof =
 								NFUDataStatics.getOptional(elem.getAsJsonObject(), "profession", JsonElement::getAsString)
 										.map(ResourceLocation::new)
-										.map(ForgeRegistries.VILLAGER_PROFESSIONS::getValue)
+										.map(ForgeRegistries.PROFESSIONS::getValue)
 										.orElse(lastProf);
 						Set<VanillaTradeListingCollection<?>> collections =
 								NFUDataStatics.getOptionalList(elem.getAsJsonObject(), "collections", JsonElement::getAsString,

@@ -16,7 +16,7 @@ public class NFUMixinItemInput {
      */
     @ModifyReturnValue(method = "createItemStack(IZ)Lnet/minecraft/world/item/ItemStack;",
         at = @At("RETURN"))
-    private ItemStack checkNaUtilsItemOverride(ItemStack original)
+    private ItemStack checkNFUItemOverride(ItemStack original)
     {
         if (original.getItem() instanceof INFUItem item
             && item.shouldGiveCommandUseDefaultInstance())

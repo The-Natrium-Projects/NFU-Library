@@ -1,10 +1,9 @@
 package net.sodiumzh.nfu.math;
 
-import net.minecraft.util.RandomSource;
-
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * A {@code WeightedRandomSelector} contains a set of objects with probability weights. It will randomly pick one of the elements with
@@ -18,7 +17,7 @@ import java.util.Map;
  */
 public class WeightedRandomSelector<T>
 {
-	private static final RandomSource RND = new ThreadSafeRandomSource();
+	private static final Random RND = new Random();
 	private final Map<T, Double> objs = new HashMap<>();
 	private double nullWeight = 0d;
 	
@@ -49,7 +48,7 @@ public class WeightedRandomSelector<T>
 	}
 
 
-	public T select(RandomSource rnd)
+	public T select(Random rnd)
 	{
 		double weightSum = 0d;
 		for (var entry: objs.entrySet())

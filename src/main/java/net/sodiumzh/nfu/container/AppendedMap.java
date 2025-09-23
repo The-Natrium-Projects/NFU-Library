@@ -74,7 +74,7 @@ public class AppendedMap<K, V> implements Map<K, V>
 			}
 			else
 			{
-				LogUtils.getLogger().error("NaUtils - AppendedMap: Attempting to overwrite external part entry. "
+				LogUtils.getLogger().error("NFU - AppendedMap: Attempting to overwrite external part entry. "
 						+ "Skipped. To actually override, call setAllowsModifyingExternalPart(true) first.");
 				return this.externalPart.get(key);
 			}
@@ -92,7 +92,7 @@ public class AppendedMap<K, V> implements Map<K, V>
 			}
 			else
 			{
-				LogUtils.getLogger().error("NaUtils - AppendedMap: Attempting to remove external part entry. "
+				LogUtils.getLogger().error("NFU - AppendedMap: Attempting to remove external part entry. "
 						+ "Skipped and returned the corresponding value. To actually override, "
 						+ "call setAllowsModifyingExternalPart(true) first.");
 				return this.externalPart.get(key);

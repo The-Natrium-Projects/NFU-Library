@@ -14,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.IForgeRegistryEntry;
 
 import java.util.ArrayList;
 
@@ -21,8 +22,8 @@ public class NFUTagStatics
 {
 	public static boolean hasTag(Entity obj, ResourceLocation tag)
 	{
-		TagKey<EntityType<?>> tagKey = ForgeRegistries.ENTITY_TYPES.tags().createTagKey(tag);
-		return ForgeRegistries.ENTITY_TYPES.tags().getTag(tagKey).contains(obj.getType());
+		TagKey<EntityType<?>> tagKey = ForgeRegistries.ENTITIES.tags().createTagKey(tag);
+		return ForgeRegistries.ENTITIES.tags().getTag(tagKey).contains(obj.getType());
 	}
 	
 	public static boolean hasTag(Entity obj, String tag)
@@ -88,8 +89,8 @@ public class NFUTagStatics
 	
 	public static ArrayList<EntityType<?>> getAllEntityTypesUnderTag(ResourceLocation tag)
 	{
-		TagKey<EntityType<?>> tagKey = ForgeRegistries.ENTITY_TYPES.tags().createTagKey(tag);
-		return NFUContainerStatics.iterableToList(ForgeRegistries.ENTITY_TYPES.tags().getTag(tagKey));
+		TagKey<EntityType<?>> tagKey = ForgeRegistries.ENTITIES.tags().createTagKey(tag);
+		return NFUContainerStatics.iterableToList(ForgeRegistries.ENTITIES.tags().getTag(tagKey));
 	}
 	
 	public static ArrayList<EntityType<?>> getAllEntityTypesUnderTag(String tag)
@@ -149,7 +150,7 @@ public class NFUTagStatics
 		return TagKey.create(Registry.ENTITY_TYPE_REGISTRY, new ResourceLocation(modId, name));
 	}
 
-	public static <T> List<TagKey<T>> getAllTags(T block, IForgeRegistry<T> registry) {
+	public static <T extends IForgeRegistryEntry<T>> List<TagKey<T>> getAllTags(T block, IForgeRegistry<T> registry) {
 		if (registry.tags() == null) return List.of();
 		return Optional.ofNullable(registry.tags())
 			.flatMap(tags -> tags.getReverseTag(block).map(t -> t.getTagKeys().toList()))

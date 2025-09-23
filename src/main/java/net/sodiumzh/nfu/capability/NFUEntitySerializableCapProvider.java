@@ -15,7 +15,7 @@ import java.util.function.Supplier;
  * @param <T> Capability interface.
  * @param <TG> Serializing NBT type.
  */
-public class NFUEntitySerializableCapProvider<E extends Entity, T extends INBTSerializable<TG>, TG extends Tag>
+public class NFUEntitySerializableCapProvider<E extends Entity, T extends INBTSerializable<TG>, TG extends Tag> 
 	extends NFUEntityCapProvider<E, T> implements ICapabilitySerializable<TG>
 {
 

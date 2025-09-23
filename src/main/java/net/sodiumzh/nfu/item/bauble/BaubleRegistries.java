@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.ToDoubleFunction;
+import org.apache.commons.lang3.mutable.MutableObject;
 
 class BaubleRegistries
 {
@@ -48,7 +49,7 @@ class BaubleRegistries
 	
 	/**
 	 * Cleared registry for specific bauble items, 
-	 * i.e. {@link IBaubleRegistryEntry}s of which {@code getItem} returns non-null.
+	 * i.e. {@link IBaubleRegistry}s of which {@code getItem} returns non-null. 
 	 * <p>Values: priority, key, entry, equipping condition (can be modified).
 	 */
 	static final HashMap<Item, 

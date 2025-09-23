@@ -1,4 +1,4 @@
-package net.sodiumzh.nfu.eventhandler;
+package net.sodiumzh.nfu.eventlistener;
 
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.eventbus.api.EventPriority;

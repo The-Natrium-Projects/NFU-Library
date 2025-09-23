@@ -9,6 +9,7 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+
 /**
  * Static methods for inter-mod compatibility related stuff.
  */

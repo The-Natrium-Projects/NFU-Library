@@ -1,8 +1,7 @@
 package net.sodiumzh.nfu.math;
 
-import net.minecraft.util.RandomSource;
-
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * A {@code RandomSelection} is a series of objects that will be randomly selected.
@@ -12,8 +11,7 @@ import java.util.ArrayList;
  */
 public class RandomSelection<T>
 {
-
-	protected static final RandomSource RND = new ThreadSafeRandomSource();
+	protected static final Random RND = new Random();
 	protected ArrayList<Double> probSequence = new ArrayList<Double>();
 	protected ArrayList<T> valSequence = new ArrayList<T>();
 	protected T defaultVal = null;
@@ -68,7 +66,7 @@ public class RandomSelection<T>
 	 * @deprecated use {@code select} instead.
 	 */
 	@Deprecated
-	public T getValue(RandomSource rnd)
+	public T getValue(Random rnd)
 	{
 		return this.select(rnd);
 	}
@@ -85,7 +83,7 @@ public class RandomSelection<T>
 	/**
 	 * Random pick an element with given random source.
 	 */
-	public T select(RandomSource rnd) {
+	public T select(Random rnd) {
 		double rnddouble = rnd.nextDouble();
 		for (int i = 0; i < probSequence.size(); ++i)
 		{

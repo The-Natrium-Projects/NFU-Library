@@ -5,7 +5,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.event.IModBusEvent;
-import net.sodiumzh.nfu.eventhandler.NFUSetupEventHandlers;
+import net.sodiumzh.nfu.eventlistener.NFUSetupEventHandlers;
 
 import java.util.function.Supplier;
 

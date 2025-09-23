@@ -1,7 +1,6 @@
 package net.sodiumzh.nfu.capability;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.common.capabilities.AutoRegisterCapability;
 import net.minecraftforge.common.capabilities.Capability;
 
 import java.util.HashSet;
@@ -13,7 +12,6 @@ import java.util.Set;
  * it won't tick correctly.
  * <p>By default, it only ticks on server. Override {@code getTickingSide} to define on which side(s) it should tick.</>
  */
-@AutoRegisterCapability
 public interface CEntityTickingCapability<T extends Entity>
 {
 	static final Set<Capability<? extends CEntityTickingCapability<? extends Entity>>> ALL_CAPS = new HashSet<>();

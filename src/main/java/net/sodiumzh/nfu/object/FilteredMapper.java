@@ -8,7 +8,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * {@code NaUtilsMapper} receives an input, test if it meets a certain condition, and
+ * {@code NFUMapper} receives an input, test if it meets a certain condition, and
  * map it to an {@link Optional} instance of the output type.
  * @param <T> Input type.
  * @param <R> Output type.

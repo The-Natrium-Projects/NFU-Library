@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.function.*;
 
 /**
- * Base interface for NaUtils item templates. This is only a template, and all implementations are done in subclasses.
+ * Base interface for NFU item templates. This is only a template, and all implementations are done in subclasses.
  * Do not implement this interface unless you fully understand how it works.
  */
 public interface INFUItem extends ICastable, ItemLike {

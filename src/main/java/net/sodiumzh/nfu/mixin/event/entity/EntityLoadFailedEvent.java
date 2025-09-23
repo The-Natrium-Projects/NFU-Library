@@ -35,7 +35,7 @@ public class EntityLoadFailedEvent extends NFUEntityEvent<Entity> {
      */
     public void ignore(boolean shouldPrintStackTrace) {
         this.shouldIgnore = true;
-        NFUDebugStatics.errorOnce(EntityLoadFailedEvent.class, "NaUtils: Entity %s loading failed. Ignored.");
+        NFUDebugStatics.errorOnce(EntityLoadFailedEvent.class, "NFU: Entity %s loading failed. Ignored.");
         if (shouldPrintStackTrace){
             cause.printStackTrace();
         }

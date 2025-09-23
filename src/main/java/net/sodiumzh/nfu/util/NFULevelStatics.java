@@ -32,7 +32,6 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -128,20 +127,20 @@ public class NFULevelStatics
 	
 	/**
 	 * Get all {@link BlockPos} in a given area fulfilling given conditions.
-	 * <p> WARNING: It would be slow if the area is too large! It will invoke {@link ArrayList#add(Object)} for times of the area volume at most.
+	 * <p> WARNING: It would be slow if the area is too large! It will invoke {@link ArrayList#add} for times of the area volume at most.
 	 * @param area Searching area.
 	 * @param filter Condition.
 	 * @return ArrayList of BlockPos. If {@code filter} is null, return all positions. 
 	 */
 	public static ArrayList<BlockPos> getBlockPosInArea(AABB area, Predicate<BlockPos> filter)
 	{
-		MutableObject<ArrayList<BlockPos>> wrapped = new MutableObject<>(new ArrayList<>());
+		ArrayList<BlockPos> res = new ArrayList<>();
 		BlockPos.betweenClosedStream(area).forEach((BlockPos b) -> 
 		{
 			if (filter == null || filter.test(b))
-				wrapped.getValue().add(new BlockPos(b.getX(), b.getY(), b.getZ()));
+				res.add(new BlockPos(b.getX(), b.getY(), b.getZ()));
 		});
-		return wrapped.getValue();
+		return res;
 	}
 	
 	/**
@@ -152,7 +151,7 @@ public class NFULevelStatics
 	 * @param power Explosion power.
 	 * @param causesFire If true, the explosion will cause fire.
 	 * @param breaksBlocks If true, the explosion will break blocks on hit.
-	 * @param alwaysDropsItemsOnBreaking If true, it will always drop block items on breaking blocks just like TNT.
+	 * @param alwaysDropsItemOnBreaking If true, it will always drop block items on breaking blocks just like TNT.
 	 * @param considersMobGriefingGameRule If true, it will consider MobGriefing game rule to determine whether to break blocks. If the source isn't a {@link Mob} it's ignored.
 	 * @return {@link Explosion} instance, or {@code null} on client.
 	 */
@@ -175,7 +174,7 @@ public class NFULevelStatics
 	 * @param power Explosion power.
 	 * @param causesFire If true, the explosion will cause fire.
 	 * @param breaksBlocks If true, the explosion will break blocks on hit. If the source is a {@link Mob} and MobGriefing game rule is false, it will be ignored.
-	 * @param alwaysDropsItemsOnBreaking If true, it will always drop block items on breaking blocks just like TNT.
+	 * @param alwaysDropsItemOnBreaking If true, it will always drop block items on breaking blocks just like TNT.
 	 * @return {@link Explosion} instance, or {@code null} on client.
 	 */
 	@Nullable
@@ -207,7 +206,7 @@ public class NFULevelStatics
 	 * @param power Explosion power.
 	 * @param causesFire If true, the explosion will cause fire.
 	 * @param breaksBlocks If true, the explosion will break blocks on hit. If the source is a {@link Mob} and MobGriefing game rule is false, it will be ignored.
-	 * @param alwaysDropsItemsOnBreaking If true, it will always drop block items on breaking blocks just like TNT.
+	 * @param alwaysDropsItemOnBreaking If true, it will always drop block items on breaking blocks just like TNT.
 	 * @return {@link Explosion} instance, or {@code null} on client.
 	 */
 	@Nullable
@@ -239,7 +238,7 @@ public class NFULevelStatics
 	 * @param power Explosion power.
 	 * @param causesFire If true, the explosion will cause fire.
 	 * @param breaksBlocks If true, the explosion will break blocks on hit.
-	 * @param alwaysDropsItemsOnBreaking If true, it will always drop block items on breaking blocks just like TNT.
+	 * @param alwaysDropsItemOnBreaking If true, it will always drop block items on breaking blocks just like TNT.
 	 * @return {@link Explosion} instance, or {@code null} on client.
 	 */
 	@Nullable
@@ -258,7 +257,8 @@ public class NFULevelStatics
 	 * @param position Explosion position in level.
 	 * @param power Explosion power.
 	 * @param causesFire If true, the explosion will cause fire.
-	 * @param breaksBlock If true, the explosion will break blocks on hit. It will NOT always drop items on breaking blocks.
+	 * @param breaksBlocks If true, the explosion will break blocks on hit. It will NOT always drop items on breaking blocks. 
+	 * @param alwaysDropsItemOnBreaking If true, it will always drop block items on breaking blocks just like TNT.
 	 * @return {@link Explosion} instance, or {@code null} on client.
 	 */
 	@Nullable

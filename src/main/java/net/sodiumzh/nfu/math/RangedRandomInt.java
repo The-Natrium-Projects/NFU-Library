@@ -2,9 +2,9 @@ package net.sodiumzh.nfu.math;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-import net.minecraft.util.RandomSource;
 
 import java.util.List;
+import java.util.Random;
 import java.util.function.Supplier;
 
 /**
@@ -18,7 +18,7 @@ import java.util.function.Supplier;
  */
 public class RangedRandomInt implements Supplier<Integer>
 {
-    private static final RandomSource RND = new ThreadSafeRandomSource();
+    private static final Random RND = new Random();
     private final int minValue;	// Included
     private final int maxValue;	// Included
     private final double p;
@@ -100,7 +100,7 @@ public class RangedRandomInt implements Supplier<Integer>
     /**
      * Get a random value using the given RandomSource.
      */
-    public int getValue(RandomSource rnd)
+    public int getValue(Random rnd)
     {
         switch (rndType)
         {
@@ -149,7 +149,7 @@ public class RangedRandomInt implements Supplier<Integer>
     public int lastValue()
     {
         if (!this.lastValueValid)
-            throw new IllegalStateException("NaUtils#VanillaMerchant#RangedRandomInt: lastValue() requires to have run getValue() at least once already.");
+            throw new IllegalStateException("NFU#VanillaMerchant#RangedRandomInt: lastValue() requires to have run getValue() at least once already.");
         return this.lastValue;
     }
 

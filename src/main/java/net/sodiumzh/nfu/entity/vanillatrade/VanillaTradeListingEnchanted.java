@@ -1,6 +1,5 @@
 package net.sodiumzh.nfu.entity.vanillatrade;
 
-import net.minecraft.util.RandomSource;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
@@ -11,6 +10,8 @@ import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.math.RangedRandomInt;
 
 import java.util.List;
+
+import java.util.Random;
 
 /**
  * A {@code VanillaTradeListingEnchanted} is a {@code VanillaTradeListing} of which the result is enchanted. 
@@ -63,7 +64,7 @@ public class VanillaTradeListingEnchanted extends VanillaTradeListing
 	}
 
 	@Override
-	public MerchantOffer getOffer(Entity trader, RandomSource rnd)
+	public MerchantOffer getOffer(Entity trader, Random rnd)
 	{
 		MerchantOffer offer = super.getOffer(trader, rnd);
 		Tuple<Enchantment, Integer> e = selector.select();

@@ -127,7 +127,7 @@ public class NFUNBTStatics {
 		toMob.setItemSlot(EquipmentSlot.OFFHAND, readItemStack(inTag, "nbt_helper_equipment_item_off_hand"));
 	}
 
-	@Deprecated // Use NaUtilsNBTStatics.TAG_XXX_ID constants instead
+	@Deprecated // Use NFUNBTStatics.TAG_XXX_ID constants instead
 	public static enum TagType
 	{
 		   TAG_BYTE(1),

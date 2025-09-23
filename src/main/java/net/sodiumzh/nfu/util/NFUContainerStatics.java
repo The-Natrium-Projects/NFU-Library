@@ -1,9 +1,7 @@
 package net.sodiumzh.nfu.util;
 
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.sodiumzh.nfu.container.MapPair;
-import net.sodiumzh.nfu.math.ThreadSafeRandomSource;
 import net.sodiumzh.nfu.math.WeightedRandomSelector;
 
 import javax.annotation.Nullable;
@@ -18,7 +16,7 @@ import java.util.stream.Collectors;
  */
 public class NFUContainerStatics
 {
-	private static final RandomSource RND = new ThreadSafeRandomSource();
+	private static final Random RND = new Random();
 	
 	/**
 	 * Remove all elements meeting a condition from a set
@@ -520,17 +518,16 @@ public class NFUContainerStatics
 		fillInto.clear();
 		fillInto.addAll(list.stream().map(cast).toList());
 	}
-	
+
 	public static <T> Set<T> getRandomSubset(Set<T> parent, int subsetSize)
 	{
-		if (subsetSize > parent.size())
-			throw new IllegalArgumentException("subsetSize is larger than parent size.");
-		List<Integer> pickedIndexes = NFUMathStatics.getRandomIntegerSequence(parent.size(), subsetSize, true);
+		if (subsetSize > parent.size()) return new HashSet<>(parent);
+		List<Integer> pickedIndexes = NFUMathStatics.getRandomIntegerSequence(parent.size(), subsetSize, true, RND);
 		List<T> list = parent.stream().toList();
 		return pickedIndexes.stream().map(list::get).collect(Collectors.toSet());
 	}
 
-	public static <T> Set<T> getWeightedRandomSubset(Map<T, Double> valuesAndWeights, int subsetSize, RandomSource rnd)
+	public static <T> Set<T> getWeightedRandomSubset(Map<T, Double> valuesAndWeights, int subsetSize, Random rnd)
 	{
 		if (subsetSize > valuesAndWeights.size())
 			return new HashSet<>(valuesAndWeights.keySet());

@@ -105,7 +105,7 @@ public class LinkableSet<E> implements Set<E>, DirectedGraphNode<LinkableSet<E>>
 	public boolean remove(Object o) {
 		if (this.containsInAttachments(o))
 		{
-			LogUtils.getLogger().warn("NaUtils#CompoundSet: attempting to remove an element from the external parts. Skipped and returned false.");
+			LogUtils.getLogger().warn("NFU#CompoundSet: attempting to remove an element from the external parts. Skipped and returned false.");
 			this.deduplicateOriginal();
 			return false;
 		}
@@ -129,12 +129,12 @@ public class LinkableSet<E> implements Set<E>, DirectedGraphNode<LinkableSet<E>>
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		throw new UnsupportedOperationException("NaUtils#CompoundSet doesn't support retainAll().");
+		throw new UnsupportedOperationException("NFU#CompoundSet doesn't support retainAll().");
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		throw new UnsupportedOperationException("NaUtils#CompoundSet doesn't support removeAll().");
+		throw new UnsupportedOperationException("NFU#CompoundSet doesn't support removeAll().");
 	}
 
 	@Override

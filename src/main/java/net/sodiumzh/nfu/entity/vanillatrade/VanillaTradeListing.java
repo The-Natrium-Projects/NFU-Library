@@ -1,6 +1,5 @@
 package net.sodiumzh.nfu.entity.vanillatrade;
 
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -11,6 +10,7 @@ import net.sodiumzh.nfu.math.RangedRandomInt;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * A default implementation of {@link IVanillaTradeListing} (extending vanilla {@link VillagerTrades.ItemListing}).
@@ -421,7 +421,7 @@ public class VanillaTradeListing implements IVanillaTradeListing
 	 */
 	@Nullable
 	@Override
-	public MerchantOffer getOffer(Entity trader, RandomSource rnd) {
+	public MerchantOffer getOffer(Entity trader, Random rnd) {
 		if (!this.isValid()) return null;	// Invalid entries have been cleared here
 		ItemStack a = this.baseCostA.isEmpty() ? ItemStack.EMPTY : this.baseCostA.get(rnd.nextInt(this.baseCostA.size()));
 		a = a.copy();
@@ -434,7 +434,7 @@ public class VanillaTradeListing implements IVanillaTradeListing
 		if (!costB.isEmpty() && this.mapBToResult)
 		{
 			if(this.result.size() < this.costB.size())
-				throw new IllegalStateException("NaUtils#VanillaTradeListing: set mapping B to result, but B size is larger than result size"); 
+				throw new IllegalStateException("NFU#VanillaTradeListing: set mapping B to result, but B size is larger than result size"); 
 			else r = this.result.get(bIndex);
 		}
 		else r = this.result.isEmpty() ? ItemStack.EMPTY : this.result.get(rnd.nextInt(this.result.size()));

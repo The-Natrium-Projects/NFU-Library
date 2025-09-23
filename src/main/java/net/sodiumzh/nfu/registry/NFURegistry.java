@@ -11,7 +11,7 @@ import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.util.thread.EffectiveSide;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
-import net.sodiumzh.nfu.eventhandler.NFUSetupEventHandlers;
+import net.sodiumzh.nfu.eventlistener.NFUSetupEventHandlers;
 import net.sodiumzh.nfu.exception.DuplicateRegistryEntryException;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.object.DirectedGraphNode;
@@ -66,7 +66,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     /**
-     * Get this registry's key in the registry of all {@code NaUtilsRegistry}s.
+     * Get this registry's key in the registry of all {@code NFURegistry}s.
      */
     public ResourceLocation getKeyOfRegistry()
     {
@@ -244,7 +244,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     public int getGenerateOnSetupPhase()
     {
         if (!this.shouldGenerateOnSetup())
-            LogUtils.getLogger().warn(String.format("NaUtilsRegistry %s calling getGenerateOnSetupPhase, " +
+            LogUtils.getLogger().warn(String.format("NFURegistry %s calling getGenerateOnSetupPhase, " +
                     "but shouldGenerateOnSetup() is false. Note that the result is invalid.", this.getKeyOfRegistry().toString()));
         return this.generateOnSetupPhase;
     }
@@ -297,7 +297,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                 StringBuilder cycleInfo = new StringBuilder(cycle.get(0).getKeyOfRegistry().toString());
                 for (int i = 1; i < cycle.size(); ++i)
                     cycleInfo.append(" -> ").append(cycle.get(i).getKeyOfRegistry().toString());
-                throw new IllegalArgumentException("NaUtilsRegistry loading order error: cyclic dependency detected.\n" +
+                throw new IllegalArgumentException("NFURegistry loading order error: cyclic dependency detected.\n" +
                         "Cycle: " + cycleInfo);
             }
         }

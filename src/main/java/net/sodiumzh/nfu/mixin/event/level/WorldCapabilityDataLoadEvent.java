@@ -9,11 +9,11 @@ import javax.annotation.Nonnull;
 /**
  * Posted before loading Level capabilities from data, allowing to modify the nbt before loading.
  */
-public class LevelCapabilityDataLoadEvent extends Event
+public class WorldCapabilityDataLoadEvent extends Event
 {
 	private final CompoundTag nbt;
 	
-	public LevelCapabilityDataLoadEvent(CompoundTag nbt)
+	public WorldCapabilityDataLoadEvent(CompoundTag nbt)
 	{
 		this.nbt = nbt;
 	}

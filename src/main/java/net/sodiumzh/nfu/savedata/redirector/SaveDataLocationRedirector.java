@@ -4,7 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.sodiumzh.nfu.object.LimitedMutable;
 
 /**
- * NaUtils - SaveDataLocationRedirector is a utility module to simplify redirect object registry location in save data 
+ * NFU - SaveDataLocationRedirector is a utility module to simplify redirect object registry location in save data 
  * when a mod is renaming the objects' registry keys. 
  * <p>Now it's incomplete and only for NFF rename.
  * <p>Use: {@code SaveDataLocationRedirector.get()} to get the instance which allows chaining.

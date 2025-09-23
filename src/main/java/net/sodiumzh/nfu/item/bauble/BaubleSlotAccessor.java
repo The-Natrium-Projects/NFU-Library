@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
-import net.sodiumzh.nfu.container.NaUtilsImmutableMap;
 
 import java.util.HashMap;
 import java.util.Map;

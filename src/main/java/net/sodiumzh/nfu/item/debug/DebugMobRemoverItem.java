@@ -84,7 +84,7 @@ public class DebugMobRemoverItem extends NFUItem {
 
     public static boolean isDiscardMode(ItemStack stack) {
         if (!(stack.getItem() instanceof DebugMobRemoverItem))
-            throw new ClassCastException("NaUtils#DebugMobRemoverItem: Illegal static method call, not a correct item.");
+            throw new ClassCastException("NFU#DebugMobRemoverItem: Illegal static method call, not a correct item.");
         CompoundTag nbt = stack.getTag();
         if (nbt == null) return false;
         if (!nbt.contains(KEY_IS_DISCARD_MODE, Tag.TAG_ANY_NUMERIC))
@@ -95,7 +95,7 @@ public class DebugMobRemoverItem extends NFUItem {
     @Nonnull
     public static UUID getOngoingMobUUID(ItemStack stack) {
         if (!(stack.getItem() instanceof DebugMobRemoverItem))
-            throw new ClassCastException("NaUtils#DebugMobRemoverItem: Illegal static method call, not a correct item.");
+            throw new ClassCastException("NFU#DebugMobRemoverItem: Illegal static method call, not a correct item.");
         CompoundTag nbt = stack.getTag();
         if (nbt == null) return EMPTY_UUID;
         if (!nbt.hasUUID(KEY_REMOVING_MOB_UUID))
@@ -105,7 +105,7 @@ public class DebugMobRemoverItem extends NFUItem {
 
     public static Component getModeInfo(ItemStack stack) {
         if (!(stack.getItem() instanceof DebugMobRemoverItem))
-            throw new ClassCastException("NaUtils#DebugMobRemoverItem: Illegal static method call, not a correct item.");
+            throw new ClassCastException("NFU#DebugMobRemoverItem: Illegal static method call, not a correct item.");
         return NFUInfoStatics.createTranslatable(isDiscardMode(stack) ?
                 "info.nfulib.item.debug_mob_remover_discard_mode" :
                 "info.nfulib.item.debug_mob_remover_kill_mode");
@@ -113,7 +113,7 @@ public class DebugMobRemoverItem extends NFUItem {
 
     public static Component getModeDesc(ItemStack stack) {
         if (!(stack.getItem() instanceof DebugMobRemoverItem))
-            throw new ClassCastException("NaUtils#DebugMobRemoverItem: Illegal static method call, not a correct item.");
+            throw new ClassCastException("NFU#DebugMobRemoverItem: Illegal static method call, not a correct item.");
         return NFUInfoStatics.createTranslatable(isDiscardMode(stack) ?
                 "info.nfulib.item.debug_mob_remover_discard_mode_desc" :
                 "info.nfulib.item.debug_mob_remover_kill_mode_desc");

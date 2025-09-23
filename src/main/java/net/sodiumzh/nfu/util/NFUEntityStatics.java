@@ -394,7 +394,7 @@ public class NFUEntityStatics
 		else return false;
 	}
 	
-	// Fired on an entity teleported by NaUtilsEntityStatics::chorusLikeTeleport or NaUtilsEntityStatics::tryTeleportOntoGround function.
+	// Fired on an entity teleported by NFUEntityStatics::chorusLikeTeleport or NFUEntityStatics::tryTeleportOntoGround function.
 	public static class tryTeleportOntoGroundEvent extends EntityTeleportEvent
 	{
 
@@ -831,7 +831,7 @@ public class NFUEntityStatics
 		{
             target.getCombatTracker().recordDamage(damageSource, target.getHealth(), amount1);
             target.setHealth(target.getHealth() - amount1);
-            target.gameEvent(GameEvent.ENTITY_DAMAGE);
+            target.gameEvent(GameEvent.ENTITY_DAMAGED);
             if (target.getHealth() <= 0)
             	target.die(damageSource);
 		}

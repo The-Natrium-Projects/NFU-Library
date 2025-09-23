@@ -10,7 +10,7 @@ import net.sodiumzh.nfu.item.debug.DebugAISwitchItem;
 import net.sodiumzh.nfu.item.debug.DebugMobRemoverItem;
 import net.sodiumzh.nfu.item.debug.DebugTargetSetterItem;
 
-public class NFUItems
+public class NFUItemRegistry
 {
 	public static final DeferredRegister<Item> NAUTILS_ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, NFULibrary.MOD_ID);
 	

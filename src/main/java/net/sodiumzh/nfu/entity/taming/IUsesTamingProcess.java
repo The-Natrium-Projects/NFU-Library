@@ -9,7 +9,7 @@ import net.sodiumzh.nfu.entity.anger.MobAngerRules;
 import net.sodiumzh.nfu.registry.NFUCaps;
 
 /**
- * Only for {@link TamableAnimal}, indicating that the mob should use NaUtils' taming process.
+ * Only for {@link TamableAnimal}, indicating that the mob should use NFU' taming process.
  */
 public interface IUsesTamingProcess extends IMobSpecific<TamableAnimal> {
 

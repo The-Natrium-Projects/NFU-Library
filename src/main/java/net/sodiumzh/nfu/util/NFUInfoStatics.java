@@ -2,8 +2,8 @@ package net.sodiumzh.nfu.util;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.contents.LiteralContents;
-import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Player;
 
 import javax.annotation.Nullable;
@@ -47,7 +47,7 @@ public class NFUInfoStatics
 	{
 		if (receiver == null)
 			return;
-		receiver.sendSystemMessage(msg);
+		receiver.sendMessage(msg, receiver.getUUID());
 	}
 
 	/**

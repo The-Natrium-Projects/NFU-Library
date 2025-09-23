@@ -6,7 +6,7 @@ import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.mixin.event.entity.EntityTickEvent;
 
 /**
- * Event listeners for NaUtils capability implementation.
+ * Event listeners for NFU capability implementation.
  */
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class NFUCapsEventListeners

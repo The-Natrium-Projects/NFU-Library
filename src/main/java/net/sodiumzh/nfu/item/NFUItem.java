@@ -40,7 +40,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * {@code NaUtilsItem} is an {@link Item} template with some simplifications, e.g. foiling, hovering descriptions, etc.
+ * {@code NFUItem} is an {@link Item} template with some simplifications, e.g. foiling, hovering descriptions, etc.
  */
 public class NFUItem extends Item implements ICastable, INFUItem
 {
