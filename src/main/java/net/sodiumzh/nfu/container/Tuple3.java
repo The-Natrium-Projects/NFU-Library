@@ -1,5 +1,6 @@
 package net.sodiumzh.nfu.container;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -11,7 +12,7 @@ public class Tuple3<A, B, C>
 	public B b;
 	public C c;
 	
-	public Tuple3(A a, B b, C c)
+	public Tuple3(@Nullable A a, @Nullable B b, @Nullable C c)
 	{
 		this.a = a;
 		this.b = b;
@@ -21,7 +22,7 @@ public class Tuple3<A, B, C>
 	@Override
 	public String toString()
 	{
-		return "Tuple3{a=" + this.a.toString() + ", b=" + this.b.toString() + ", c=" + this.c.toString() + "}";
+		return "Tuple3{a=" + this.a + ", b=" + this.b + ", c=" + this.c + "}";
 	}
 
 	@Override
@@ -49,5 +50,27 @@ public class Tuple3<A, B, C>
 		return new Tuple3<>(a, bc.getA(), bc.getB());
 	}
 
+	public A getA() {
+		return a;
+	}
 
+	public void setA(A a) {
+		this.a = a;
+	}
+
+	public B getB() {
+		return b;
+	}
+
+	public void setB(B b) {
+		this.b = b;
+	}
+
+	public C getC() {
+		return c;
+	}
+
+	public void setC(C c) {
+		this.c = c;
+	}
 }

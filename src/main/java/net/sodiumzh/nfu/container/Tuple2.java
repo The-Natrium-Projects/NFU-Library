@@ -2,6 +2,7 @@ package net.sodiumzh.nfu.container;
 
 import net.minecraft.util.Tuple;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Objects;
 
@@ -17,14 +18,36 @@ public class Tuple2<A, B> extends Tuple<A, B>
 	}
 
 	@Override
+	public A getA() {
+		return super.getA();
+	}
+
+
+	@Override
+	public void setA(A pA) {
+		super.setA(pA);
+	}
+
+	@Override
+	public B getB() {
+		return super.getB();
+	}
+
+
+	@Override
+	public void setB(B pB) {
+		super.setB(pB);
+	}
+
+	@Override
 	public String toString()
 	{
-		return String.format("Tuple2{A=%s, B=%s}", this.getA().toString(), this.getB().toString());
+		return String.format("Tuple2{A=%s, B=%s}", this.getA(), this.getB());
 	}
 
 	@Override
 	public boolean equals(Object other) {
-		return other instanceof Tuple2<?, ?> otherTuple &&
+		return other instanceof Tuple<?, ?> otherTuple &&
 				Objects.equals(this.getA(), otherTuple.getA()) && Objects.equals(this.getB(), otherTuple.getB());
 	}
 
