@@ -72,7 +72,7 @@ public interface IVanillaTradeListingCollection<T extends IVanillaTradeListing>
 			});
 		}
 		Multimap<Integer, T> res = HashMultimap.create();
-		actualAmounts.entrySet().stream().map(entry -> new Tuple<>(entry.getKey(), this.pickListings(actualAmounts.get(entry.getValue()), entry.getKey())))
+		actualAmounts.entrySet().stream().map(entry -> new Tuple<>(entry.getKey(), this.pickListings(entry.getValue(), entry.getKey())))
 				.forEach(e -> res.putAll(e.getA(), e.getB()));
 		return res;
 	}
