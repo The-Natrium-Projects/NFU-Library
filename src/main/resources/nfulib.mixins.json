@@ -21,6 +21,7 @@
     "NFUMixinPlayer",
     "NFUMixinProjectile",
     "NFUMixinResourceLocation",
+    "NFUMixinServerLevel",
     "NFUMixinServerPlayer",
     "NFUMixinServerPlayerGameMode",
     "NFUMixinTagBuilder",
@@ -29,6 +30,7 @@
   ],
   "client": [
     "NFUMerchantScreenMixin",
+    "NFUMixinClientLevel",
     "NFUMixinLivingEntityRenderer"
   ],
   "minVersion": "0.8"
