@@ -6,8 +6,8 @@ import net.minecraft.world.item.trading.MerchantOffers;
 import net.sodiumzh.nfu.registry.NFURegistries;
 
 /**
- * NFU' extension of vanilla {@link VillagerTrades.ItemListing}.
- * <p>A {@link VillagerTrades.ItemListing} represents a randomizable trade entry generator that can be picked and generate
+ * NFU extension of vanilla {@link VillagerTrades.ItemListing}.
+ * <p>A {@link VillagerTrades.ItemListing} represents a randomized trade entry generator that can be picked and generate
  * a trade entry ({@link MerchantOffer}) for a vanilla trade list. The listings will not be stored in trade-able mob instances,
  * but in registries. When generating a mob's trade list, the game randomly picks {@link VillagerTrades.ItemListing}s from
  * the corresponding registries, generates an entry from each {@link VillagerTrades.ItemListing} as a {@link MerchantOffer},
