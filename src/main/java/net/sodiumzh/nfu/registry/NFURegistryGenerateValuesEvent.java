@@ -1,5 +1,6 @@
 package net.sodiumzh.nfu.registry;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.event.IModBusEvent;
 
@@ -51,8 +52,12 @@ public abstract class NFURegistryGenerateValuesEvent extends Event {
      * Posted right before a registry generates its values on server setup phase.
      */
     public static class ServerBefore extends NFURegistryGenerateValuesEvent {
-        public ServerBefore(NFURegistry<?> registry) {
+
+        public final MinecraftServer server;
+
+        public ServerBefore(NFURegistry<?> registry, MinecraftServer server) {
             super(registry);
+            this.server = server;
         }
     }
 
@@ -60,8 +65,12 @@ public abstract class NFURegistryGenerateValuesEvent extends Event {
      * Posted right after a registry generates its values on server setup phase.
      */
     public static class ServerAfter extends NFURegistryGenerateValuesEvent {
-        public ServerAfter(NFURegistry<?> registry) {
+
+        public final MinecraftServer server;
+
+        public ServerAfter(NFURegistry<?> registry, MinecraftServer server) {
             super(registry);
+            this.server = server;
         }
     }
 
