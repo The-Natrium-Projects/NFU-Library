@@ -1,5 +1,6 @@
 package net.sodiumzh.nfu.container;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -23,7 +24,7 @@ public class Tuple4<A, B, C, D>
 	@Override
 	public String toString()
 	{
-		return "Tuple4{a=" + this.a.toString() + ", b=" + this.b.toString() + ", c=" + this.c.toString() + ", d=" + this.d.toString() + "}";
+		return "Tuple4{a=" + this.a + ", b=" + this.b + ", c=" + this.c + ", d=" + this.d + "}";
 	}
 
 	@Override
@@ -73,5 +74,37 @@ public class Tuple4<A, B, C, D>
 	public static <A, B, C, D> Tuple4<A, B, C, D> of(Tuple2<A, B> ab, Tuple2<C, D> cd) {
 
 		return new Tuple4<>(ab.getA(), ab.getB(), cd.getA(), cd.getB());
+	}
+
+	public A getA() {
+		return a;
+	}
+
+	public void setA(A a) {
+		this.a = a;
+	}
+
+	public B getB() {
+		return b;
+	}
+
+	public void setB(B b) {
+		this.b = b;
+	}
+
+	public C getC() {
+		return c;
+	}
+
+	public void setC(C c) {
+		this.c = c;
+	}
+
+	public D getD() {
+		return d;
+	}
+
+	public void setD(D d) {
+		this.d = d;
 	}
 }
