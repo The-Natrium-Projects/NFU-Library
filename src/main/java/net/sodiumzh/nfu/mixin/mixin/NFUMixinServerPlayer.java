@@ -2,6 +2,9 @@ package net.sodiumzh.nfu.mixin.mixin;
 
 import java.util.List;
 
+import net.sodiumzh.nfu.mixin.event.entity.EntityFinishTickEvent;
+import net.sodiumzh.nfu.mixin.event.entity.EntityStartTickEvent;
+import net.sodiumzh.nfu.util.NFUEntityStatics;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -35,5 +38,15 @@ public class NFUMixinServerPlayer implements NFUMixin<ServerPlayer>
 		});
 		// If all mob are cancelled, don't prevent sleep i.e. regard as empty
 		return cancelled.getValue() == list.size();
+	}
+
+	@WrapOperation(method = "doTick()V", at = @At(value = "INVOKE",
+		target = "net/minecraft/world/entity/player/Player.tick()V"))
+	private void onDoTick(ServerPlayer instance, Operation<Void> original) {
+		NFUEntityStatics.notifyEntityTickStart(instance);
+		MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
+		original.call(instance);
+		MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
+		NFUEntityStatics.notifyEntityTickEnd(instance);
 	}
 }

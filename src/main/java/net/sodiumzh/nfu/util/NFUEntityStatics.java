@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
@@ -14,6 +15,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -49,12 +51,52 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
+import net.sodiumzh.nfu.annotation.DontCallManually;
+import net.sodiumzh.nfu.container.IStackContainer;
+import net.sodiumzh.nfu.container.StackContainer;
+import net.sodiumzh.nfu.mixin.mixin.NFUMixinClientLevel;
+import net.sodiumzh.nfu.mixin.mixin.NFUMixinEntity;
+import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerLevel;
+import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerPlayer;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;
 
-// Static function library for befriending-related actions.
 public class NFUEntityStatics
 {
+	private static final ThreadLocal<IStackContainer<Entity>> TICKING_ENTITY
+		= ThreadLocal.withInitial(StackContainer::new);
+
+	/**
+	 * Get the entities being ticked. Empty if it's not currently running in an entity ticking cycle.
+	 * <p>The currently ticked entity is recorded through mixins at each call of {@link Entity#tick()} at:
+	 * {@link ClientLevel#tickNonPassenger}, {@link ServerLevel#tickNonPassenger},
+	 * {@link ServerPlayer#doTick()} and {@link Entity#rideTick()};
+	 * @see NFUMixinClientLevel
+	 * @see NFUMixinServerLevel
+	 * @see NFUMixinServerPlayer
+	 * @see NFUMixinEntity
+	 */
+	public static IStackContainer<Entity> getEntityTickStack() {
+		return Optional.ofNullable(TICKING_ENTITY.get()).orElseGet(StackContainer::new);
+	}
+
+	/**
+	 * Only called in mixins to record current ticking entity
+	 */
+	@DontCallManually
+	public static void notifyEntityTickStart(Entity e) {
+		if (e != null)
+			TICKING_ENTITY.get().push(e);
+	}
+
+	/**
+	 * Only called in mixins to record current ticking entity
+	 */
+	@DontCallManually
+	public static void notifyEntityTickEnd(Entity e) {
+		if (e != null)
+			TICKING_ENTITY.get().pop(e);
+	}
 
 	/**
 	 * Replace a living mob with another one. Only works in server. Calling in
