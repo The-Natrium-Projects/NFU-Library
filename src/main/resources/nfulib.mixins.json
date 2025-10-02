@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "nfulib.refmap.json",
   "mixins": [
+    "NFUMerchantMenuMixin",
     "NFUMixinBlockItem",
     "NFUMixinEnderMan",
     "NFUMixinEntity",
@@ -19,13 +20,14 @@
     "NFUMixinPlayer",
     "NFUMixinProjectile",
     "NFUMixinResourceLocation",
+    "NFUMixinServerLevel",
     "NFUMixinServerPlayer",
     "NFUMixinServerPlayerGameMode",
-    "NFUMixinThrownTrident",
-    "NFUMerchantMenuMixin"
+    "NFUMixinThrownTrident"
   ],
   "client": [
     "NFUMerchantScreenMixin",
+    "NFUMixinClientLevel",
     "NFUMixinLivingEntityRenderer"
   ],
   "minVersion": "0.8"
