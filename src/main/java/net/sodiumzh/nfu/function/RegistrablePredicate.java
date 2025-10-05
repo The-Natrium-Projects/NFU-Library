@@ -8,6 +8,7 @@ import net.sodiumzh.nfu.util.NFUInfoStatics;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -15,20 +16,26 @@ import java.util.function.Predicate;
  */
 public class RegistrablePredicate<T> implements Predicate<T> {
 
-    @Nonnull
-    private final Predicate<T> predicate;
-    @Nonnull
+    private final Predicate<? super T> predicate;
+    private final Class<T> inputClass;
     private final String name;
-    @Nullable
     private String translationKey = null;
-    @Nullable
     private Object[] translationArgs = null;
 
-    public RegistrablePredicate(@Nonnull String name, @Nonnull Predicate<T> predicate) {
+    /**
+     * @param inputClass Base class of inputs. If inputs cannot be cast to this, always return false.
+     * @param name An arbitrary string name. Will be displayed in toString().
+     * @param predicate Raw predicate.
+     */
+    public RegistrablePredicate(Class<T> inputClass, @Nonnull String name, @Nonnull Predicate<? super T> predicate) {
+        this.inputClass = inputClass;
         this.predicate = predicate;
         this.name = name;
     }
 
+    /**
+     * Enable a translatable {@link MutableComponent} name. Set key and arguments.
+     */
     public RegistrablePredicate<T> setTranslation(String key, Object... args) {
         this.translationKey = key;
         this.translationArgs = args;
@@ -36,7 +43,7 @@ public class RegistrablePredicate<T> implements Predicate<T> {
     }
 
     public boolean test(T t) {
-        return predicate.test(t);
+        return this.inputClass.isAssignableFrom(t.getClass()) && predicate.test(t);
     }
 
     @Nonnull
@@ -67,20 +74,28 @@ public class RegistrablePredicate<T> implements Predicate<T> {
         return s.append("}").toString();
     }
 
-    public static <T> RegistrablePredicate<T> and(String name, Predicate<? super T> a, Predicate<? super T> b) {
-        return new RegistrablePredicate<>(name, (T t) -> a.test(t) && b.test(t));
+    /**
+     * @return An optional of {@code this} cast to the given input type generics, or empty if this predicate cannot
+     * receive the given class as input.
+     */
+    public <R> Optional<RegistrablePredicate<R>> castInputType(Class<R> inClass) {
+        return this.inputClass.isAssignableFrom(inClass) ? Optional.of((RegistrablePredicate<R>)this) : Optional.empty();
     }
 
-    public static <T> RegistrablePredicate<T> or(String name, Predicate<? super T> a, Predicate<? super T> b) {
-        return new RegistrablePredicate<>(name, (T t) -> a.test(t) || b.test(t));
+    public static <T> RegistrablePredicate<T> and(Class<T> inputClass, String name, Predicate<? super T> a, Predicate<? super T> b) {
+        return new RegistrablePredicate<>(inputClass, name, (T t) -> a.test(t) && b.test(t));
     }
 
-    public static <T> RegistrablePredicate<T> not(String name, Predicate<? super T> a) {
-        return new RegistrablePredicate<>(name, (T t) -> !a.test(t));
+    public static <T> RegistrablePredicate<T> or(Class<T> inputClass, String name, Predicate<? super T> a, Predicate<? super T> b) {
+        return new RegistrablePredicate<>(inputClass, name, (T t) -> a.test(t) || b.test(t));
     }
 
-    public static <T> RegistrablePredicate<T> xor(String name, Predicate<? super T> a, Predicate<? super T> b) {
-        return new RegistrablePredicate<>(name, (T t) -> a.test(t) != b.test(t));
+    public static <T> RegistrablePredicate<T> not(Class<T> inputClass, String name, Predicate<? super T> a) {
+        return new RegistrablePredicate<>(inputClass, name, (T t) -> !a.test(t));
+    }
+
+    public static <T> RegistrablePredicate<T> xor(Class<T> inputClass, String name, Predicate<? super T> a, Predicate<? super T> b) {
+        return new RegistrablePredicate<>(inputClass, name, (T t) -> a.test(t) != b.test(t));
     }
 
     /**

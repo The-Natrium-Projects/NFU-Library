@@ -105,13 +105,20 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         return entry.get();
     }
 
+    public Optional<T> getOptionalValue(ResourceLocation key) {
+        return Optional.ofNullable(getValue(key));
+    }
+
     @Nullable
     public ResourceLocation getKey(T value) {
-        for (var entry: this.table.entrySet())
-        {
-            if (value.equals(entry.getValue().get())) return entry.getKey();
-        }
-        return null;
+        return this.getOptionalKey(value).orElse(null);
+    }
+
+    public Optional<ResourceLocation> getOptionalKey(T value) {
+        return this.table.entrySet().stream()
+            .filter(entry -> entry.getValue().equals(value))
+            .findAny()
+            .map(Map.Entry::getKey);
     }
 
     public Set<ResourceLocation> keySet() {
