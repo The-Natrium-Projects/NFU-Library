@@ -120,4 +120,8 @@ public final class Validatable<T> {
         else return Optional.ofNullable(value);
     }
 
+    public String toString() {
+        return "Validatable{" + value + "}";
+    }
+
 }

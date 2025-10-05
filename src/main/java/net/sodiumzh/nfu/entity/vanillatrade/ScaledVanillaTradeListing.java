@@ -51,4 +51,12 @@ public class ScaledVanillaTradeListing implements IVanillaTradeListing {
     public String toString() {
         return "ScaledVanillaTradeListing {original = " + original + ", scale = " + this.scale + "}";
     }
+
+    public IVanillaTradeListing getOriginal() {
+        return original;
+    }
+
+    public double getScale() {
+        return scale;
+    }
 }
