@@ -172,10 +172,11 @@ public class VanillaTradeRegistry
 
 	/**
 	 * A pre-processed copy of a {@link VanillaTradeRegistry}, allowing to directly access the combined listing collections.
-	 * Created only from {@link VanillaTradeRegistry#collect()}.
+	 * Created only from {@link VanillaTradeRegistry#collect()}. Entries are {@link ScaledVanillaTradeListing}s which wrap
+	 * the original listing with its collection weight scale.
 	 */
 	public static class Collected {
-		private final SetMultimap<Tuple3<ResourceLocation, VillagerProfession, Integer>, IVanillaTradeListing> table
+		private final SetMultimap<Tuple3<ResourceLocation, VillagerProfession, Integer>, ScaledVanillaTradeListing> table
 				= HashMultimap.create();
 
 		private Collected() {}
@@ -183,7 +184,7 @@ public class VanillaTradeRegistry
 		/**
 		 * Get a set of listings for given key, profession and merchant level.
 		 */
-		public Set<IVanillaTradeListing> get(ResourceLocation key, VillagerProfession profession, Integer level) {
+		public Set<ScaledVanillaTradeListing> get(ResourceLocation key, VillagerProfession profession, Integer level) {
 			return table.get(Tuple3.of(key, profession, level));
 		}
 
@@ -192,8 +193,8 @@ public class VanillaTradeRegistry
 		 * @return A listing-collection-like mapping, unmodifiable but supporting most queries
 		 * of {@link VanillaTradeListingCollection}.
 		 */
-		public IVanillaTradeListingCollection<IVanillaTradeListing> get(ResourceLocation key, VillagerProfession profession) {
-			SetMultimap<Integer, IVanillaTradeListing> res = HashMultimap.create();
+		public IVanillaTradeListingCollection<ScaledVanillaTradeListing> get(ResourceLocation key, VillagerProfession profession) {
+			SetMultimap<Integer, ScaledVanillaTradeListing> res = HashMultimap.create();
 			table.keySet().stream().filter(ks -> ks.a.equals(key) && ks.b.equals(profession))
 					.forEach(ks -> res.putAll(ks.c, table.get(ks)));
 			return new UnmodifiableVanillaTradeListingCollection<>(res);
@@ -202,7 +203,7 @@ public class VanillaTradeRegistry
 		/**
 		 * Get a set of listings for given key and merchant level for {@link VillagerProfession#NONE}.
 		 */
-		public Set<IVanillaTradeListing> getForDefaultProfession(ResourceLocation key, Integer level) {
+		public Set<ScaledVanillaTradeListing> getForDefaultProfession(ResourceLocation key, Integer level) {
 			return this.get(key, VillagerProfession.NONE, level);
 		}
 
@@ -211,7 +212,7 @@ public class VanillaTradeRegistry
 		 * @return A listing-collection-like mapping, unmodifiable but supporting most queries
 		 * of {@link VanillaTradeListingCollection}.
 		 */
-		public IVanillaTradeListingCollection<IVanillaTradeListing> getForDefaultProfession(ResourceLocation key) {
+		public IVanillaTradeListingCollection<ScaledVanillaTradeListing> getForDefaultProfession(ResourceLocation key) {
 			return this.get(key, VillagerProfession.NONE);
 		}
 
