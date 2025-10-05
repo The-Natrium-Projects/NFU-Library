@@ -127,33 +127,6 @@ public class NFUNetworkStatics
 	}
 
 	/**
-	 * Write a collection to bytebuf.
-	 * @param writer Method to write a single element to buf.
-	 */
-	public static <T> void writeCollection(FriendlyByteBuf buf, Collection<T> collection, BiConsumer<FriendlyByteBuf, T> writer) {
-		buf.writeInt(collection.size());
-		collection.forEach(t -> writer.accept(buf, t));
-	}
-
-	/**
-	 * Write a map to bytebuf.
-	 * @param keyWriter Method to write a single key to buf.
-	 * @param valWriter Method to write a single value to buf.
-	 */
-	public static <K, V> void writeMap(
-		FriendlyByteBuf buf,
-		Map<K, V> map,
-		BiConsumer<FriendlyByteBuf, K> keyWriter,
-		BiConsumer<FriendlyByteBuf, V> valWriter)
-	{
-		buf.writeInt(map.keySet().size());
-		map.forEach((k, v) -> {
-			keyWriter.accept(buf, k);
-			valWriter.accept(buf, v);
-		});
-	}
-
-	/**
 	 * Write a multimap to bytebuf.
 	 * @param keyWriter Method to write a single key to buf.
 	 * @param valWriter Method to write a single value to buf.
@@ -167,46 +140,8 @@ public class NFUNetworkStatics
 		buf.writeInt(multimap.keySet().size());
 		multimap.keySet().forEach(k -> {
 			keyWriter.accept(buf, k);
-			writeCollection(buf, multimap.get(k), valWriter);
+			buf.writeCollection(multimap.get(k), valWriter::accept);
 		});
-	}
-
-	/**
-	 * Read a set from bytebuf. Only reads data written by {@link NFUNetworkStatics#writeCollection}.
-	 * @param reader Method to read a single element.
-	 */
-	public static <T> Set<T> readSet(FriendlyByteBuf buf, Function<FriendlyByteBuf, T> reader) {
-		int size = buf.readInt();
-		return IntStream.range(0, size).mapToObj(i -> reader.apply(buf)).collect(Collectors.toSet());
-	}
-
-	/**
-	 * Read a list from bytebuf. Only reads data written by {@link NFUNetworkStatics#writeCollection}.
-	 * @param reader Method to read a single element.
-	 */
-	public static <T> List<T> readList(FriendlyByteBuf buf, Function<FriendlyByteBuf, T> reader) {
-		int size = buf.readInt();
-		return IntStream.range(0, size).mapToObj(i -> reader.apply(buf)).collect(Collectors.toList());
-	}
-
-	/**
-	 * Read a map from bytebuf. Only reads data written by {@link NFUNetworkStatics#writeMap}.
-	 * @param keyReader Method to read a single key.
-	 * @param valueReader Method to read a single value.   
-	 */
-	public static <K, V> Map<K, V> readMap(
-		FriendlyByteBuf buf, 
-		Function<FriendlyByteBuf, K> keyReader,
-		Function<FriendlyByteBuf, V> valueReader) 
-	{
-		int size = buf.readInt();
-		Map<K, V> res = new HashMap<>();
-		IntStream.range(0, size).forEach(i -> {
-			K k = keyReader.apply(buf);
-			V v = valueReader.apply(buf);
-			res.put(k, v);
-		});
-		return res;
 	}
 
 	/**
@@ -223,7 +158,7 @@ public class NFUNetworkStatics
 		Multimap<K, V> res = HashMultimap.create();
 		IntStream.range(0, size).forEach(i -> {
 			K k = keyReader.apply(buf);
-			List<V> vs = readList(buf, valueReader);
+			List<V> vs = buf.readList(valueReader::apply);
 			res.putAll(k, vs);
 		});
 		return res;
