@@ -9,6 +9,7 @@ import net.sodiumzh.nfu.entity.anger.MobAngerRules;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListing;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListingCollection;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeRegistry;
+import net.sodiumzh.nfu.function.RegistrableFunction;
 import net.sodiumzh.nfu.function.RegistrablePredicate;
 import net.sodiumzh.nfu.item.bauble.IBaubleRegistryEntry;
 import net.sodiumzh.nfu.math.IFieldPattern3D;
@@ -43,7 +44,7 @@ public class NFURegistries {
      * Registry for generic {@link Function}s. Note that the functions' input/output types are generic, and will not do
      * any type check before running. Ensure the types match before running.
      */
-    public static final NFURegistry<Function<?, ?>> FUNCTIONS =
+    public static final NFURegistry<RegistrableFunction<?, ?>> FUNCTIONS =
             new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "functions"));
 
     public static final NFURegistry<RegistrablePredicate<?>> PREDICATES =
