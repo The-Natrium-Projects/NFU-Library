@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.*;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -15,6 +16,7 @@ import javax.annotation.Nullable;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.datafixers.util.Either;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.Resource;
@@ -28,6 +30,13 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.container.Tuple2;
+import net.sodiumzh.nfu.function.RegistrableFunction;
+import net.sodiumzh.nfu.function.RegistrablePredicate;
+import net.sodiumzh.nfu.math.RandomSelection;
+import net.sodiumzh.nfu.math.RangedRandomDouble;
+import net.sodiumzh.nfu.math.RangedRandomInt;
+import net.sodiumzh.nfu.object.Validatable;
+import net.sodiumzh.nfu.registry.NFURegistries;
 
 /**
  * A {@code MobApplicableItemTable} is a collection of information about if an {@link ItemStack}
@@ -112,7 +121,7 @@ public class MobApplicableItemTable
 		int i = 0;
 		for (var input: entries.keySet())
 		{
-			if (input.item != null)
+			if (input.getCriteria(). != null)
 				map.put(input.item.toString(), Output.getOutput(mob, entries.get(input)).amount);
 			else if (input.tag != null)
 				map.put(input.tag.location().toString(), Output.getOutput(mob, entries.get(input)).amount);
@@ -186,57 +195,31 @@ public class MobApplicableItemTable
 		public MobApplicableItemTable.Builder add(String key, double amount)
 		{
 			return addRaw(Input.create(key), new OutputGetter(amount));
-
 		}
 		
-		public MobApplicableItemTable.Builder add(Item item, Function<Mob, Double> amount)
+		public MobApplicableItemTable.Builder add(Item item, DoubleValueProvider amount)
 		{
 			return addRaw(Input.create(item), new OutputGetter(amount));
 		}
 		
-		public MobApplicableItemTable.Builder add(Predicate<ItemStack> predicate, Function<Mob, Double> amount)
+		public MobApplicableItemTable.Builder add(Predicate<ItemStack> predicate, DoubleValueProvider amount)
 		{
 			return addRaw(Input.create(predicate), new OutputGetter(amount));
 		}
 		
-		public MobApplicableItemTable.Builder add(TagKey<Item> tag, Function<Mob, Double> amount)
+		public MobApplicableItemTable.Builder add(TagKey<Item> tag, DoubleValueProvider amount)
 		{
 			return addRaw(Input.create(tag), new OutputGetter(amount));
 		}
 		
-		public MobApplicableItemTable.Builder add(ResourceLocation key, Function<Mob, Double> amount)
+		public MobApplicableItemTable.Builder add(ResourceLocation key, DoubleValueProvider amount)
 		{
 			return addRaw(Input.create(key), new OutputGetter(amount));
 		}
 		
-		public MobApplicableItemTable.Builder add(String key, Function<Mob, Double> amount)
+		public MobApplicableItemTable.Builder add(String key, DoubleValueProvider amount)
 		{
 			return addRaw(Input.create(key), new OutputGetter(amount));
-		}
-
-		public MobApplicableItemTable.Builder add(Item item, Supplier<Double> amount)
-		{
-			return addRaw(Input.create(item), new OutputGetter(mob -> amount.get()));
-		}
-
-		public MobApplicableItemTable.Builder add(Predicate<ItemStack> predicate, Supplier<Double> amount)
-		{
-			return addRaw(Input.create(predicate), new OutputGetter(mob -> amount.get()));
-		}
-
-		public MobApplicableItemTable.Builder add(TagKey<Item> tag, Supplier<Double> amount)
-		{
-			return addRaw(Input.create(tag), new OutputGetter(mob -> amount.get()));
-		}
-
-		public MobApplicableItemTable.Builder add(ResourceLocation key, Supplier<Double> amount)
-		{
-			return addRaw(Input.create(key), new OutputGetter(mob -> amount.get()));
-		}
-
-		public MobApplicableItemTable.Builder add(String key, Supplier<Double> amount)
-		{
-			return addRaw(Input.create(key), new OutputGetter(mob -> amount.get()));
 		}
 
 		public MobApplicableItemTable.Builder addPredicate(@Nonnull Predicate<ItemStack> predicate)
@@ -255,7 +238,7 @@ public class MobApplicableItemTable
 			return this;
 		}
 		
-		public MobApplicableItemTable.Builder cooldown(@Nonnull Function<Mob, Integer> getter)
+		public MobApplicableItemTable.Builder cooldown(@Nonnull IntValueProvider getter)
 		{
 			if (buildingActiveEntry == null)
 				throw new UnsupportedOperationException("Illegal operation for empty table. Call add() first!");
@@ -313,26 +296,25 @@ public class MobApplicableItemTable
 	 */
 	public static class Input implements Predicate<ItemStack>
 	{
-		// By checking if it's a specific type of item
-		private final Item item;
-		// By running predicate
-		private Predicate<ItemStack> stackCheck;
-		// By checking if it has a tag
-		private final TagKey<Item> tag;
-		// By checking if it's an item found in registry.
-		private final ResourceLocation key;
-		// For getAllItems(). When this input is using a predicate, it may take resource to
-		// Iterate the whole registry to find applicable items. So cache it here to prevent repeated testing.
-		private List<Item> cachedApplicableItems;
+		private final ItemStackCriteria criteria;
 
 		private Input(Item item, Predicate<ItemStack> stackCheck, TagKey<Item> tag, ResourceLocation key)
 		{
-			this.item = item;
-			this.stackCheck = stackCheck;
-			this.tag = tag;
-			this.key = key;
+			if (item != null)
+				this.criteria = ItemStackCriteria.byItem(item);
+			else if (key != null)
+				this.criteria = ItemStackCriteria.byItemRegistrykey(key);
+			else if (tag != null)
+				this.criteria = ItemStackCriteria.byTag(tag);
+			else if (stackCheck != null)
+				this.criteria = ItemStackCriteria.unparseable(stackCheck);
+			else this.criteria = ItemStackCriteria.unparseable(i -> false);
 		}
-		
+
+		public ItemStackCriteria getCriteria() {
+			return criteria;
+		}
+
 		/** Create a raw {@code Input}. Not recommended unless you know what you're doing. */
 		public static Input createRaw(Item item, Predicate<ItemStack> stackCheck, TagKey<Item> tag, ResourceLocation key)
 		{
@@ -368,8 +350,12 @@ public class MobApplicableItemTable
 		{
 			return new Input(null, null, null, new ResourceLocation(in));
 		}
-		
-		public void addPredicate(@Nonnull Predicate<ItemStack> predicate)
+
+		public void addRegisteredPredicate(ResourceLocation key) {
+
+		}
+
+		public void addUnparseablePredicate(@Nonnull Predicate<ItemStack> predicate)
 		{
 			if (this.stackCheck == null)
 				this.stackCheck = predicate;
@@ -490,34 +476,27 @@ public class MobApplicableItemTable
 	 */
 	public static class OutputGetter
 	{
-		protected Optional<Double> amountStatic = Optional.of(5d);
-		protected Function<Mob, Double> amountGetter = null;
-		protected Optional<Integer> cooldownStatic = Optional.of(40);
-		protected Function<Mob, Integer> cooldownGetter = null;
+		protected DoubleValueProvider amountProvider = DoubleValueProvider.singleNumber(5d);
+		protected IntValueProvider cooldownProvider = IntValueProvider.singleNumber(40);
 		protected boolean noConsume = false;
 		protected Consumer<Mob> extraAction = mob -> {};
 		
-		public OutputGetter(double amount)
-		{
-			amountStatic = Optional.of(amount);
+		public OutputGetter(double amount) {
+			amountProvider = DoubleValueProvider.singleNumber(amount);
 		}
 		
-		public OutputGetter(@Nonnull Function<Mob, Double> amountGetter)
-		{
-			amountStatic = Optional.empty();
-			this.amountGetter = amountGetter;
+		public OutputGetter(DoubleValueProvider provider) {
+			this.amountProvider = provider;
 		}
 		
 		public void cooldown(int value)
 		{
-			cooldownStatic = Optional.of(value);
-			cooldownGetter = null;
+			cooldownProvider = IntValueProvider.singleNumber(value);
 		}
 		
-		public void cooldown(@Nonnull Function<Mob, Integer> getter)
+		public void cooldown(IntValueProvider provider)
 		{
-			cooldownStatic = Optional.empty();
-			cooldownGetter = getter;
+			cooldownProvider = provider;
 		}
 		
 		public void noConsume()
@@ -532,36 +511,12 @@ public class MobApplicableItemTable
 
 		public boolean isNoConsume() { return noConsume; }
 
-		/**
-		 * Get the raw amount source, either a fixed value or a functional getter from mob.
-		 */
-		public Either<Double, Function<Mob, Double>> getAmountSource() {
-			return amountStatic.<Either<Double, Function<Mob, Double>>>map(Either::left)
-				.orElseGet(() -> Either.right(amountGetter));
+		public DoubleValueProvider getAmountProvider() {
+			return amountProvider;
 		}
 
-		/**
-		 * Get the raw cooldown source, either a fixed value or a functional getter from mob.
-		 */
-		public Either<Integer, Function<Mob, Integer>> getCooldownSource() {
-			return cooldownStatic.<Either<Integer, Function<Mob, Integer>>>map(Either::left)
-				.orElseGet(() -> Either.right(cooldownGetter));
-		}
-
-		/**
-		 * Get the function to generate the cool down ticks.
-		 */
-		public Function<Mob, Integer> getCooldownGetter() {
-			return cooldownStatic.<Function<Mob, Integer>>map(val -> ((Mob mob) -> val))
-					.orElse(cooldownGetter);
-		}
-
-		/**
-		 * Get the function to generate the amount.
-		 */
-		public Function<Mob, Double> getAmountGetter() {
-			return amountStatic.<Function<Mob, Double>>map(val -> ((Mob mob) -> val))
-					.orElse(amountGetter);
+		public IntValueProvider getCooldownProvider() {
+			return cooldownProvider;
 		}
 	}
 	
@@ -575,10 +530,10 @@ public class MobApplicableItemTable
 		public static Output getOutput(Mob mob, OutputGetter getter)
 		{
 			return new Output(
-					getter.amountStatic.isPresent() ? getter.amountStatic.get() : getter.amountGetter.apply(mob),
-					getter.cooldownStatic.isPresent() ? getter.cooldownStatic.get() : getter.cooldownGetter.apply(mob),
-					getter.noConsume,
-					getter.extraAction);
+				getter.getAmountProvider().apply(mob),
+				getter.getCooldownProvider().apply(mob),
+				getter.noConsume,
+				getter.extraAction);
 		}
 	}
 	
@@ -627,4 +582,299 @@ public class MobApplicableItemTable
 
 	}
 
+	public static class ItemStackCriteria implements Predicate<ItemStack> {
+
+		private final Item item;
+		private final TagKey<Item> tag;
+		private final ResourceLocation itemRegistryKey;
+		private Tuple2<ResourceLocation, RegistrablePredicate<ItemStack>> registeredPredicate;
+		private Predicate<ItemStack> unparseablePredicate;
+		private List<Item> allItemsCache = null;
+
+		private ItemStackCriteria(
+			Item item,
+			TagKey<Item> tag,
+			ResourceLocation itemRegistryKey,
+			ResourceLocation predicateKey,
+			Predicate<ItemStack> unparseable) {
+			this.item = item;
+			this.tag = tag;
+			this.itemRegistryKey = itemRegistryKey;
+			this.unparseablePredicate = unparseable;
+		}
+
+		public boolean isValid() {
+			return !Stream.of(this.item != null, this.tag != null, this.itemRegistryKey != null, this.registeredPredicate != null, this.unparseablePredicate != null)
+                .filter(Boolean::booleanValue).toList().isEmpty();
+		}
+
+		public static ItemStackCriteria byItem(Item item) {
+			return new ItemStackCriteria(item, null, null, null, null);
+		}
+
+		public static ItemStackCriteria byTag(TagKey<Item> tag) {
+			return new ItemStackCriteria(null, tag, null, null, null);
+		}
+
+		public static ItemStackCriteria byTag(ResourceLocation key) {
+			return byTag(TagKey.create(ForgeRegistries.ITEMS.getRegistryKey(), key));
+		}
+
+		public static ItemStackCriteria byItemRegistrykey(ResourceLocation key) {
+			return new ItemStackCriteria(null, null, key, null, null);
+		}
+
+		public static ItemStackCriteria byRegisteredPredicate(ResourceLocation regKey) {
+			return new ItemStackCriteria(null, null, null, regKey, null);
+		}
+
+		public static ItemStackCriteria unparseable(Predicate<ItemStack> predicate) {
+			return new ItemStackCriteria(null, null, null, null, predicate);
+		}
+
+		@Override
+		public boolean test(ItemStack itemStack) {
+			if (!this.isValid()) return false;
+			boolean res = true;
+			if (this.item != null) res = itemStack.is(item);
+			else if (this.tag != null) res = itemStack.is(tag);
+			else if (this.itemRegistryKey != null)
+				res = Optional.ofNullable(ForgeRegistries.ITEMS.getValue(this.itemRegistryKey)).filter(itemStack::is).isPresent();
+			if (registeredPredicate != null)
+				res = res && registeredPredicate.getB().test(itemStack);
+			if (unparseablePredicate != null)
+				res = res && unparseablePredicate.test(itemStack);
+			return res;
+		}
+
+		public void setRegisteredPredicate(Tuple2<ResourceLocation, RegistrablePredicate<ItemStack>> registeredPredicate) {
+			this.registeredPredicate = registeredPredicate;
+		}
+
+		public void setUnparseablePredicate(Predicate<ItemStack> unparseablePredicate) {
+			this.unparseablePredicate = unparseablePredicate;
+		}
+
+		public List<Item> getAllUsableItems() {
+			if (this.item != null) return List.of(this.item);
+			else if (this.tag != null) return Optional.ofNullable(ForgeRegistries.ITEMS.tags()).map(tags -> tags.getTag(this.tag).stream().toList()).orElseGet(List::of);
+			else if (itemRegistryKey != null) return Optional.ofNullable(ForgeRegistries.ITEMS.getValue(itemRegistryKey)).map(List::of).orElseGet(List::of);
+			// If unparseable, iterate the registry only once and cache the result for further queries
+			if (allItemsCache != null) return allItemsCache;
+			allItemsCache = ForgeRegistries.ITEMS.getValues().stream().filter(i -> {
+				try {
+					return this.test(i.getDefaultInstance());
+				} catch (Exception e) {
+					return false;
+				}
+			}).toList();
+			return allItemsCache;
+		}
+
+		public Optional<Item> asItem() {
+			if (this.item != null)
+				return Optional.of(this.item);
+			else if (this.itemRegistryKey != null)
+
+		}
+
+		public Optional<>
+
+
+
+
+
+	}
+
+	/**
+	 * Parse-able double provider from a mob. For generating amount values.
+	 */
+	public static class DoubleValueProvider implements Function<Mob, Double> {
+
+		public static final DoubleValueProvider INVALID = new DoubleValueProvider(Double.NaN, null, null, null, null);
+		private final double singleNumber;  // If invalid, use NaN.
+		private final RangedRandomDouble range;
+		private final RandomSelection<Double> randomSelection;
+		private final Tuple2<ResourceLocation, RegistrableFunction<Mob, Double>> registered;
+		private final Function<Mob, Double> unparseableFunction;
+
+		private DoubleValueProvider(
+			double singleNumber,
+			RangedRandomDouble range,
+			RandomSelection<Double> randomSelection,
+			ResourceLocation functionKey,
+			Function<Mob, Double> unparseableFunction)
+		{
+			this.singleNumber = singleNumber;
+			this.range = range;
+			this.randomSelection = randomSelection;
+			this.registered = Optional.ofNullable(functionKey)
+				.flatMap(k -> NFURegistries.FUNCTIONS.getOptionalValue(k)
+					.flatMap(f -> f.castTypes(Mob.class, Double.class))
+					.map(f -> Tuple2.of(k, f)))
+				.orElse(null);
+			this.unparseableFunction = unparseableFunction;
+		}
+
+		public static DoubleValueProvider getInvalid() {
+			return INVALID;
+		}
+
+		public boolean isValid() {
+			return Stream.of(!Double.isNaN(singleNumber), range != null, randomSelection != null, registered != null, unparseableFunction != null)
+				.filter(Boolean::booleanValue).toList().size() == 1;
+		}
+
+		public static DoubleValueProvider singleNumber(double value) {
+			return new DoubleValueProvider(value, null, null, null, null);
+		}
+
+		public static DoubleValueProvider range(RangedRandomDouble range) {
+			return new DoubleValueProvider(Double.NaN, range, null, null, null);
+		}
+
+		public static DoubleValueProvider randomSelection(RandomSelection<Double> randomSelection) {
+			return new DoubleValueProvider(Double.NaN, null, randomSelection, null, null);
+		}
+
+		public static DoubleValueProvider functionKey(ResourceLocation resourceLocation) {
+			return new DoubleValueProvider(Double.NaN, null, null, resourceLocation, null);
+		}
+
+		public static DoubleValueProvider unparseable(Function<Mob, Double> function) {
+			return new DoubleValueProvider(Double.NaN, null, null, null, function);
+		}
+
+		public Optional<Double> getAsSingleNumber() {
+			if (!isValid()) return Optional.empty();
+			return Optional.of(singleNumber).filter(v -> !Double.isNaN(v));
+		}
+
+		public Optional<RangedRandomDouble> getAsRange() {
+			if (!isValid()) return Optional.empty();
+			return Optional.ofNullable(range);
+		}
+
+		public Optional<RandomSelection<Double>> getAsSelection() {
+			if (!isValid()) return Optional.empty();
+			return Optional.ofNullable(randomSelection);
+		}
+
+		public Optional<Tuple2<ResourceLocation, RegistrableFunction<Mob, Double>>> getAsRegisteredFunction() {
+			if (!isValid()) return Optional.empty();
+			return Optional.ofNullable(registered);
+		}
+
+		public Optional<Function<Mob, Double>> getAsUnparseableFunction(){
+			if (!isValid()) return Optional.empty();
+			return Optional.ofNullable(unparseableFunction);
+		}
+
+		@Override
+		public Double apply(Mob mob) {
+			if (!this.isValid()) return 0d;
+			if (!Double.isNaN(this.singleNumber)) return this.singleNumber;
+			if (range != null) return range.getValue(mob.getRandom());
+			if (randomSelection != null) return randomSelection.select(mob.getRandom());
+			if (registered != null) return registered.getB().apply(mob);
+			if (unparseableFunction != null) return unparseableFunction.apply(mob);
+			return 0d;
+		}
+	}
+
+	/**
+	 * Parse-able int provider from a mob. For generating cooldown  values.
+	 */
+	public static class IntValueProvider implements Function<Mob, Integer> {
+
+		public static final IntValueProvider INVALID = new IntValueProvider(null, null, null, null, null);
+		private final Optional<Integer> singleNumber;
+		private final RangedRandomInt range;
+		private final RandomSelection<Integer> randomSelection;
+		private final Tuple2<ResourceLocation, RegistrableFunction<Mob, Integer>> registered;
+		private final Function<Mob, Integer> unparseableFunction;
+
+		private IntValueProvider(
+			Optional<Integer> singleNumber,
+			RangedRandomInt range,
+			RandomSelection<Integer> randomSelection,
+			ResourceLocation functionKey,
+			Function<Mob, Integer> unparseableFunction)
+		{
+			this.singleNumber = singleNumber;
+			this.range = range;
+			this.randomSelection = randomSelection;
+			this.registered = Optional.ofNullable(functionKey)
+				.flatMap(k -> NFURegistries.FUNCTIONS.getOptionalValue(k)
+					.flatMap(f -> f.castTypes(Mob.class, Integer.class))
+					.map(f -> Tuple2.of(k, f)))
+				.orElse(null);
+			this.unparseableFunction = unparseableFunction;
+		}
+
+		public static IntValueProvider getInvalid() {
+			return INVALID;
+		}
+
+		public boolean isValid() {
+			return Stream.of(singleNumber.isPresent(), range != null, randomSelection != null, registered != null, unparseableFunction != null)
+				.filter(Boolean::booleanValue).toList().size() == 1;
+		}
+
+		public static IntValueProvider singleNumber(int value) {
+			return new IntValueProvider(Optional.of(value), null, null, null, null);
+		}
+
+		public static IntValueProvider range(RangedRandomInt range) {
+			return new IntValueProvider(Optional.empty(), range, null, null, null);
+		}
+
+		public static IntValueProvider randomSelection(RandomSelection<Integer> randomSelection) {
+			return new IntValueProvider(Optional.empty(), null, randomSelection, null, null);
+		}
+
+		public static IntValueProvider functionKey(ResourceLocation resourceLocation) {
+			return new IntValueProvider(Optional.empty(), null, null, resourceLocation, null);
+		}
+
+		public static IntValueProvider unparseable(Function<Mob, Integer> function) {
+			return new IntValueProvider(Optional.empty(), null, null, null, function);
+		}
+
+		public Optional<Integer> getAsSingleNumber() {
+			if (!isValid()) return Optional.empty();
+			return singleNumber;
+		}
+
+		public Optional<RangedRandomInt> getAsRange() {
+			if (!isValid()) return Optional.empty();
+			return Optional.ofNullable(range);
+		}
+
+		public Optional<RandomSelection<Integer>> getAsSelection() {
+			if (!isValid()) return Optional.empty();
+			return Optional.ofNullable(randomSelection);
+		}
+
+		public Optional<Tuple2<ResourceLocation, RegistrableFunction<Mob, Integer>>> getAsRegisteredFunction() {
+			if (!isValid()) return Optional.empty();
+			return Optional.ofNullable(registered);
+		}
+
+		public Optional<Function<Mob, Integer>> getAsUnparseableFunction(){
+			if (!isValid()) return Optional.empty();
+			return Optional.ofNullable(unparseableFunction);
+		}
+
+		@Override
+		public Integer apply(Mob mob) {
+			if (!this.isValid()) return 0;
+			if (this.singleNumber.isPresent()) return this.singleNumber.get();
+			if (range != null) return range.getValue(mob.getRandom());
+			if (randomSelection != null) return randomSelection.select(mob.getRandom());
+			if (registered != null) return registered.getB().apply(mob);
+			if (unparseableFunction != null) return unparseableFunction.apply(mob);
+			return 0;
+		}
+	}
 }
