@@ -214,7 +214,7 @@ tasks.named('processResources', ProcessResources).configure {
             loader_version_range: loader_version_range, license: license,
             nfu_mod_id: mod_id, nfu_name: mod_name, nfu_license: license,
             nfu_version: mod_version, nfu_authors: mod_authors,
-            nfu_description: mod_description,
+            nfu_description: mod_description
     ]
     inputs.properties replaceProperties
 
