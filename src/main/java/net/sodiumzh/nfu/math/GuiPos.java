@@ -1,5 +1,7 @@
 package net.sodiumzh.nfu.math;
 
+import java.util.Objects;
+
 /**
  * A {@code GuiPos} is an xy (or uv) integer pair pointing at a position on the screen or a texture image.
  */
@@ -46,12 +48,18 @@ public class GuiPos
 	{
 		return ZERO;
 	}
-	
-	public boolean equals(GuiPos other)
+
+    @Override
+	public boolean equals(Object other)
 	{
-		return this.x == other.x && this.y == other.y;
+		return other instanceof GuiPos otherPos && this.x == otherPos.x && this.y == otherPos.y;
 	}
-	
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.x, this.y);
+    }
+
 	@Deprecated
 	public GuiPos copy()
 	{
