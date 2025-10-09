@@ -3,11 +3,9 @@ package net.sodiumzh.nfu.entity;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -15,8 +13,6 @@ import javax.annotation.Nullable;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.mojang.datafixers.util.Either;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.Resource;
@@ -25,6 +21,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -35,8 +32,8 @@ import net.sodiumzh.nfu.function.RegistrablePredicate;
 import net.sodiumzh.nfu.math.RandomSelection;
 import net.sodiumzh.nfu.math.RangedRandomDouble;
 import net.sodiumzh.nfu.math.RangedRandomInt;
-import net.sodiumzh.nfu.object.Validatable;
 import net.sodiumzh.nfu.registry.NFURegistries;
+import net.sodiumzh.nfu.util.NFUDataStatics;
 
 /**
  * A {@code MobApplicableItemTable} is a collection of information about if an {@link ItemStack}
@@ -48,21 +45,17 @@ public class MobApplicableItemTable
 
 	public static final MobApplicableItemTable EMPTY = new MobApplicableItemTable();
 	
-	private HashMap<Input, OutputGetter> entries = new HashMap<>();
+	private HashMap<ItemStackCriteria, OutcomeProvider> entries = new HashMap<>();
 	
 	protected MobApplicableItemTable()
 	{
 	}
 	
-	protected MobApplicableItemTable(HashMap<Input, OutputGetter> entries)
+	protected MobApplicableItemTable(HashMap<ItemStackCriteria, OutcomeProvider> entries)
 	{
 		this.entries = entries;
 	}
 
-	/**
-	 * Create a new builder.
-	 * <p> Note: for a new builder, always call any of {@code add()} first, otherwise it will crash.
-	 */
 	public static MobApplicableItemTable.Builder builder() {
 		return new MobApplicableItemTable.Builder();
 	}
@@ -78,32 +71,15 @@ public class MobApplicableItemTable
 		return entries.isEmpty();
 	}
 
-	/**
-	 *
-	 * @param mob
-	 * @param stack
-	 * @return
-	 */
-	@Nullable
-	public Output getOutput(Mob mob, ItemStack stack)
+	public Optional<Outcome> getOutcome(Mob mob, ItemStack stack)
 	{
-		for (var input: entries.keySet())
-		{
-			if (input.test(stack))
-				return Output.getOutput(mob, entries.get(input));
-		}
-		return null;
+		return this.getOutcomeProvider(mob, stack).map(provider -> Outcome.getOutcome(mob, provider));
 	}
 
-	@Nullable
-	public OutputGetter getOutputGetter(Mob mob, ItemStack stack)
+	public Optional<OutcomeProvider> getOutcomeProvider(Mob mob, ItemStack stack)
 	{
-		for (var input: entries.keySet())
-		{
-			if (input.test(stack))
-				return entries.get(input);
-		}
-		return null;
+		return entries.entrySet().stream().filter(entry -> entry.getKey().test(stack))
+            .findAny().map(Map.Entry::getValue);
 	}
 
 	@Override
@@ -111,160 +87,58 @@ public class MobApplicableItemTable
 	{
 		return entries.toString();
 	}
-	
-	/**
-	 * Only for debug mode, transform it to a visualized map.
-	 */
-	public HashMap<String, Double> toDebugMap(Mob mob)
-	{
-		HashMap<String, Double> map = new HashMap<>();
-		int i = 0;
-		for (var input: entries.keySet())
-		{
-			if (input.getCriteria(). != null)
-				map.put(input.item.toString(), Output.getOutput(mob, entries.get(input)).amount);
-			else if (input.tag != null)
-				map.put(input.tag.location().toString(), Output.getOutput(mob, entries.get(input)).amount);
-			else if (input.stackCheck != null)
-			{
-				map.put("{Predicate_" + Integer.toString(i) + "}", Output.getOutput(mob, entries.get(input)).amount);
-				++i;
-			}
-			else if (input.key != null)
-			{
-				Item item = ForgeRegistries.ITEMS.getValue(input.key);
-				if (item != null)
-					map.put(item.toString(), Output.getOutput(mob, entries.get(input)).amount);
-				else map.put("{Missing item: " + input.key.toString() + "}", Output.getOutput(mob, entries.get(input)).amount);
-			}
-		}
-		return map;
-	}
 
-	public Map<Input, OutputGetter> getEntriesView() {
+
+	public Map<ItemStackCriteria, OutcomeProvider> getEntriesView() {
 		return Map.copyOf(this.entries);
 	}
 
 	public static class Builder
 	{
-		private HashMap<Input, OutputGetter> entries = new HashMap<>();
-		private Input buildingActiveEntry = null;
+		private HashMap<ItemStackCriteria, OutcomeProvider> entries = new HashMap<>();
 		private DataReader reader = null;
 
-		public MobApplicableItemTable.Builder addRaw(Input in, OutputGetter out)
+        public MobApplicableItemTable.Builder create() {
+            return new MobApplicableItemTable.Builder();
+        }
+
+		public MobApplicableItemTable.Builder add(ItemStackCriteria in, OutcomeProvider out)
 		{
 			entries.put(in, out);
-			buildingActiveEntry = in;
-			return this;
-		}
-		/**
-		 * Put a new entry.
-		 * @param input Raw input object.
-		 * @param amount Result amount (fixed value).
-		 */
-		public MobApplicableItemTable.Builder add(Input input, double amount)
-		{
-			return addRaw(input, new OutputGetter(amount));
-		}
-		
-		/**
-		 * Put a new entry.
-		 * @param item Input item.
-		 * @param amount Result amount (fixed value).
-		 */
-		public MobApplicableItemTable.Builder add(Item item, double amount)
-		{
-			return addRaw(Input.create(item), new OutputGetter(amount));
-		}
-		
-		public MobApplicableItemTable.Builder add(Predicate<ItemStack> predicate, double amount)
-		{
-			return addRaw(Input.create(predicate), new OutputGetter(amount));
-		}
-		
-		public MobApplicableItemTable.Builder add(TagKey<Item> tag, double amount)
-		{
-			return addRaw(Input.create(tag), new OutputGetter(amount));
-		}
-		
-		public MobApplicableItemTable.Builder add(ResourceLocation key, double amount)
-		{
-			return addRaw(Input.create(key), new OutputGetter(amount));
-		}
-
-		public MobApplicableItemTable.Builder add(String key, double amount)
-		{
-			return addRaw(Input.create(key), new OutputGetter(amount));
-		}
-		
-		public MobApplicableItemTable.Builder add(Item item, DoubleValueProvider amount)
-		{
-			return addRaw(Input.create(item), new OutputGetter(amount));
-		}
-		
-		public MobApplicableItemTable.Builder add(Predicate<ItemStack> predicate, DoubleValueProvider amount)
-		{
-			return addRaw(Input.create(predicate), new OutputGetter(amount));
-		}
-		
-		public MobApplicableItemTable.Builder add(TagKey<Item> tag, DoubleValueProvider amount)
-		{
-			return addRaw(Input.create(tag), new OutputGetter(amount));
-		}
-		
-		public MobApplicableItemTable.Builder add(ResourceLocation key, DoubleValueProvider amount)
-		{
-			return addRaw(Input.create(key), new OutputGetter(amount));
-		}
-		
-		public MobApplicableItemTable.Builder add(String key, DoubleValueProvider amount)
-		{
-			return addRaw(Input.create(key), new OutputGetter(amount));
-		}
-
-		public MobApplicableItemTable.Builder addPredicate(@Nonnull Predicate<ItemStack> predicate)
-		{
-			if (buildingActiveEntry == null)
-				throw new UnsupportedOperationException("Illegal operation for empty table. Call add() first!");
-			buildingActiveEntry.addPredicate(predicate);
 			return this;
 		}
 
-		public MobApplicableItemTable.Builder cooldown(int value)
+		public MobApplicableItemTable.Builder addSimpleOutput(ItemStackCriteria input, double amount, int cooldown)
 		{
-			if (buildingActiveEntry == null)
-				throw new UnsupportedOperationException("Illegal operation for empty table. Call add() first!");
-			entries.get(buildingActiveEntry).cooldown(value);
-			return this;
+			return add(input, OutcomeProvider.simple(amount, cooldown));
 		}
-		
-		public MobApplicableItemTable.Builder cooldown(@Nonnull IntValueProvider getter)
-		{
-			if (buildingActiveEntry == null)
-				throw new UnsupportedOperationException("Illegal operation for empty table. Call add() first!");
-			entries.get(buildingActiveEntry).cooldown(getter);
-			return this;
-		}
-		
-		public MobApplicableItemTable.Builder noConsume()
-		{
-			if (buildingActiveEntry == null)
-				throw new UnsupportedOperationException("Illegal operation for empty table. Call add() first!");
-			entries.get(buildingActiveEntry).noConsume();
-			return this;
-		}
-		
-		public MobApplicableItemTable.Builder extraAction(Consumer<Mob> action)
-		{
-			if (buildingActiveEntry == null)
-				throw new UnsupportedOperationException("Illegal operation for empty table. Call add() first!");
-			entries.get(buildingActiveEntry).extraAction(action);
-			return this;
-		}
+
+        public MobApplicableItemTable.Builder addSimpleItem(Item item, double amount, int cooldown) {
+            return add(ItemStackCriteria.byItems(item), OutcomeProvider.simple(amount, cooldown));
+        }
+
+        public MobApplicableItemTable.Builder addSimpleTag(TagKey<Item> tag, double amount, int cooldown) {
+            return add(ItemStackCriteria.byTags(tag), OutcomeProvider.simple(amount, cooldown));
+        }
+
+        public MobApplicableItemTable.Builder addSimpleTag(ResourceLocation tag, double amount, int cooldown) {
+            return add(ItemStackCriteria.byTags(tag), OutcomeProvider.simple(amount, cooldown));
+        }
+
+        public MobApplicableItemTable.Builder addItemRanged(Item item, double min, double max, int cooldown) {
+            return add(ItemStackCriteria.byItems(item), OutcomeProvider.ranged(min, max, cooldown));
+        }
+
+        public MobApplicableItemTable.Builder addSimpleTag(TagKey<Item> tag, double min, double max, int cooldown) {
+            return add(ItemStackCriteria.byTags(tag), OutcomeProvider.ranged(min, max, cooldown));
+        }
+
+        public MobApplicableItemTable.Builder addSimpleTag(ResourceLocation tag, double min, double max, int cooldown) {
+            return add(ItemStackCriteria.byTags(tag), OutcomeProvider.ranged(min, max, cooldown));
+        }
 
 		/**
 		 * Define a resource location and a method (parser) to read data and merge into the table on building.
-		 * @Param loc
 		 */
 		public MobApplicableItemTable.Builder readData(@Nonnull ResourceLocation loc,
 													   @Nonnull BiConsumer<JsonElement, MobApplicableItemTable.Builder> parser)
@@ -280,260 +154,325 @@ public class MobApplicableItemTable
 			return new MobApplicableItemTable(this.entries);
 		}
 	}
-	
-	/**
-	 * A {@link MobApplicableItemTable.Input} is a <i>check</i> for given {@link ItemStack}.
-	 * If the input {@link ItemStack} satisfies a specific {@code Input}, the {@code ItemApplyingToMobTable} will return corresponding {@code OutputGetter}.
-	 * <p> It now accepts 4 types of checks: 
-	 * <p> a) {@link Item}, to check if the given {@link ItemStack} is this type of {@link Item}.
-	 * <p> b) {@link ResourceLocation} of item, browsing {@link Item} from registry and check if the {@link ItemStack} is the found {@link Item}.
-	 * It could be optional and can be applied for other mods' items. If the item is not found (e.g. due to the mod not loaded), it will be ignored and won't throw exceptions.
-	 * <p> c) {@link TagKey} to check if the given {@link ItemStack} has this tag.
-	 * <p> d) {@link Predicate<ItemStack>} to simply check if the given {@link ItemStack} meets the condition.
-	 * <p> Note: This object is static and should be embedded in the corresponding {@link MobApplicableItemTable}. When
-	 * the item interaction actually happens, the item will be checked by each {@link MobApplicableItemTable.Input} to see
-	 * which {@link MobApplicableItemTable.OutputGetter}(s) it should use.
-	 */
-	public static class Input implements Predicate<ItemStack>
-	{
-		private final ItemStackCriteria criteria;
 
-		private Input(Item item, Predicate<ItemStack> stackCheck, TagKey<Item> tag, ResourceLocation key)
-		{
-			if (item != null)
-				this.criteria = ItemStackCriteria.byItem(item);
-			else if (key != null)
-				this.criteria = ItemStackCriteria.byItemRegistrykey(key);
-			else if (tag != null)
-				this.criteria = ItemStackCriteria.byTag(tag);
-			else if (stackCheck != null)
-				this.criteria = ItemStackCriteria.unparseable(stackCheck);
-			else this.criteria = ItemStackCriteria.unparseable(i -> false);
-		}
 
-		public ItemStackCriteria getCriteria() {
-			return criteria;
-		}
+    /**
+     * Criteria to match input {@link ItemStack}s. It has an item list and a tag list to match, and a
+     * {@link RegistrablePredicate} and a generic (unparseable) {@link Predicate} for additional checks.
+     * <p>The item must be included in <i>either the item or the tag list</i>, and passes <i>both predicates</i>
+     * (if present). If the item and tag lists are both empty, the item needs to only pass predicates.
+     */
+    public static class ItemStackCriteria implements Predicate<ItemStack> {
 
-		/** Create a raw {@code Input}. Not recommended unless you know what you're doing. */
-		public static Input createRaw(Item item, Predicate<ItemStack> stackCheck, TagKey<Item> tag, ResourceLocation key)
-		{
-			return new Input(item, stackCheck, tag, key);
-		}
-		
-		/** Create from {@link Item}. */
-		public static Input create(Item in)
-		{
-			return new Input(in, null, null, null);
-		}
-		
-		/** Create from {@link Predicate}. */
-		public static Input create(Predicate<ItemStack> in)
-		{
-			return new Input(null, in, null, null);
-		}
-		
-		/** Create from {@link TagKey}. */
-		public static Input create(TagKey<Item> in)
-		{
-			return new Input(null, null, in, null);
-		}
-		
-		/** Create from {@link ResourceLocation} as registry key. */
-		public static Input create(ResourceLocation in)
-		{
-			return new Input(null, null, null, in);
-		}
-		
-		/** Create from {@link ResourceLocation} as registry key. The input string should be formatted like "modid:name_key" to create a {@link ResourceLocation} in-situ. */
-		public static Input create(String in)
-		{
-			return new Input(null, null, null, new ResourceLocation(in));
-		}
+        private final List<Item> items = new ArrayList<>();
+        private final List<TagKey<Item>> tags = new ArrayList<>();
+        private Tuple2<ResourceLocation, RegistrablePredicate<ItemStack>> registeredPredicate;
+        private Predicate<ItemStack> unparseablePredicate;
+        private List<Item> allItemsCache = null;
 
-		public void addRegisteredPredicate(ResourceLocation key) {
+        private ItemStackCriteria(
+            @Nullable ResourceLocation predicateKey,
+            @Nullable Predicate<ItemStack> unparseable) {
+            this.registeredPredicate = Optional.ofNullable(predicateKey)
+                .map(k -> Tuple2.of(k,
+                    Optional.ofNullable(NFURegistries.PREDICATES.getValue(k)).flatMap(p -> p.castInputType(ItemStack.class))
+                        .orElse(null)))
+                .filter(pair -> pair.getB() != null)
+                .orElse(null);
+            this.unparseablePredicate = unparseable;
+        }
 
-		}
+        public static ItemStackCriteria create() {
+            return new ItemStackCriteria(null, null);
+        }
 
-		public void addUnparseablePredicate(@Nonnull Predicate<ItemStack> predicate)
-		{
-			if (this.stackCheck == null)
-				this.stackCheck = predicate;
-			else this.stackCheck = this.stackCheck.and(predicate);
-		}
-		
-		@Override
-		public boolean test(ItemStack stack)
-		{
-			boolean retval = true;
-			boolean valid = false;
-			if (item != null)
-			{
-				retval = retval && stack.is(item);
-				valid = true;
-				if (!retval) return false;
-			}
-			if (stackCheck != null)
-			{
-				try {
-					retval = retval && stackCheck.test(stack);
-					valid = true;
-					if (!retval) return false;
-				} catch (RuntimeException | NoSuchFieldError | NoSuchMethodError e)
-				{
-					e.printStackTrace();
-					return false;
-				}
-			}
-			if (tag != null)
-			{
-				retval = retval && stack.is(tag);
-				valid = true;
-				if (!retval) return false;
-			}
-			if (key != null)
-			{
-				Item item = ForgeRegistries.ITEMS.getValue(key);
-				retval = retval && item != null && stack.is(item);
-				valid = true;
-				if (!retval) return false;
-			}
-			return retval && valid;
-		}
-		
-		@Override
-		public String toString()
-		{
-			String out = "Input {";
-			if (item != null)
-				out = out + "Item (" + ForgeRegistries.ITEMS.getKey(item).toString() + "), ";
-			if (stackCheck != null)
-				out = out + "{Predicate}, ";
-			if (tag != null)
-				out = out + "Tag (" + tag.location().toString() + "), ";
-			if (key != null)
-				out = out + "Key (" + key.toString() + "), ";
-			if (out.substring(out.length() - 2, out.length()) == ", ")
-				out = out.substring(0, out.length() - 2);
-			out = out + "}";
-			return out;
-		}
+        public static ItemStackCriteria byItems(Object... items) {
+            return ItemStackCriteria.create().addItems(items);
+        }
 
-		/**
-		 * Get a list of all items that should be applicable in this input.
-		 * <p>Note: when this input is using a predicate, this method can <i>NOT</i>
-		 * recognize items of which the default instance is not applicable but only
-		 * applicable when having some kind of NBT.
-		 * @param refreshCache When this input is using a predicate, if true, it should iterate
-		 *                     the whole item registry each time, which may be resource-costly. Use this only
-		 *                     when you suspect the item registry itself may have changed after first calling
-		 *                     this method.
-		 */
-		public List<Item> getAllItems(boolean refreshCache) {
-			try {
-				if (item != null) return List.of(item);
-				else if (key != null)
-					return Optional.ofNullable(ForgeRegistries.ITEMS.getValue(key)).map(List::of).orElseGet(List::of);
-				else if (tag != null)
-					return Optional.ofNullable(ForgeRegistries.ITEMS.tags())
-						.map(t -> t.getTag(tag).stream().toList()).orElseGet(List::of);
-				else {
-					// Skip and don't cache if the item registry is not yet available,
-					// so it will always retry for the next time
-					if (ForgeRegistries.ITEMS.getValues().isEmpty()) return List.of();
-					if (this.cachedApplicableItems == null || refreshCache)
-						this.cachedApplicableItems = ForgeRegistries.ITEMS.getValues()
-							.stream().filter(item -> this.test(item.getDefaultInstance()))
-							.toList();
-					return this.cachedApplicableItems;
-				}
-			} catch (RuntimeException e) {
-				return List.of();
-			}
-		}
+        public static ItemStackCriteria byTags(Object... tags) {
+            return ItemStackCriteria.create().addTags(tags);
+        }
 
-		/**
-		 * Get a list of all items that should be applicable in this input.
-		 * <p>Note: when this input is using a predicate, this method can <i>NOT</i>
-		 * recognize items of which the default instance is not applicable but only
-		 * applicable when having some kind of NBT.
-		 * <p>Note: When this input is using a predicate, this operation will need
-		 * to iterate the whole Forge item registry, and it will cache the result on
-		 * the first run of {@code getAllItems()} by default to save resource. If you
-		 * suspect the Forge item registry itself changed after the first run, use
-		 * {@code getAllItems(true)} to refresh the cache.
-		 */
-		public List<Item> getAllItems() {
-			return this.getAllItems(false);
-		}
-	}
+        public static ItemStackCriteria byRegistrablePredicate(ResourceLocation key) {
+            return ItemStackCriteria.create().setRegistrablePredicate(key);
+        }
 
-	/**
-	 * A {@link MobApplicableItemTable.OutputGetter} describes what should happen if
-	 * a specific {@link MobApplicableItemTable.Input} is applied to the mob, including a double "amount" value (can represent
-	 * anything you want), usage cooldown ticks, whether the item should be consumed, and extra action to take.
+        public static ItemStackCriteria byUnparseablePredicate(Predicate<ItemStack> predicate) {
+            return ItemStackCriteria.create().setUnparseablePredicate(predicate);
+        }
+
+        /**
+         * Add items to match. The tested item should be one of the listed items to meet the requirement.
+         * @param itemsOrRegistryKeys Either {@link Item}s or {@link ItemStack}s for items (NBT will be ignored),
+         *        or {@link ResourceLocation}s or Strings for registry keys. Other random elements, {@code null}s and
+         *        invalid keys will be ignored.
+         * @return this.
+         */
+        public ItemStackCriteria addItems(Collection<?> itemsOrRegistryKeys) {
+            List<Item> items = itemsOrRegistryKeys.stream().map(elem -> {
+                try {
+                    if (elem instanceof Item item) return item;
+                    else if (elem instanceof ResourceLocation key)
+                        return ForgeRegistries.ITEMS.getValue(key);
+                    else if (elem instanceof ItemStack itemStack)
+                        return itemStack.getItem();
+                    else if (elem instanceof String str)
+                        return ForgeRegistries.ITEMS.getValue(new ResourceLocation(str));
+                    else return Items.AIR;
+                } catch (Exception e) {
+                    return Items.AIR;
+                }
+            }).filter(Objects::nonNull).filter(item -> !item.equals(Items.AIR)).toList();
+            this.items.addAll(items);
+            return this;
+        }
+
+        /**
+         * Add items to match. The tested item should be one of the listed items to meet the requirement.
+         * @param itemsOrRegistryKeys Either {@link Item}s or {@link ItemStack}s for items (NBT will be ignored),
+         *        or {@link ResourceLocation}s or Strings for registry keys. Other random elements, {@code null}s and
+         *        invalid keys will be ignored.
+         * @return this.
+         */
+        public ItemStackCriteria addItems(Object... itemsOrRegistryKeys) {
+            return addItems(List.of(items));
+        }
+
+        /**
+         * Add items to match. The tested item should have one of the listed tags to meet the requirement.
+         * @param keys Either {@link TagKey<Item>}s, or {@link ResourceLocation}s / Strings as keys.
+         *        Other random elements and {@code null}s keys will be ignored.
+         * @return this.
+         */
+        public ItemStackCriteria addTags(Collection<?> keys) {
+            List<TagKey<Item>> tags = keys.stream().map(elem -> {
+                try {
+                    if (elem instanceof TagKey<?> tagKey && tagKey.registry().equals(ForgeRegistries.ITEMS))
+                        return tagKey;
+                    else if (elem instanceof ResourceLocation key)
+                        return Optional.ofNullable(ForgeRegistries.ITEMS.tags())
+                            .map(reg -> reg.createTagKey(key)).orElse(null);
+                    else if (elem instanceof String str)
+                        return Optional.ofNullable(ForgeRegistries.ITEMS.tags())
+                            .map(reg -> reg.createTagKey(new ResourceLocation(str))).orElse(null);
+                    else return null;
+                } catch (Exception e) {
+                    return null;
+                }
+            }).filter(Objects::nonNull).map(key -> (TagKey<Item>)key).toList();
+            this.tags.addAll(tags);
+            return this;
+        }
+
+        public ItemStackCriteria addTags(Object... tags) {
+            return addItems(List.of(tags));
+        }
+
+        /**
+         * Get all items matching either the item list or the tag list.
+         */
+        public Set<Item> getAllItemsAndTags() {
+            Set<Item> res = this.tags.stream().flatMap(tag ->
+                    Optional.ofNullable(ForgeRegistries.ITEMS.tags()).map(tm -> tm.getTag(tag).stream()).orElseGet(Stream::of))
+                .collect(Collectors.toSet());
+            res.addAll(this.items);
+            return res;
+        }
+
+        public ItemStackCriteria setRegistrablePredicate(@Nullable ResourceLocation key) {
+            this.registeredPredicate = Optional.ofNullable(key)
+                .map(k -> Tuple2.of(k,
+                    Optional.ofNullable(NFURegistries.PREDICATES.getValue(k)).flatMap(p -> p.castInputType(ItemStack.class))
+                        .orElse(null)))
+                .filter(pair -> pair.getB() != null)
+                .orElse(null);
+            return this;
+        }
+
+        public ItemStackCriteria setUnparseablePredicate(@Nullable Predicate<ItemStack> predicate) {
+            this.unparseablePredicate = predicate;
+            return this;
+        }
+
+
+        @Override
+        public boolean test(ItemStack itemStack) {
+            // If this criteria instance is totally invalid, alway return false
+            if (this.items.isEmpty() && this.tags.isEmpty() && this.registeredPredicate == null && this.unparseablePredicate == null)
+                return false;
+            // If items and tags are both empty, the input item will only match predicates
+            boolean res = this.items.isEmpty() && this.tags.isEmpty();
+            // If the input item matches either item list or tag list, set this to true. If
+            // lists and tags are both empty, res is already true, and the following two rows
+            // will be skipped
+            res = res || this.items.contains(itemStack.getItem());
+            res = res || this.tags.stream().anyMatch(itemStack::is);
+            // The item must meet both criteria defined by predicates if present
+            if (registeredPredicate != null)
+                res = res && registeredPredicate.getB().test(itemStack);
+            if (unparseablePredicate != null)
+                res = res && unparseablePredicate.test(itemStack);
+            return res;
+        }
+
+        public void setRegisteredPredicate(Tuple2<ResourceLocation, RegistrablePredicate<ItemStack>> registeredPredicate) {
+            this.registeredPredicate = registeredPredicate;
+        }
+
+        public List<Item> getAllUsableItems() {
+            if (allItemsCache != null) return allItemsCache;
+            Collection<Item> allItemsToTest = this.items.isEmpty() && this.tags.isEmpty() ?
+                ForgeRegistries.ITEMS.getValues() : getAllItemsAndTags();
+            this.allItemsCache = allItemsToTest.stream().filter(i -> {
+                if (registeredPredicate != null && !registeredPredicate.getB().test(i.getDefaultInstance()))
+                    return false;
+                else if (unparseablePredicate != null && !unparseablePredicate.test(i.getDefaultInstance()))
+                    return false;
+                return true;
+            }).distinct().toList();
+            return allItemsCache;
+        }
+
+        public List<Item> getItemMatchingList() {
+            return this.items.stream().toList();
+        }
+
+        public List<TagKey<Item>> getTagMatchingList() {
+            return this.tags.stream().toList();
+        }
+
+        public Optional<Tuple2<ResourceLocation, RegistrablePredicate<ItemStack>>> getRegistrablePredicateCriterion() {
+            return Optional.ofNullable(this.registeredPredicate);
+        }
+
+        public Optional<Predicate<ItemStack>> getUnparseablePredicateCriterion() {
+            return Optional.ofNullable(this.unparseablePredicate);
+        }
+    }
+
+
+    /**
+	 * A {@link OutcomeProvider} describes what should happen if
+	 * a specific {@link MobApplicableItemTable.ItemStackCriteria} is applied to the mob, including a double result (can represent
+	 * anything you want), an integer result, whether the item should be consumed, and extra action to take.
 	 * <p>This object should be static and embedded in the corresponding {@link MobApplicableItemTable}.
+     * <p>Note: double and int results are <i>totally separate</i>, and cannot generate values for each other.
 	 */
-	public static class OutputGetter
+	public static class OutcomeProvider
 	{
-		protected DoubleValueProvider amountProvider = DoubleValueProvider.singleNumber(5d);
-		protected IntValueProvider cooldownProvider = IntValueProvider.singleNumber(40);
-		protected boolean noConsume = false;
+		protected DoubleValueProvider amountProvider;
+        protected IntValueProvider cooldownProvider;
+        protected boolean noConsume = false;
 		protected Consumer<Mob> extraAction = mob -> {};
-		
-		public OutputGetter(double amount) {
-			amountProvider = DoubleValueProvider.singleNumber(amount);
-		}
-		
-		public OutputGetter(DoubleValueProvider provider) {
-			this.amountProvider = provider;
-		}
-		
-		public void cooldown(int value)
-		{
-			cooldownProvider = IntValueProvider.singleNumber(value);
-		}
-		
-		public void cooldown(IntValueProvider provider)
-		{
-			cooldownProvider = provider;
-		}
-		
-		public void noConsume()
-		{
-			noConsume = true;
-		}
-		
-		public void extraAction(@Nullable Consumer<Mob> action)
-		{
-			this.extraAction = action;
-		}
 
-		public boolean isNoConsume() { return noConsume; }
+        public OutcomeProvider(DoubleValueProvider amountProvider, IntValueProvider cooldownProvider) {
+            this.amountProvider = amountProvider;
+            this.cooldownProvider = cooldownProvider;
+        }
 
-		public DoubleValueProvider getAmountProvider() {
+        /**
+         * Create an empty provider with initial amount and cooldown 0.
+         */
+        public static OutcomeProvider empty() {
+            return simple(0d, 0);
+        }
+
+        /**
+         * Create with a single (unrandomized) amount and cooldown.
+         */
+        public static OutcomeProvider simple(double amount, int cooldown) {
+            return new OutcomeProvider(DoubleValueProvider.singleNumber(amount), IntValueProvider.singleNumber(cooldown));
+        }
+
+        /**
+         * Create with a ranged amount result (uniform distribution) and single cooldown.
+         */
+        public static OutcomeProvider ranged(double min, double max, int cooldown) {
+            return new OutcomeProvider(DoubleValueProvider.range(RangedRandomDouble.uniform(min, max)), IntValueProvider.singleNumber(cooldown));
+        }
+
+
+        public OutcomeProvider setAmountProvider(DoubleValueProvider amountProvider) {
+            this.amountProvider = amountProvider;
+            return this;
+        }
+
+        public OutcomeProvider setAmountValue(double amount) {
+            return setAmountProvider(DoubleValueProvider.singleNumber(amount));
+        }
+
+        public OutcomeProvider setCooldownProvider(IntValueProvider cooldownProvider) {
+            this.cooldownProvider = cooldownProvider;
+            return this;
+        }
+
+        public OutcomeProvider setCooldownValue(int cooldown) {
+            return setCooldownProvider(IntValueProvider.singleNumber(cooldown));
+        }
+
+        public boolean isNoConsume() {
+            return noConsume;
+        }
+
+        public OutcomeProvider setNoConsume(boolean noConsume) {
+            this.noConsume = noConsume;
+            return this;
+        }
+
+        public Consumer<Mob> getExtraAction() {
+            return extraAction;
+        }
+
+        public OutcomeProvider setExtraAction(Consumer<Mob> extraAction) {
+            this.extraAction = extraAction;
+            return this;
+        }
+
+        public DoubleValueProvider getAmountProvider() {
 			return amountProvider;
 		}
 
 		public IntValueProvider getCooldownProvider() {
-			return cooldownProvider;
+            return cooldownProvider;
 		}
+
+        /**
+         * Provide a complete outcome record.
+         */
+        public Outcome getOutcome(Mob mob) {
+            return Outcome.getOutcome(mob, this);
+        }
+
+        /**
+         * Only run amount provider and give a result.
+         */
+        public double getOutcomeAmount(Mob mob) {
+            return amountProvider.apply(mob);
+        }
+
+        /**
+         * Only run cooldown provider and give a result.
+         */
+        public int getOutcomeCooldown(Mob mob) {
+            return cooldownProvider.apply(mob);
+        }
+
 	}
 	
 	/**
-	 * A {@link MobApplicableItemTable.Output} represents a result when the item is <i>actually</i> applied to the mob.
-	 *
+	 * An {@link Outcome} represents a result when the item is <i>actually</i> applied to the mob.
 	 */
-	public static record Output(Double amount, int cooldown, boolean noConsume, Consumer<Mob> action)
+	public static record Outcome(double amount, int cooldown, boolean noConsume, Consumer<Mob> action)
 	{
 		
-		public static Output getOutput(Mob mob, OutputGetter getter)
+		public static Outcome getOutcome(Mob mob, OutcomeProvider provider)
 		{
-			return new Output(
-				getter.getAmountProvider().apply(mob),
-				getter.getCooldownProvider().apply(mob),
-				getter.noConsume,
-				getter.extraAction);
+			return new Outcome(
+				provider.getOutcomeAmount(mob),
+				provider.getOutcomeCooldown(mob),
+				provider.noConsume,
+				provider.extraAction);
 		}
 	}
 	
@@ -579,110 +518,6 @@ public class MobApplicableItemTable
 				}
 			}
 		}
-
-	}
-
-	public static class ItemStackCriteria implements Predicate<ItemStack> {
-
-		private final Item item;
-		private final TagKey<Item> tag;
-		private final ResourceLocation itemRegistryKey;
-		private Tuple2<ResourceLocation, RegistrablePredicate<ItemStack>> registeredPredicate;
-		private Predicate<ItemStack> unparseablePredicate;
-		private List<Item> allItemsCache = null;
-
-		private ItemStackCriteria(
-			Item item,
-			TagKey<Item> tag,
-			ResourceLocation itemRegistryKey,
-			ResourceLocation predicateKey,
-			Predicate<ItemStack> unparseable) {
-			this.item = item;
-			this.tag = tag;
-			this.itemRegistryKey = itemRegistryKey;
-			this.unparseablePredicate = unparseable;
-		}
-
-		public boolean isValid() {
-			return !Stream.of(this.item != null, this.tag != null, this.itemRegistryKey != null, this.registeredPredicate != null, this.unparseablePredicate != null)
-                .filter(Boolean::booleanValue).toList().isEmpty();
-		}
-
-		public static ItemStackCriteria byItem(Item item) {
-			return new ItemStackCriteria(item, null, null, null, null);
-		}
-
-		public static ItemStackCriteria byTag(TagKey<Item> tag) {
-			return new ItemStackCriteria(null, tag, null, null, null);
-		}
-
-		public static ItemStackCriteria byTag(ResourceLocation key) {
-			return byTag(TagKey.create(ForgeRegistries.ITEMS.getRegistryKey(), key));
-		}
-
-		public static ItemStackCriteria byItemRegistrykey(ResourceLocation key) {
-			return new ItemStackCriteria(null, null, key, null, null);
-		}
-
-		public static ItemStackCriteria byRegisteredPredicate(ResourceLocation regKey) {
-			return new ItemStackCriteria(null, null, null, regKey, null);
-		}
-
-		public static ItemStackCriteria unparseable(Predicate<ItemStack> predicate) {
-			return new ItemStackCriteria(null, null, null, null, predicate);
-		}
-
-		@Override
-		public boolean test(ItemStack itemStack) {
-			if (!this.isValid()) return false;
-			boolean res = true;
-			if (this.item != null) res = itemStack.is(item);
-			else if (this.tag != null) res = itemStack.is(tag);
-			else if (this.itemRegistryKey != null)
-				res = Optional.ofNullable(ForgeRegistries.ITEMS.getValue(this.itemRegistryKey)).filter(itemStack::is).isPresent();
-			if (registeredPredicate != null)
-				res = res && registeredPredicate.getB().test(itemStack);
-			if (unparseablePredicate != null)
-				res = res && unparseablePredicate.test(itemStack);
-			return res;
-		}
-
-		public void setRegisteredPredicate(Tuple2<ResourceLocation, RegistrablePredicate<ItemStack>> registeredPredicate) {
-			this.registeredPredicate = registeredPredicate;
-		}
-
-		public void setUnparseablePredicate(Predicate<ItemStack> unparseablePredicate) {
-			this.unparseablePredicate = unparseablePredicate;
-		}
-
-		public List<Item> getAllUsableItems() {
-			if (this.item != null) return List.of(this.item);
-			else if (this.tag != null) return Optional.ofNullable(ForgeRegistries.ITEMS.tags()).map(tags -> tags.getTag(this.tag).stream().toList()).orElseGet(List::of);
-			else if (itemRegistryKey != null) return Optional.ofNullable(ForgeRegistries.ITEMS.getValue(itemRegistryKey)).map(List::of).orElseGet(List::of);
-			// If unparseable, iterate the registry only once and cache the result for further queries
-			if (allItemsCache != null) return allItemsCache;
-			allItemsCache = ForgeRegistries.ITEMS.getValues().stream().filter(i -> {
-				try {
-					return this.test(i.getDefaultInstance());
-				} catch (Exception e) {
-					return false;
-				}
-			}).toList();
-			return allItemsCache;
-		}
-
-		public Optional<Item> asItem() {
-			if (this.item != null)
-				return Optional.of(this.item);
-			else if (this.itemRegistryKey != null)
-
-		}
-
-		public Optional<>
-
-
-
-
 
 	}
 

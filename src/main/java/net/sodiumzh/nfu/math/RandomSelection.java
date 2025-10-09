@@ -1,8 +1,14 @@
 package net.sodiumzh.nfu.math;
 
-import java.util.ArrayList;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
 
 import net.minecraft.util.RandomSource;
+import net.sodiumzh.nfu.container.Tuple2;
+
+import javax.annotation.Nullable;
 
 /**
  * A {@code RandomSelection} is a series of objects that will be randomly selected.
@@ -146,5 +152,72 @@ public class RandomSelection<T>
 	{
 		return scaleTo(1d);
 	}
-	
+
+    public ProbabilityMap<T> getProbabilityMap() {
+        ProbabilityMap<T> res = new ProbabilityMap<>();
+        for (int i = 0; i < valSequence.size(); ++i) {
+            if (i > 0 && probSequence.get(i - 1) >= 1d)
+                break;
+            double prob = (probSequence.get(i) >= 1d ? 1d : probSequence.get(i)) - (i > 0 ? probSequence.get(i - 1) : 0d);
+            if (prob > 0d) {
+                res.valueMap.put(valSequence.get(i), prob);
+            }
+        }
+        if (probSequence.get(probSequence.size() - 1) < 1d - 1e-12d) {  // Tolerate double calculation error
+            res.put(defaultVal, 1 - probSequence.get(probSequence.size() - 1));
+        }
+        return res;
+    }
+
+    /**
+     * Get mathematical expectation. Note that the mapper must tolerate null input if
+     * this RandomSelection accepts null input.
+     */
+    public double expectation(ToDoubleFunction<T> mapperToDouble) {
+        return this.getProbabilityMap().expectation(mapperToDouble);
+    }
+
+    public static class ProbabilityMap<T> {
+        Map<T, Double> valueMap;
+        double nullProb = 0d;
+
+        ProbabilityMap() {
+        }
+
+        public double getProbability(@Nullable T value) {
+            return value == null ? nullProb : Optional.ofNullable(valueMap.get(value)).orElse(0d);
+        }
+
+        public void put(@Nullable T value, double prob) {
+            if (value == null) nullProb += prob;
+            else {
+                double oldProb = Optional.ofNullable(valueMap.get(value)).orElse(0d);
+                valueMap.put(value, oldProb + prob);
+            }
+        }
+
+        public List<Tuple2<T, Double>> entries() {
+            List<Tuple2<T, Double>> res = valueMap.entrySet().stream().filter(entry -> entry.getValue() > 1e-12d)
+                .map(entry -> Tuple2.of(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+            if (nullProb > 1e-12d)
+                res.add(Tuple2.of(null, nullProb));
+            return res;
+        }
+
+        public boolean contains(@Nullable T value) {
+            if (value == null)
+                return nullProb >= 1e-12d;
+            else return Optional.ofNullable(valueMap.get(value)).filter(p -> p > 1e-12d).isPresent();
+        }
+
+        /**
+         * Get mathematical expectation. Note that the mapper must tolerate null input if
+         * this RandomSelection accepts null.
+         */
+        public double expectation(ToDoubleFunction<T> mapper) {
+            return entries().stream().mapToDouble(entry -> mapper.applyAsDouble(entry.getA()) * entry.getB())
+                .sum();
+        }
+    }
 }
