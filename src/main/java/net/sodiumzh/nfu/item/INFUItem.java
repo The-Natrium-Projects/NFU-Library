@@ -201,8 +201,9 @@ public interface INFUItem extends ICastable, ItemLike {
      * to re-format it.
      */
     @Nullable
-    public BiFunction<ItemStack, MutableComponent, MutableComponent> getNameStyle();
-
+    public default BiFunction<ItemStack, MutableComponent, MutableComponent> getNameStyle() {
+        return null;
+    }
 
     public INFUItem setNameStyle(BiFunction<ItemStack, MutableComponent, MutableComponent> styleModifier);
 

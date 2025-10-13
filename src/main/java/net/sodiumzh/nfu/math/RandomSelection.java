@@ -179,7 +179,7 @@ public class RandomSelection<T>
     }
 
     public static class ProbabilityMap<T> {
-        Map<T, Double> valueMap;
+        final Map<T, Double> valueMap = new HashMap<>();
         double nullProb = 0d;
 
         ProbabilityMap() {
