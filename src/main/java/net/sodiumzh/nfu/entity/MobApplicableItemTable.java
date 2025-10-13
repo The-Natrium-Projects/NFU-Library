@@ -322,6 +322,10 @@ public class MobApplicableItemTable
 
         public List<Item> getAllUsableItems() {
             if (allItemsCache != null) return allItemsCache;
+            if (this.items.isEmpty() && this.tags.isEmpty() && this.registeredPredicate == null && this.unparseablePredicate == null) {
+                allItemsCache = List.of();
+                return allItemsCache;
+            }
             Collection<Item> allItemsToTest = this.items.isEmpty() && this.tags.isEmpty() ?
                 ForgeRegistries.ITEMS.getValues() : getAllItemsAndTags();
             this.allItemsCache = allItemsToTest.stream().filter(i -> {
