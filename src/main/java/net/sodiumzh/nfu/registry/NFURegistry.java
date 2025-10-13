@@ -117,8 +117,9 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     public Optional<ResourceLocation> getOptionalKey(T value) {
+        if (value == null) return Optional.empty();
         return this.table.entrySet().stream()
-            .filter(entry -> entry.getValue().equals(value))
+            .filter(entry -> Objects.equals(entry.getValue().get(), value))
             .findAny()
             .map(Map.Entry::getKey);
     }
