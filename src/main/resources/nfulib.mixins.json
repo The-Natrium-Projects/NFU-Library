@@ -5,6 +5,7 @@
   "refmap": "nfulib.refmap.json",
   "mixins": [
     "NFUBlockItemMixin",
+    "NFUAreaEffectCloudMixin",
     "NFUMerchantMenuMixin",
     "NFUMixinDeferredRegister",
     "NFUMixinEnderMan",
@@ -26,7 +27,8 @@
     "NFUMixinServerPlayerGameMode",
     "NFUMixinTagBuilder",
     "NFUMixinThrownTrident",
-    "NFUMixinWorldCapabilityData"
+    "NFUMixinWorldCapabilityData",
+    "NFUThrownPotionMixin"
   ],
   "client": [
     "NFUMerchantScreenMixin",
