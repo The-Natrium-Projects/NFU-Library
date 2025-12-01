@@ -6,6 +6,7 @@ import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;
 import net.sodiumzh.nfu.object.CastableObject;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -202,7 +203,6 @@ public class NFUReflectionStatics
 	 * @param declaredClass Class in which the field is declared.
 	 * @param fieldNameSrg Field to find. Use SRG name which can be looked up at: <a href="https://linkie.shedaniel.dev/mappings?namespace=mojang_srg&version=1.20.1&search=">...</a>
 	 * @return An {@link Optional} of the result field, or empty if absent.
-	 * @param <T>
 	 */
 	public static <T> Optional<Field> findFieldIfDeclared(Class<?> declaredClass, String fieldNameSrg) {
 		try {

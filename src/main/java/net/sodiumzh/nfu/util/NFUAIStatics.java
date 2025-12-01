@@ -2,7 +2,10 @@ package net.sodiumzh.nfu.util;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -15,20 +18,28 @@ import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
+import javax.annotation.Nullable;
+
 /**
  * Utilities related to mob AI operation.
  */
 public class NFUAIStatics {
 
-	@SuppressWarnings("unchecked")
+	/**
+	 * Get the targeting type of a {@link NearestAttackableTargetGoal}.
+	 */
 	public static Class<? extends LivingEntity> getTargetType(NearestAttackableTargetGoal<?> goal)
 	{
-		return NFUReflectionStatics.forceGet(goal, NearestAttackableTargetGoal.class, "f_26048_").cast();
+		return NFUReflectionStatics.getFieldValue(goal, NearestAttackableTargetGoal.class, "f_26048_").cast();
 	}
 
+	/**
+	 * Get the targeting type of a {@link NearestAttackableTargetGoal}.
+	 */
+	@Nullable
 	public static TargetingConditions getTargetConditions(NearestAttackableTargetGoal<?> goal)
 	{
-		return NFUReflectionStatics.forceGet(goal, NearestAttackableTargetGoal.class, "f_26051_").cast();
+		return NFUReflectionStatics.getFieldValue(goal, NearestAttackableTargetGoal.class, "f_26051_").cast();
 	}
 
 	public static boolean isMobHostileTo(Mob test, LivingEntity isHostileTo)
@@ -66,14 +77,7 @@ public class NFUAIStatics {
 	 */
 	public static <T extends LivingEntity> void setHostileTo(Mob mob, Class<T> type, Predicate<LivingEntity> condition, boolean noSubclass)
 	{
-		if (getTargetPlayerGoal(mob) != null)
-		{
-			setHostileTo(mob, type, getTargetPlayerGoal(mob).getPriority(), condition, noSubclass);
-		}
-		else
-		{
-			setHostileTo(mob, type, 3, condition, noSubclass);
-		}
+		setHostileTo(mob, type, getTargetPlayerWrappedGoal(mob).map(WrappedGoal::getPriority).orElse(3), condition, noSubclass);
 	}
 
 	/**
@@ -150,28 +154,52 @@ public class NFUAIStatics {
 	}
 
 	/**
-	 * Get the goal for targeting player of a mob, or null if not having one.
+	 * Get the {@link WrappedGoal} for targeting player of a mob, or empty if not having one.
 	 * It returns {@link WrappedGoal}, which contains a {@code NearestAttackableTargetGoal<Player>} or {@code NearestAttackableTargetGoal<ServerPlayer>.}
+	 * In case it has multiple target-player goals, return a random one.
 	 */
-	public static WrappedGoal getTargetPlayerGoal(Mob mob)
-	{
-		for (WrappedGoal goal: mob.targetSelector.getAvailableGoals()) {
-			if(goal.getGoal() instanceof NearestAttackableTargetGoal<?> tg)
-			{
-				if (Player.class.isAssignableFrom(getTargetType(tg)))
-				{
-					return goal;
-				}
-			}
-		}
-		return null;
+	public static Optional<WrappedGoal> getTargetPlayerWrappedGoal(Mob mob) {
+		return mob.targetSelector.getAvailableGoals().stream().filter(wg ->
+				wg.getGoal() instanceof NearestAttackableTargetGoal<?> tg
+				&& Player.class.isAssignableFrom(getTargetType(tg)))
+			.findAny();
+	}
+
+	/**
+	 * Get the {@link Goal} for targeting player of a mob, or empty if not having one.
+	 * In case it has multiple target-player goals, return a random one.
+	 */
+	@SuppressWarnings("unchecked")
+	public static Optional<NearestAttackableTargetGoal<? extends Player>> getTargetPlayerGoal(Mob mob) {
+		return getTargetPlayerWrappedGoal(mob).map(wg -> (NearestAttackableTargetGoal<? extends Player>) (wg.getGoal()));
+	}
+
+	/**
+	 * Get the {@link WrappedGoal}s for targeting player of a mob, or empty if not having one.
+	 */
+	public static List<WrappedGoal> getTargetPlayerWrappedGoals(Mob mob) {
+		return mob.targetSelector.getAvailableGoals().stream().filter(wg ->
+			wg.getGoal() instanceof NearestAttackableTargetGoal<?> tg
+				&& Player.class.isAssignableFrom(getTargetType(tg)))
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Get the {@link Goal}s for targeting player of a mob, or empty if not having one.
+	 */
+	@SuppressWarnings("unchecked")
+	public static List<NearestAttackableTargetGoal<? extends Player>> getTargetPlayerGoals(Mob mob) {
+		return mob.targetSelector.getAvailableGoals().stream().filter(wg ->
+				wg.getGoal() instanceof NearestAttackableTargetGoal<?> tg
+					&& Player.class.isAssignableFrom(getTargetType(tg)))
+			.map(wg -> (NearestAttackableTargetGoal<? extends Player>) (wg.getGoal()))
+			.collect(Collectors.toList());
 	}
 
 	/**
 	 * Add a targeting condition to a hostile target goal.
 	 * The target will be required to fulfill BOTH the old and new conditions.
 	 */
-	@SuppressWarnings("unchecked")
 	public static void addAndTargetingCondition(NearestAttackableTargetGoal<?> goal, Predicate<LivingEntity> condition)
 	{
 		TargetingConditions goalCond = getTargetConditions(goal);	// targetConditions
@@ -188,7 +216,6 @@ public class NFUAIStatics {
 	 * The target will be required to fulfill EITHER the old or new condition.
 	 * Warning: if there isn't a previously existing check, it will not work because the old condition is always true.
 	 */
-	@SuppressWarnings("unchecked")
 	public static void addOrTargetingCondition(NearestAttackableTargetGoal<?> goal, Predicate<LivingEntity> condition)
 	{
 		TargetingConditions goalCond = getTargetConditions(goal);	// targetConditions
