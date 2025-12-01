@@ -78,8 +78,17 @@ public class MobApplicableItemTable
 
 	public Optional<OutcomeProvider> getOutcomeProvider(Mob mob, ItemStack stack)
 	{
-		return entries.entrySet().stream().filter(entry -> entry.getKey().test(stack))
-            .findAny().map(Map.Entry::getValue);
+        return entries.entrySet().stream().filter(entry -> entry.getKey().test(stack))
+            // Overriding order: item > tag > registrable predicate > unparseable predicate
+            .min(Comparator.comparingInt(entry -> {
+            if (!entry.getKey().getItemMatchingList().isEmpty())
+                return 1;
+            else if (!entry.getKey().getTagMatchingList().isEmpty())
+                return 2;
+            else if (entry.getKey().getRegistrablePredicateCriterion().isPresent())
+                return 3;
+            else return 4;
+        })).map(Map.Entry::getValue);
 	}
 
 	@Override
