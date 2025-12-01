@@ -12,6 +12,8 @@ public class NFUConfigs
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_SAVE_DATA_PORTER;
 	public static final ForgeConfigSpec.BooleanValue SPEC_DEBUG_MODE;
 
+	public static final ForgeConfigSpec.BooleanValue ENABLES_FLYING_SPEED_SCALING_FIX;
+
 	static
 	{
 		BUILDER.push("common");
@@ -20,20 +22,28 @@ public class NFUConfigs
 				.define("enablesSaveDataPorter", true);
 		BUILDER.pop();
 		BUILDER.push("debug");
-		SPEC_DEBUG_MODE = BUILDER.comment("If true, it will enable debug actions defined in NaUtilsDebugStatics, like debug output in the chatting box.")
+		SPEC_DEBUG_MODE = BUILDER.comment("If true, it will enable debug actions defined in NFUDebugStatics, like debug output in the chatting box.")
 				.define("debugMode", false);
+		BUILDER.pop();
+		BUILDER.push("fixes");
+		ENABLES_FLYING_SPEED_SCALING_FIX = BUILDER.comment("Vanilla has an issue that some flying mobs' flying " +
+				"speed is not multiplied by AI speed modifiers (MC-172801). Fix this issue. If some mob's flying speed goes wrong, " +
+				"consider disabling this config entry.")
+			.define("enablesFlyingSpeedScalingFix", true);
 		BUILDER.pop();
 		CONFIG = BUILDER.build();
 	}
 	
 	public static boolean CACHED_ENABLES_SAVE_DATA_PORTER = true;
 	public static boolean CACHED_DEBUG_MODE = false;
-	public static boolean CACHED_CRASHES_WHEN_ENTITY_LOAD_FAILED = false;
+	//public static boolean CACHED_CRASHES_WHEN_ENTITY_LOAD_FAILED = false;
+	public static boolean CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = true;
 	
 	public static void refresh()
 	{
 		CACHED_ENABLES_SAVE_DATA_PORTER = SPEC_ENABLES_SAVE_DATA_PORTER.get();
 		CACHED_DEBUG_MODE = SPEC_DEBUG_MODE.get();
+		CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = ENABLES_FLYING_SPEED_SCALING_FIX.get();
 	}
 	
 	@SubscribeEvent

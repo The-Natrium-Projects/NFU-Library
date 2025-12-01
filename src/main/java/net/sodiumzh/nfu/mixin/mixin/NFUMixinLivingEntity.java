@@ -1,8 +1,11 @@
 package net.sodiumzh.nfu.mixin.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.world.entity.player.Player;
 import net.sodiumzh.nfu.mixin.event.entity.*;
+import net.sodiumzh.nfu.registry.NFUConfigs;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,14 +29,14 @@ public abstract class NFUMixinLivingEntity implements NFUMixin<LivingEntity>
 	@Inject(method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V",
 			at = @At(value = "INVOKE",
 				target = "Lnet/minecraft/world/damagesource/DamageSource;getEntity()Lnet/minecraft/world/entity/Entity;"))
-	private void startDie(DamageSource dmgSource, CallbackInfo callback)
+	private void nfu_startDie(DamageSource dmgSource, CallbackInfo callback)
 	{
 		MinecraftForge.EVENT_BUS.post(new LivingStartDeathEvent(caller(), dmgSource));
 	}
 	
 	@ModifyVariable(method = "dropAllDeathLoot(Lnet/minecraft/world/damagesource/DamageSource;)V",
 			at = @At("STORE"), ordinal = 0)
-	private boolean canDropPlayerKill(boolean original, @Local(ordinal = 0, argsOnly = true) DamageSource dmg)
+	private boolean nfu_canDropPlayerKill(boolean original, @Local(ordinal = 0, argsOnly = true) DamageSource dmg)
 	{
 		var event = new LootCheckPlayerKillEvent(this.caller(), dmg, original);
 		MinecraftForge.EVENT_BUS.post(event);
@@ -45,7 +48,7 @@ public abstract class NFUMixinLivingEntity implements NFUMixin<LivingEntity>
 
 	@WrapOperation(method = "actuallyHurt(Lnet/minecraft/world/damagesource/DamageSource;F)V",
 	at = @At(value = "INVOKE", target = "net/minecraft/world/entity/LivingEntity.setAbsorptionAmount (F)V"))
-	private void postDamageTakenEvent(LivingEntity instance, float pAbsorptionAmount, Operation<Void> original,
+	private void nfu_postDamageTakenEvent(LivingEntity instance, float pAbsorptionAmount, Operation<Void> original,
 		@Local(argsOnly = true) DamageSource damageSource, @Local(ordinal = 1) float amount) {
 		original.call(instance, pAbsorptionAmount);
 		if (amount > 0f)
@@ -53,13 +56,23 @@ public abstract class NFUMixinLivingEntity implements NFUMixin<LivingEntity>
 	}
 
 	@Inject(method = "aiStep()V", at = @At("HEAD"))
-	private void postStartBaseAiStepEvent(CallbackInfo ci) {
+	private void nfu_postStartBaseAiStepEvent(CallbackInfo ci) {
 		MinecraftForge.EVENT_BUS.post(new LivingStartBaseAiStepEvent(caller()));
 	}
 
 	@Inject(method = "aiStep()V", at = @At("TAIL"))
-	private void postEndBaseAiStepEvent(CallbackInfo ci) {
+	private void nfu_postEndBaseAiStepEvent(CallbackInfo ci) {
 		MinecraftForge.EVENT_BUS.post(new LivingEndBaseAiStepEvent(caller()));
+	}
+
+	@ModifyReturnValue(method = "getFlyingSpeed()F", at = @At("RETURN"))
+	private float nfu_fixMC_172801_FlyingSpeedIssue(float original) {
+		if (!NFUConfigs.CACHED_ENABLES_FLYING_SPEED_SCALING_FIX)
+			return original;
+		// Filter cases, in order to prevent conflict when another mod also fixed this issue by mixin
+		if (original == 0.02f && this.caller().getSpeed() != 1.0f && ! (this.caller().getControllingPassenger() instanceof Player))
+			return original * 2.5f * this.caller().getSpeed();
+		else return original;
 	}
 
 }
