@@ -9,6 +9,7 @@ import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.item.debug.DebugAISwitchItem;
 import net.sodiumzh.nfu.item.debug.DebugMobRemoverItem;
 import net.sodiumzh.nfu.item.debug.DebugTargetSetterItem;
+import net.sodiumzh.nfu.item.debug.TagDisplayerItem;
 
 public class NFUItemRegistry
 {
@@ -31,4 +32,7 @@ public class NFUItemRegistry
 					.description(DebugMobRemoverItem::getModeDesc)
 					.descTranslatable("info.nfulib.item.debug_mob_remover_switch_mode")
 					.cast());
+
+	public static final RegistryObject<TagDisplayerItem> TAG_DISPLAYER = NAUTILS_ITEMS.register("tag_displayer",
+		() -> new TagDisplayerItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
 }
