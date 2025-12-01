@@ -31,10 +31,11 @@ public class NFULibrary {
 	public NFULibrary() {
 		IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, NFUConfigs.CONFIG);
+		modEventBus.addListener(NFUConfigs::loadConfig);
 		NFUItems.NAUTILS_ITEMS.register(modEventBus);
 		NFUEntityDataSerializers.SERIALIZERS.register(modEventBus);
 		NFUEntityTypes.ENTITY_TYPES.register(modEventBus);
-
+		NFUEffects.EFFECTS.register(modEventBus);
 
 		// Custom registry related
 		NFURegistries.init();
