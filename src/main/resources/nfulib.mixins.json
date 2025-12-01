@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "nfulib.refmap.json",
   "mixins": [
+    "NFUAreaEffectCloudMixin",
     "NFUMerchantMenuMixin",
     "NFUMixinBlockItem",
     "NFUMixinEnderMan",
@@ -23,7 +24,8 @@
     "NFUMixinServerLevel",
     "NFUMixinServerPlayer",
     "NFUMixinServerPlayerGameMode",
-    "NFUMixinThrownTrident"
+    "NFUMixinThrownTrident",
+    "NFUThrownPotionMixin"
   ],
   "client": [
     "NFUMerchantScreenMixin",
