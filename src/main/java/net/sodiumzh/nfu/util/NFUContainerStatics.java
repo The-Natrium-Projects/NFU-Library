@@ -1,23 +1,26 @@
 package net.sodiumzh.nfu.util;
 
+import java.util.*;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.annotation.Nullable;
+
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.sodiumzh.nfu.container.MapPair;
 import net.sodiumzh.nfu.math.ThreadSafeRandomSource;
 import net.sodiumzh.nfu.math.WeightedRandomSelector;
 
-import javax.annotation.Nullable;
-import java.util.*;
-import java.util.function.BiPredicate;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 /**
  * Utility static methods for containers (List, Set, Map, etc).
  */
 public class NFUContainerStatics
 {
+	
 	private static final RandomSource RND = new ThreadSafeRandomSource();
 	
 	/**
@@ -521,11 +524,18 @@ public class NFUContainerStatics
 		fillInto.addAll(list.stream().map(cast).toList());
 	}
 	
+	public static <T> Set<T> getRandomSubset(Set<T> parent, int subsetSize, RandomSource rnd)
+	{
+		if (subsetSize > parent.size()) return new HashSet<>(parent);
+		List<Integer> pickedIndexes = NFUMathStatics.getRandomIntegerSequence(parent.size(), subsetSize, true, rnd);
+		List<T> list = parent.stream().toList();
+		return pickedIndexes.stream().map(list::get).collect(Collectors.toSet());
+	}
+
 	public static <T> Set<T> getRandomSubset(Set<T> parent, int subsetSize)
 	{
-		if (subsetSize > parent.size())
-			throw new IllegalArgumentException("subsetSize is larger than parent size.");
-		List<Integer> pickedIndexes = NFUMathStatics.getRandomIntegerSequence(parent.size(), subsetSize, true);
+		if (subsetSize > parent.size()) return new HashSet<>(parent);
+		List<Integer> pickedIndexes = NFUMathStatics.getRandomIntegerSequence(parent.size(), subsetSize, true, RND);
 		List<T> list = parent.stream().toList();
 		return pickedIndexes.stream().map(list::get).collect(Collectors.toSet());
 	}
@@ -609,5 +619,59 @@ public class NFUContainerStatics
 			res.put(i, values[i]);
 		}
 		return res;
+	}
+
+	/**
+	 * Check if two collections include the same element set. Element appearance counts are ignored.
+	 * <p>E.g. {a, a, b, b, c, c} and {a, b, c} => true; {a, b, c, d} and {a, b, c} => false.
+	 */
+	public static boolean unorderedUniqueEquals(Collection<?> a, Collection<?> b) {
+		for (Object elem: a) {
+			if (!b.contains(elem)) return false;
+		}
+		for (Object elem: b) {
+			if (!a.contains(elem)) return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Check if two containers contain identical elements with identical counts, ignoring order.
+	 */
+	public static boolean unorderedContainerEquals(Collection<?> c1, Collection<?> c2) {
+		if (c1.size() != c2.size()) {
+			return false;
+		}
+		// Count occurrences of each element in c1
+		Map<Object, Integer> countMap = new HashMap<>();
+		for (Object elem : c1) {
+			countMap.merge(elem, 1, Integer::sum);
+		}
+		// Subtract counts based on c2
+		for (Object elem : c2) {
+			Integer count = countMap.get(elem);
+			if (count == null) {
+				// Element not found in c1
+				return false;
+			}
+			if (count == 1) {
+				countMap.remove(elem);
+			} else {
+				countMap.put(elem, count - 1);
+			}
+		}
+		// If map is empty, both collections had identical counts
+		return countMap.isEmpty();
+	}
+
+	/**
+	 * Compare if two lists have identical elements on each index.
+	 */
+	public static boolean listEquals(List<?> a, List<?> b) {
+		if (a.size() != b.size()) return false;
+		for (int i = 0; i < a.size(); ++i) {
+			if (!Objects.equals(a.get(i), b.get(i))) return false;
+		}
+		return true;
 	}
 }
