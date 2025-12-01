@@ -57,7 +57,7 @@ public class MobRespawnInfo implements INBTSerializable<CompoundTag>
 		this.beforeSave(mob);
 		this.type = (EntityType<? extends Mob>) mob.getType();
 		this.info = new CompoundTag();
-		mob.save(info);
+		mob.saveWithoutId(info);
 		//this.tag.put("mob_nbt", nbt);
 		this.afterSave(mob, info);
 	}
