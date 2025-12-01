@@ -402,11 +402,23 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
     /**
      * Shoot this projectile to a given position.
      */
-    public void shootTo(Vec3 target, float speed, float inaccuracy) {
-        Vec3 v = target.subtract(this.getBoundingBox().getCenter()).normalize();
-        this.shoot(v.x, v.y, v.z, speed, inaccuracy);
+    public void shootTo(Vec3 target, float speed, float inaccuracy, double compensateGravityMaxOffset) {
+        // calculate compensation
+        // Calculate the expected offset and add an upward offset to compensate it. This will bring an error
+        // but ignorable when the pitch is not very high
+        Vec3 s = target.subtract(this.getBoundingBox().getCenter());
+        double tSqr = s.lengthSqr() / speed / speed;
+        double compensate = Math.min(this.getGravity() * tSqr / 2d, compensateGravityMaxOffset);
+        Vec3 direction = s.add(0d, compensate, 0d).normalize();
+        this.shoot(direction.x, direction.y, direction.z, speed, inaccuracy);
     }
 
+    /**
+     * Shoot this projectile to a given position.
+     */
+    public void shootTo(Vec3 target, float speed, float inaccuracy) {
+        shootTo(target, speed, inaccuracy, 0.5d);
+    }
 
     /**
      * Set position on server, and sync to client. Will not do anything on client.
