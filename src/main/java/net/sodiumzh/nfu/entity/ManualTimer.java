@@ -39,8 +39,8 @@ public class ManualTimer<T> {
      */
     public void update() {
         timedUpObjects.clear();
-        Stream<Map.Entry<T, Integer>> entryStream = timer.entrySet().stream();
-        entryStream.forEach(e -> {
+        List<Map.Entry<T, Integer>> entries = timer.entrySet().stream().toList();
+        entries.forEach(e -> {
             if (e.getValue() <= 1) {
                 timer.remove(e.getKey());
                 timedUpObjects.add(e.getKey());
