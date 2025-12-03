@@ -1,11 +1,14 @@
 package net.sodiumzh.nfu.exception;
 
+import java.io.Serial;
+
 /**
  * Thrown when something should be invoked only on a certain side, but actually invoked on another side.
  */
 public class WrongSideException extends RuntimeException
 {
 
+	@Serial
 	private static final long serialVersionUID = 1990333858334025102L;
 
 	public WrongSideException(String msg)
@@ -17,25 +20,5 @@ public class WrongSideException extends RuntimeException
 	{
 		super(msg);
 	}
-	
-	public static WrongSideException serverOnly(String msg)
-	{
-		return new WrongSideException(msg + " Only on server.");
-	}
-	
-	public static WrongSideException serverOnly(String msg, Throwable cause)
-	{
-		return new WrongSideException(msg + " Only on server.", cause);
-	}
 
-	public static WrongSideException clientOnly(String msg)
-	{
-		return new WrongSideException(msg + " Only on client.");
-	}
-	
-	public static WrongSideException clientOnly(String msg, Throwable cause)
-	{
-		return new WrongSideException(msg + " Only on client.", cause);
-	}
-	
 }
