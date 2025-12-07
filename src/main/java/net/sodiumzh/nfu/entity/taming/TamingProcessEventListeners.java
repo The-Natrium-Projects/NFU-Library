@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
 import net.sodiumzh.nfu.entity.anger.CMobAngerHandlerProvider;
-import net.sodiumzh.nfu.registry.NFUCaps;
+import net.sodiumzh.nfu.registry.NFUCapabilities;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE, modid = NFULibrary.MOD_ID)
 public class TamingProcessEventListeners {

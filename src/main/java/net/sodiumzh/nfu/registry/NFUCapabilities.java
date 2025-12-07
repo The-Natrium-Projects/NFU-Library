@@ -15,7 +15,7 @@ import net.sodiumzh.nfu.entity.taming.CVanillaAnimalTamingProcessHandler;
 import net.sodiumzh.nfu.entity.taming.VanillaAnimalTamingProcess;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = NFULibrary.MOD_ID)
-public class NFUCaps {
+public class NFUCapabilities {
 
     /**
      * A default anger handler.

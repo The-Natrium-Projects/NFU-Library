@@ -64,14 +64,4 @@ public abstract class NFUMixinLivingEntity implements NFUMixin<LivingEntity>
 		MinecraftForge.EVENT_BUS.post(new LivingEndBaseAiStepEvent(caller()));
 	}
 
-	@ModifyReturnValue(method = "getFlyingSpeed()F", at = @At("RETURN"))
-	private float nfu_fixMC_172801_FlyingSpeedIssue(float original) {
-		if (!NFUConfigs.CACHED_ENABLES_FLYING_SPEED_SCALING_FIX)
-			return original;
-		// Filter cases, in order to prevent conflict when another mod also fixed this issue by mixin
-		if (original == 0.02f && this.caller().getSpeed() != 1.0f && ! (this.caller().getControllingPassenger() instanceof Player))
-			return original * 2.5f * this.caller().getSpeed();
-		else return original;
-	}
-
 }

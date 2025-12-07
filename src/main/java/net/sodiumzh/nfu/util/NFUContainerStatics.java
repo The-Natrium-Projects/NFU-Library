@@ -520,7 +520,7 @@ public class NFUContainerStatics
 		fillInto.clear();
 		fillInto.addAll(list.stream().map(cast).toList());
 	}
-	
+
 	public static <T> Set<T> getRandomSubset(Set<T> parent, int subsetSize, Random rnd)
 	{
 		if (subsetSize > parent.size()) return new HashSet<>(parent);

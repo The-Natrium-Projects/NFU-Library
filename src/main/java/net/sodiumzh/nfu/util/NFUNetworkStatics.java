@@ -122,7 +122,7 @@ public class NFUNetworkStatics
 	}
 
 	public static void sendToServer(Player player, SimpleChannel channel, Packet<?> message) {
-		if (!player.level().isClientSide) return;
+		if (!player.level.isClientSide) return;
 		channel.sendToServer(message);
 	}
 

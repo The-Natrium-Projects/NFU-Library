@@ -26,7 +26,7 @@ public class ClientOnly<T> {
     }
 
     public ClientOnly(@Nullable T obj, Entity levelContext) {
-        this(obj, levelContext == null ? null : levelContext.level());
+        this(obj, levelContext == null ? null : levelContext.level);
     }
 
     public ClientOnly(@Nullable T obj) {

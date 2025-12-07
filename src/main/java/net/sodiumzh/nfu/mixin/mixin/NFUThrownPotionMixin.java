@@ -15,7 +15,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.entity.ThrownPotionAddEffectEvent;
 import net.sodiumzh.nfu.mixin.event.entity.ThrownPotionEffectCloudEvent;
-import net.sodiumzh.nfu.registry.NFUEffects;
 import net.sodiumzh.nfu.util.NFUContainerStatics;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -67,8 +66,8 @@ public class NFUThrownPotionMixin implements NFUMixin<ThrownPotion> {
     }
 
     @Inject(method = "makeAreaOfEffectCloud(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/alchemy/Potion;)V",
-        at = @At(value = "INVOKE", target = "net/minecraft/world/entity/projectile/ThrownPotion.level ()Lnet/minecraft/world/level/Level;",
-        ordinal = 1), cancellable = true)
+        at = @At(value = "INVOKE", target = "net/minecraft/world/level/Level.addFreshEntity (Lnet/minecraft/world/entity/Entity;)Z",
+            ordinal = 1), cancellable = true)
     private void nfu_PostAddCloudEventSpawn(
         ItemStack pStack,
         Potion pPotion,
