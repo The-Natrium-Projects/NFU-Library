@@ -1,8 +1,6 @@
 package net.sodiumzh.nfu.mixin.mixin;
 
-import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
-import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.savedata.redirector.SaveDataLocationRedirectorEventListeners;
 import org.spongepowered.asm.mixin.Mixin;

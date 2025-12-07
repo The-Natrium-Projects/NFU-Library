@@ -1,7 +1,5 @@
 package net.sodiumzh.nfu.item.debug;
 
-import javax.annotation.Nullable;
-
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -14,6 +12,8 @@ import net.minecraft.world.level.Level;
 import net.sodiumzh.nfu.item.NFUItem;
 import net.sodiumzh.nfu.util.NFUEntityStatics;
 import net.sodiumzh.nfu.util.NFUMiscStatics;
+
+import javax.annotation.Nullable;
 
 /**
  * NOT IMPLEMENTED!!!!

@@ -1,12 +1,12 @@
 package net.sodiumzh.nfu.math;
 
-import java.util.Comparator;
-import java.util.HashMap;
-
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.phys.Vec3;
 import net.sodiumzh.nfu.util.NFUContainerStatics;
 import net.sodiumzh.nfu.util.NFUInfoStatics;
+
+import java.util.Comparator;
+import java.util.HashMap;
 
 public class HtmlColors
 {

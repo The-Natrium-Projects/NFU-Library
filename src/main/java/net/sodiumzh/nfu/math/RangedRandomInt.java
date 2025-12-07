@@ -1,12 +1,11 @@
 package net.sodiumzh.nfu.math;
 
-import java.util.List;
-import java.util.function.Supplier;
-
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-
 import net.minecraft.util.RandomSource;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * A {@code RangedRandomInt} is a random integer generator with a range and

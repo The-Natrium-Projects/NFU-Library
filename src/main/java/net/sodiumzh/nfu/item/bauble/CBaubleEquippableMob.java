@@ -1,12 +1,11 @@
 package net.sodiumzh.nfu.item.bauble;
 
-import java.util.Optional;
-import java.util.Set;
-
-import javax.annotation.Nonnull;
-
 import net.minecraft.world.entity.Mob;
 import net.sodiumzh.nfu.annotation.DontOverride;
+
+import javax.annotation.Nonnull;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Capability for all mobs that can equip baubles. Mobs registered in {@link RegisterBaublesEvent} will be automatically added this capability.

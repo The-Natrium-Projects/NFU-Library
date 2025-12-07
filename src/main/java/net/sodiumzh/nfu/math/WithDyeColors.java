@@ -1,9 +1,9 @@
 package net.sodiumzh.nfu.math;
 
+import net.minecraft.world.item.DyeColor;
+
 import java.util.HashMap;
 import java.util.Random;
-
-import net.minecraft.world.item.DyeColor;
 
 /**
  * A collection for objects that have variants of the 16 vanilla dye colors, e.g. dyes, wools, terracottas, etc.

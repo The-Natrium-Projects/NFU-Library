@@ -1,13 +1,13 @@
 package net.sodiumzh.nfu.entity;
 
-import java.util.HashSet;
-import java.util.UUID;
-import java.util.function.Predicate;
-
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.sodiumzh.nfu.annotation.DontCallManually;
+
+import java.util.HashSet;
+import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * A {@code ConditionalAttributeModifier} is a wrapped {@link AttributeModifier} that updates on tick

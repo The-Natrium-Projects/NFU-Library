@@ -1,7 +1,5 @@
 package net.sodiumzh.nfu.savedata.redirector;
 
-import java.util.Set;
-
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -13,6 +11,8 @@ import net.sodiumzh.nfu.mixin.event.entity.EntityLoadEvent;
 import net.sodiumzh.nfu.mixin.event.level.LevelCapabilityDataLoadEvent;
 import net.sodiumzh.nfu.util.NFUContainerStatics;
 import net.sodiumzh.nfu.util.NFUNBTStatics;
+
+import java.util.Set;
 
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class SaveDataLocationRedirectorEventListeners

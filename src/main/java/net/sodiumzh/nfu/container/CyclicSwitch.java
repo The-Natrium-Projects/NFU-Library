@@ -1,9 +1,9 @@
 package net.sodiumzh.nfu.container;
 
+import com.mojang.logging.LogUtils;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.mojang.logging.LogUtils;
 
 /**
  * A {@code CyclicSwitch} is a ordered collection that can be switched cyclicly, 

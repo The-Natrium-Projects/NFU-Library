@@ -1,10 +1,10 @@
 package net.sodiumzh.nfu.annotation;
 
-import static java.lang.annotation.ElementType.METHOD;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.METHOD;
 
 /**
  * Labels that the default method is not recommended to override.

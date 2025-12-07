@@ -4,7 +4,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.eventbus.api.*;
+import net.minecraftforge.eventbus.api.Event;
 import net.sodiumzh.nfu.event.NFULivingEvent;
 
 /**

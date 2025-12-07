@@ -1,7 +1,5 @@
 package net.sodiumzh.nfu.item.bauble;
 
-import java.util.function.Predicate;
-
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,6 +9,7 @@ import net.sodiumzh.nfu.util.NFUInfoStatics;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.function.Predicate;
 
 /**
  * A checker for if a bauble item can be equipped in a given bauble slot of a given living entity.

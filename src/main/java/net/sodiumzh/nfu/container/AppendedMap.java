@@ -1,11 +1,11 @@
 package net.sodiumzh.nfu.container;
 
+import com.mojang.logging.LogUtils;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import com.mojang.logging.LogUtils;
 
 /**
  * An {@code AppendedMap} is a map containing two parts. One is a reference of an external map, the other is internal.

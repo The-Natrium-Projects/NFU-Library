@@ -1,12 +1,12 @@
 package net.sodiumzh.nfu.entity;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.UUID;
-
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.UUID;
 
 public class AttributeModifierSwitch
 {

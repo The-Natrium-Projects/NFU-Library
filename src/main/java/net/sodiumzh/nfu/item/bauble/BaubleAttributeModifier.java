@@ -1,12 +1,5 @@
 package net.sodiumzh.nfu.item.bauble;
 
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Predicate;
-
-import javax.annotation.Nullable;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
@@ -14,6 +7,12 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.container.Tuple3;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * A {@code BaubleAttributeModifier} is a wrapped attribute modifier which is dynamically added and removed in bauble ticks. 

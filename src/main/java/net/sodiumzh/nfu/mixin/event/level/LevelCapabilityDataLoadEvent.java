@@ -1,11 +1,10 @@
 package net.sodiumzh.nfu.mixin.event.level;
 
-import javax.annotation.Nonnull;
-
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.util.LevelCapabilityData;
 import net.minecraftforge.eventbus.api.Event;
+
+import javax.annotation.Nonnull;
 
 /**
  * Posted before loading Level capabilities from data, allowing to modify the nbt before loading.

@@ -1,7 +1,5 @@
 package net.sodiumzh.nfu.mixin.event.entity;
 
-import javax.annotation.Nullable;
-
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -10,6 +8,8 @@ import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinProjectile;
+
+import javax.annotation.Nullable;
 
 /**
  * Fired when any projectile hit something, either block or entity.

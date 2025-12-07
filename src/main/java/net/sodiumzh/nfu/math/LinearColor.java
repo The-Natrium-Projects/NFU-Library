@@ -1,12 +1,11 @@
 package net.sodiumzh.nfu.math;
 
-import net.sodiumzh.nfu.registry.NFUEntityDataSerializers;
-import net.sodiumzh.nfu.util.NFUMathStatics;
-
 import net.minecraft.core.Vec3i;
+import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.network.syncher.EntityDataSerializer;
+import net.sodiumzh.nfu.registry.NFUEntityDataSerializers;
+import net.sodiumzh.nfu.util.NFUMathStatics;
 
 /**
  * A {@code LinearColor} is a representation of a color by three 0-1 double values (i.e. normalized values) of RGB. 

@@ -1,11 +1,11 @@
 package net.sodiumzh.nfu.capability;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.capabilities.AutoRegisterCapability;
 import net.minecraftforge.common.capabilities.Capability;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A base interface for entity capabilities that are automatically ticked. Needs registration.

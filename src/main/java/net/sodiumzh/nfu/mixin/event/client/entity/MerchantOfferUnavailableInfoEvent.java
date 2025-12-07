@@ -1,7 +1,5 @@
 package net.sodiumzh.nfu.mixin.event.client.entity;
 
-import javax.annotation.Nullable;
-
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.npc.ClientSideMerchant;
@@ -13,6 +11,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.Event;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
+
+import javax.annotation.Nullable;
 
 /**
  * Posted on the player's mouse pointing on merchant menu's crossed arrow when the offer is not available.

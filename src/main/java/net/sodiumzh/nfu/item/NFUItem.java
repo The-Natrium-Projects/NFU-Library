@@ -1,14 +1,5 @@
 package net.sodiumzh.nfu.item;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.*;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.swing.text.html.Option;
-
 import com.mojang.logging.LogUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -28,6 +19,13 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinItemInput;
 import net.sodiumzh.nfu.object.ICastable;
 import net.sodiumzh.nfu.util.NFUInfoStatics;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.*;
 
 /**
  * {@code NaUtilsItem} is an {@link Item} template with some simplifications, e.g. foiling, hovering descriptions, etc.

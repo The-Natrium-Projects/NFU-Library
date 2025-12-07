@@ -2,7 +2,6 @@ package net.sodiumzh.nfu.container;
 
 import net.minecraft.util.Tuple;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Objects;
 

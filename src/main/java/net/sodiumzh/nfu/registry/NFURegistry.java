@@ -7,26 +7,23 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.util.thread.EffectiveSide;
 import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.RegistryObject;
 import net.sodiumzh.nfu.eventhandler.NFUSetupEventHandlers;
 import net.sodiumzh.nfu.exception.DuplicateRegistryEntryException;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.object.DirectedGraphNode;
 import net.sodiumzh.nfu.object.LimitedMutable;
-import net.sodiumzh.nfu.savedata.redirector.SaveDataLocationRedirector;
-import net.sodiumzh.nfu.savedata.redirector.SaveDataLocationRedirectorEventListeners;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import org.jetbrains.annotations.Nullable;
-import net.minecraftforge.registries.RegistryObject;
+
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 /**
  * A simple registry. It's internally a {@link HashBiMap} with keys of {@link ResourceLocation}s.
  * Note that this is NOT a part of Minecraft registry system.

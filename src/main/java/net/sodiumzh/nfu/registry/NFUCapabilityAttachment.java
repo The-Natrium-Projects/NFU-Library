@@ -7,8 +7,8 @@ import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
-import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
 import net.sodiumzh.nfu.capability.CEntityDataCapability;
+import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
 import net.sodiumzh.nfu.entity.anger.CMobAngerHandlerProvider;
 import net.sodiumzh.nfu.entity.anger.IUsesDefaultAngerHandler;
 

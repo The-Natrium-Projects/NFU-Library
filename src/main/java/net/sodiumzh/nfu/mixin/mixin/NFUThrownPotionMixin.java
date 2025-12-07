@@ -15,7 +15,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.entity.ThrownPotionAddEffectEvent;
 import net.sodiumzh.nfu.mixin.event.entity.ThrownPotionEffectCloudEvent;
-import net.sodiumzh.nfu.registry.NFUEffects;
 import net.sodiumzh.nfu.util.NFUContainerStatics;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

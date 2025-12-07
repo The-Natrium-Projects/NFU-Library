@@ -1,7 +1,5 @@
 package net.sodiumzh.nfu.entity.vanillatrade;
 
-import javax.annotation.Nullable;
-
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.RandomSource;
@@ -12,6 +10,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
+
+import javax.annotation.Nullable;
 
 /**
  * <b>Abstract</b> implementation of {@code CVanillaMerchant}. This class doesn't allow to instantiate directly. 

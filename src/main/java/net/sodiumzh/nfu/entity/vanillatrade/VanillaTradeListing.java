@@ -1,9 +1,5 @@
 package net.sodiumzh.nfu.entity.vanillatrade;
 
-import java.util.ArrayList;
-
-import javax.annotation.Nullable;
-
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.VillagerTrades;
@@ -13,6 +9,9 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.sodiumzh.nfu.math.RangedRandomInt;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
 
 /**
  * A default implementation of {@link IVanillaTradeListing} (extending vanilla {@link VillagerTrades.ItemListing}).

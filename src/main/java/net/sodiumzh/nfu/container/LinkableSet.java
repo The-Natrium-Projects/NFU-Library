@@ -1,13 +1,13 @@
 package net.sodiumzh.nfu.container;
 
+import com.mojang.logging.LogUtils;
+import net.sodiumzh.nfu.object.DirectedGraphNode;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.mojang.logging.LogUtils;
-import net.sodiumzh.nfu.object.DirectedGraphNode;
 
 /**
  * A {@code LinkableSet} is a {@link Set} with attachments to other {@link Set}s. Query of the {@code LinkableSet} will

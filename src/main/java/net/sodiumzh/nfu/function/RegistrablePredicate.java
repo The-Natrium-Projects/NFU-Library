@@ -2,7 +2,6 @@ package net.sodiumzh.nfu.function;
 
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.util.NFUInfoStatics;
 

@@ -1,10 +1,11 @@
 package net.sodiumzh.nfu.container;
 
-import net.minecraft.util.Tuple;
 import org.apache.logging.log4j.util.TriConsumer;
-import org.checkerframework.checker.units.qual.K;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 

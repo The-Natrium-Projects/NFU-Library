@@ -1,9 +1,9 @@
 package net.sodiumzh.nfu.capability;
 
-import java.util.function.Supplier;
-
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.capabilities.Capability;
+
+import java.util.function.Supplier;
 
 /**
  * A default template Capability Provider for non-serializable capabilities.

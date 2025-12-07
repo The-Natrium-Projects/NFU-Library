@@ -1,17 +1,16 @@
 package net.sodiumzh.nfu.info;
 
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.sodiumzh.nfu.util.NFUContainerStatics;
+import net.sodiumzh.nfu.util.NFUInfoStatics;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
-
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.sodiumzh.nfu.util.NFUContainerStatics;
-import net.sodiumzh.nfu.util.NFUInfoStatics;
-import org.spongepowered.asm.mixin.Mutable;
 
 /**
  * A {@code ComponentBuilder} is a builder for simplifying the creation of complex {@link MutableComponent}s. It allows chain coding.

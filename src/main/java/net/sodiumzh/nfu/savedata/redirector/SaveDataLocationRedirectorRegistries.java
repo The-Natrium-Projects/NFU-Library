@@ -1,9 +1,9 @@
 package net.sodiumzh.nfu.savedata.redirector;
 
+import net.minecraft.resources.ResourceLocation;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import net.minecraft.resources.ResourceLocation;
 
 class SaveDataLocationRedirectorRegistries
 {

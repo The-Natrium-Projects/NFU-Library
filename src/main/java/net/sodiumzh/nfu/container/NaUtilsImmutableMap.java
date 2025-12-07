@@ -1,12 +1,12 @@
 package net.sodiumzh.nfu.container;
 
+import com.google.common.collect.ImmutableMap;
+import com.mojang.logging.LogUtils;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableMap;
-import com.mojang.logging.LogUtils;
 
 /**
  * An immutable map implementation that can be directly created from a generic map or an element collection.

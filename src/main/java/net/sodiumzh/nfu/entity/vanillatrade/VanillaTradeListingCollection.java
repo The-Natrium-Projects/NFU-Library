@@ -10,7 +10,7 @@ import net.sodiumzh.nfu.container.LinkableMultimap;
 import net.sodiumzh.nfu.registry.NFURegistries;
 
 import java.util.*;
- import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 
 /**
  * A {@code VanillaTradeListingCollection} is a collection of {@link IVanillaTradeListing}s. It's the minimal unit of the

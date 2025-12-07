@@ -1,12 +1,12 @@
 package net.sodiumzh.nfu.capability;
 
-import java.util.function.Supplier;
-
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.INBTSerializable;
+
+import java.util.function.Supplier;
 
 /**
  * A default template Capability Provider for serializable capabilities.
