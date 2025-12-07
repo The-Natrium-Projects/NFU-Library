@@ -14,6 +14,4 @@ public class NFUTags {
      */
     public static final TagKey<EntityType<?>> EXPLOSION_NOT_BREAKING_ITEMS =
         NFUTagStatics.createEntityTypeTag(NFULibrary.MOD_ID, "explosion_not_breaking_items");
-
-
 }

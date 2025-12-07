@@ -9,7 +9,7 @@ import net.sodiumzh.nfu.entity.anger.CMobAngerHandler;
 import net.sodiumzh.nfu.entity.taming.CVanillaAnimalTamingProcessHandler;
 import net.sodiumzh.nfu.entity.taming.VanillaAnimalTamingProcess;
 
-public class NFUCaps {
+public class NFUCapabilities {
 
     /**
      * A default anger handler.

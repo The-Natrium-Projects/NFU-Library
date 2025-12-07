@@ -26,7 +26,7 @@ public class ServerOnly<T> {
     }
 
     public ServerOnly(@Nullable T obj, Entity levelContext) {
-        this(obj, levelContext == null ? null : levelContext.level());
+        this(obj, levelContext == null ? null : levelContext.level);
     }
 
     public ServerOnly(@Nullable T obj) {

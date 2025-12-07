@@ -32,7 +32,7 @@ public class TagDisplayerItem extends NFUItem {
 
     @Override
     public InteractionResult interactLivingEntity(Player player, LivingEntity target, InteractionHand hand) {
-        if (!player.level().isClientSide) {
+        if (!player.level.isClientSide) {
             ComponentBuilder builder = ComponentBuilder.create().appendText("Entity: ").append(target.getType().getDescription())
                 .appendText(" Tags: ");
             List<TagKey<EntityType<?>>> allTags = Optional.ofNullable(ForgeRegistries.ENTITY_TYPES.tags())
@@ -45,15 +45,15 @@ public class TagDisplayerItem extends NFUItem {
             }
             NFUInfoStatics.printMessage(player, builder.build());
         }
-        return InteractionResult.sidedSuccess(player.level().isClientSide);
+        return InteractionResult.sidedSuccess(player.level.isClientSide);
     }
 
     @Override
     public InteractionResult useOn(UseOnContext pContext) {
         Player player = pContext.getPlayer();
         if (player == null) return InteractionResult.PASS;
-        BlockState bs = player.level().getBlockState(pContext.getClickedPos());
-        if (!player.level().isClientSide) {
+        BlockState bs = player.level.getBlockState(pContext.getClickedPos());
+        if (!player.level.isClientSide) {
             ComponentBuilder builder = ComponentBuilder.create().appendText("Block: ").append(bs.getBlock().getName())
                 .appendText(" Tags: ");
             List<TagKey<Block>> allTags = Optional.ofNullable(ForgeRegistries.BLOCKS.tags())
@@ -66,7 +66,7 @@ public class TagDisplayerItem extends NFUItem {
             }
             NFUInfoStatics.printMessage(player, builder.build());
         }
-        return InteractionResult.sidedSuccess(player.level().isClientSide);
+        return InteractionResult.sidedSuccess(player.level.isClientSide);
     }
 
     @Override
