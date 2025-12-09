@@ -2,9 +2,11 @@ package net.sodiumzh.nfu.entity.vanillatrade;
 
 import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.EnchantedBookItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.math.RangedRandomInt;
@@ -67,7 +69,7 @@ public class VanillaTradeListingEnchanted extends VanillaTradeListing
 	{
 		MerchantOffer offer = super.getOffer(trader, rnd);
 		Tuple<Enchantment, Integer> e = selector.select();
-		offer.getResult().enchant(e.getA(), e.getB());
+        EnchantedBookItem.addEnchantment(offer.getResult(), new EnchantmentInstance(e.getA(), e.getB()));
 		return offer;
 	}
 
