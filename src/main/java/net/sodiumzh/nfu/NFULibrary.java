@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 public class NFULibrary {
 
 	public static final String MOD_ID = "nfulib";
-	public static final String MOD_ID_LEGACY = "nautils";
+	private static final String MOD_ID_LEGACY = "nautils";
 	private static MinecraftServer server = null;
 
 	public NFULibrary() {
@@ -67,7 +67,9 @@ public class NFULibrary {
 	private void portSaveDataKeys() {
 		SaveDataLocationRedirector.get()
 			.redirectNamespace(MOD_ID_LEGACY, MOD_ID)
-			.redirectEntityCapability(new ResourceLocation("nffservices", "cap_bauble_equippable_mob"), new ResourceLocation(NFULibrary.MOD_ID, "cap_bauble_equippable_mob"));
+			.redirectEntityCapability(new ResourceLocation("nffservices", "cap_bauble_equippable_mob"), new ResourceLocation(NFULibrary.MOD_ID, "cap_bauble_equippable_mob"))
+			.redirectEntityCapability(new ResourceLocation(MOD_ID_LEGACY, "data_capability"), new ResourceLocation(MOD_ID, "data_capability"))
+			.redirectEntityCapability(new ResourceLocation(MOD_ID_LEGACY, "default_anger_handler"), new ResourceLocation(MOD_ID, "default_anger_handler"));
 	}
 
 	@Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
