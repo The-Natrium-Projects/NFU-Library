@@ -332,4 +332,15 @@ public class NFUDataStatics {
         readJsonsUnderPath(side, path, l -> true, reader);
     }
 
+    /**
+     * Convert a Json Array to list. Reflecting JsonArray#asList in later GSON versions.
+     */
+    public static List<JsonElement> jsonArrayToList(JsonArray array) {
+        List<JsonElement> out = new ArrayList<>();
+        for (var elem: array) {
+            out.add(elem);
+        }
+        return out;
+    }
+
 }
