@@ -22,10 +22,10 @@ public class TamingProcessEventListeners {
     {
         if (event.getObject() instanceof TamableAnimal tamable && event.getObject() instanceof IUsesTamingProcess utp)
         {
-            event.addCapability(new ResourceLocation(NFULibrary.MOD_ID_LEGACY, TAMING_PROCESS_HANDLER_KEY),
+            event.addCapability(new ResourceLocation(NFULibrary.MOD_ID, TAMING_PROCESS_HANDLER_KEY),
                     new NFUEntitySerializableCapProvider<>(tamable, NFUCapabilities.CAP_VANILLA_ANIMAL_TAMING_PROCESS_HANDLER_CAPABILITY,
                             () -> new CVanillaAnimalTamingProcessHandler.Impl(utp)));
-            event.addCapability(new ResourceLocation(NFULibrary.MOD_ID_LEGACY, ANGER_HANDLER_KEY),
+            event.addCapability(new ResourceLocation(NFULibrary.MOD_ID, ANGER_HANDLER_KEY),
                     new CMobAngerHandlerProvider(utp.asMob(), NFUCapabilities.CAP_VANILLA_TAMABLE_ANIMAL_ANGER_HANDLER, utp.getTamingAngerRules()));
         }
     }
