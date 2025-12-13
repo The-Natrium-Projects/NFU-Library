@@ -13,7 +13,6 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.util.thread.EffectiveSide;
 import net.minecraftforge.server.ServerLifecycleHooks;
-import net.sodiumzh.nfu.container.Tuple2;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;

@@ -1,6 +1,5 @@
 package net.sodiumzh.nfu.container;
 
-import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**

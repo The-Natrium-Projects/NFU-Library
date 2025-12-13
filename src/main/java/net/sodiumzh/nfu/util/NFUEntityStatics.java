@@ -1,11 +1,5 @@
 package net.sodiumzh.nfu.util;
 
-import java.util.*;
-import java.util.function.Predicate;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -56,6 +50,7 @@ import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerLevel;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerPlayer;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;

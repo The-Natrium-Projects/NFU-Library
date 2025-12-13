@@ -2,14 +2,13 @@ package net.sodiumzh.nfu.entity;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
-import net.minecraft.world.entity.Entity;
-import net.sodiumzh.nfu.network.NFUDataSerializer;
-import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 /**
  * A simple manually-updated timer attached to an entity.

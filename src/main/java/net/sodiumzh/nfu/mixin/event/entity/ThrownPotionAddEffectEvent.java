@@ -1,13 +1,11 @@
 package net.sodiumzh.nfu.mixin.event.entity;
 
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 @Cancelable

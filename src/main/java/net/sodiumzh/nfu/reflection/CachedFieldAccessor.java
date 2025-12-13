@@ -1,12 +1,10 @@
 package net.sodiumzh.nfu.reflection;
 
-import joptsimple.internal.Reflection;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;
 import net.sodiumzh.nfu.object.CastableObject;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;

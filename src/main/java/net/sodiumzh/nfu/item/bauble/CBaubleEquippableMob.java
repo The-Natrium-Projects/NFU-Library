@@ -1,14 +1,10 @@
 package net.sodiumzh.nfu.item.bauble;
 
-import java.util.Optional;
-import java.util.Set;
-
-import javax.annotation.Nonnull;
-
 import net.minecraft.world.entity.Mob;
 import net.sodiumzh.nfu.annotation.DontOverride;
 
 import javax.annotation.Nonnull;
+import java.util.Optional;
 import java.util.Set;
 
 /**

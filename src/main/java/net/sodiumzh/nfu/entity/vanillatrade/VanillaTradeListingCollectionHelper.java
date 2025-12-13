@@ -18,7 +18,6 @@ import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.container.Tuple3;
-import net.sodiumzh.nfu.container.Tuple4;
 import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.util.NFUDataStatics;
@@ -28,12 +27,10 @@ import javax.annotation.Nullable;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.file.OpenOption;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Utility class for constructing {@link VanillaTradeListingCollection}, specific for default 

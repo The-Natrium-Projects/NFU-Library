@@ -8,7 +8,6 @@ import net.sodiumzh.nfu.event.NFUEntityEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * Posted when an {@link AreaEffectCloud} is trying to add effect(s) to a living entity.

@@ -8,7 +8,6 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.common.util.NonNullSupplier;
 import net.minecraftforge.registries.IForgeRegistry;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

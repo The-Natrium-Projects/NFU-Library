@@ -19,14 +19,16 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinItemInput;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class NFUBlockItem extends ItemNameBlockItem implements INFUItem {
     protected List<Function<ItemStack, ? extends Component>> descriptions = new ArrayList<>();

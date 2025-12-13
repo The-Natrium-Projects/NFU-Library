@@ -2,7 +2,6 @@ package net.sodiumzh.nfu.registry;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.DeferredRegister;
@@ -15,8 +14,6 @@ import net.sodiumzh.nfu.math.LinearColor;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.network.NFUDataSerializers;
 
-import javax.swing.text.html.parser.Entity;
-import java.lang.reflect.Field;
 import java.util.*;
 
 public class NFUEntityDataSerializers

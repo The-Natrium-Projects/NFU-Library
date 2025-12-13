@@ -1,25 +1,18 @@
 package net.sodiumzh.nfu.mixin.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
-import net.sodiumzh.nfu.item.INFUItem;
-import net.sodiumzh.nfu.mixin.event.entity.LivingEntityDamageTakenEvent;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.item.INFUItem;
 import net.sodiumzh.nfu.mixin.NFUMixin;
+import net.sodiumzh.nfu.mixin.event.entity.LivingEntityDamageTakenEvent;
 import net.sodiumzh.nfu.mixin.event.entity.LivingEntitySweepHurtEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

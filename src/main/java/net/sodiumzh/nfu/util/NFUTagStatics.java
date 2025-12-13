@@ -1,9 +1,5 @@
 package net.sodiumzh.nfu.util;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -16,6 +12,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class NFUTagStatics
 {

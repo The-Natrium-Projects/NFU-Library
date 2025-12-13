@@ -3,7 +3,6 @@ package net.sodiumzh.nfu.util;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.LiteralContents;
-import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.entity.player.Player;
 
 import javax.annotation.Nullable;

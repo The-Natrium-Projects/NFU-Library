@@ -1,13 +1,11 @@
 package net.sodiumzh.nfu.network;
 
 import com.google.common.base.Function;
-import com.machinezoo.noexception.optional.OptionalToDoubleBiFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.sodiumzh.nfu.annotation.DontOverride;
 import net.sodiumzh.nfu.registry.NFURegistries;
