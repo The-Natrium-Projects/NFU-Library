@@ -4,8 +4,8 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "nfulib.refmap.json",
   "mixins": [
-    "NFUBlockItemMixin",
     "NFUAreaEffectCloudMixin",
+    "NFUBlockItemMixin",
     "NFUMerchantMenuMixin",
     "NFUMixinDeferredRegister",
     "NFUMixinEnderMan",

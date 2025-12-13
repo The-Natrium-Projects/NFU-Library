@@ -9,7 +9,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 public class RegistrableFunction<T, R> implements Function<T, R> {
 

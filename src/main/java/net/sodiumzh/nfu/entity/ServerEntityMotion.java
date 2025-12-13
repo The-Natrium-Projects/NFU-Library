@@ -4,8 +4,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.sodiumzh.nfu.util.NFUEntityStatics;
 
-import javax.annotation.Nullable;
-
 /**
  * Represents a motion (movement, acceleration) on server. Applying the motion will be synched to client.
  * <p>Movement in tick^-1. Acceleration in tick^-2.

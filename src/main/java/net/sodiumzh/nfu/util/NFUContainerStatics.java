@@ -1,17 +1,15 @@
 package net.sodiumzh.nfu.util;
 
+import net.minecraft.util.Mth;
+import net.sodiumzh.nfu.container.MapPair;
+import net.sodiumzh.nfu.math.WeightedRandomSelector;
+
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.Nullable;
-
-import net.minecraft.util.Mth;
-import net.sodiumzh.nfu.container.MapPair;
-import net.sodiumzh.nfu.math.WeightedRandomSelector;
 
 /**
  * Utility static methods for containers (List, Set, Map, etc).

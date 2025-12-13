@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.ToDoubleFunction;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 class BaubleRegistries
 {

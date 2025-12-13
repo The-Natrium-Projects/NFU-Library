@@ -1,17 +1,5 @@
 package net.sodiumzh.nfu.entity;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.*;
-import java.util.function.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import net.minecraft.resources.ResourceLocation;
@@ -34,7 +22,20 @@ import net.sodiumzh.nfu.math.RandomSelection;
 import net.sodiumzh.nfu.math.RangedRandomDouble;
 import net.sodiumzh.nfu.math.RangedRandomInt;
 import net.sodiumzh.nfu.registry.NFURegistries;
-import net.sodiumzh.nfu.util.NFUDataStatics;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A {@code MobApplicableItemTable} is a collection of information about if an {@link ItemStack}

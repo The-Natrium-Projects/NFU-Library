@@ -2,15 +2,10 @@ package net.sodiumzh.nfu.registry;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import io.netty.util.internal.ConcurrentSet;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.event.IModBusEvent;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.IForgeRegistry;
@@ -20,9 +15,7 @@ import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinDeferredRegister;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinGameData;
-import net.sodiumzh.nfu.object.LimitedMutable;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;

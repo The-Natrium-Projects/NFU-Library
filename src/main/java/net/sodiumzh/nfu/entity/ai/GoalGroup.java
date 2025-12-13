@@ -8,7 +8,6 @@ import net.sodiumzh.nfu.container.Tuple2;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class GoalGroup<T extends Mob> {
 

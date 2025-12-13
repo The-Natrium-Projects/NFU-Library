@@ -1,14 +1,11 @@
 package net.sodiumzh.nfu.math;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
 import net.sodiumzh.nfu.container.Tuple2;
 
 import javax.annotation.Nullable;
-
-import java.util.ArrayList;
+import java.util.*;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
 
 /**
  * A {@code RandomSelection} is a series of objects that will be randomly selected.

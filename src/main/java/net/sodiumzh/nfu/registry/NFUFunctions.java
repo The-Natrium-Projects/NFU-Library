@@ -1,8 +1,5 @@
 package net.sodiumzh.nfu.registry;
 
-import net.minecraft.resources.ResourceLocation;
-import net.sodiumzh.nfu.object.CastableObject;
-
 import java.util.function.Function;
 
 /**

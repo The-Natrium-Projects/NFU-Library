@@ -2,7 +2,6 @@ package net.sodiumzh.nfu.entity.vanillatrade;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.trading.MerchantOffer;
-import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.Random;
