@@ -14,7 +14,7 @@ public class NFUInfoStatics
 	/** Create a component with plain text content, equals to TextComponent in 1.18.2 */
 	public static MutableComponent createText(String str, @Nullable Consumer<MutableComponent> modifier)
 	{
-		MutableComponent res = MutableComponent.create(new LiteralContents(str));
+		MutableComponent res = new TranslatableComponent(str);
 		if (modifier != null) modifier.accept(res);
 		return res;
 	}
@@ -29,7 +29,7 @@ public class NFUInfoStatics
 	public static MutableComponent createTranslatable(String key, Consumer<MutableComponent> modifier,
 													  Object... params)
 	{
-		MutableComponent res = Component.translatable(key, params);
+		MutableComponent res = new TranslatableComponent(key, params);
 		if (modifier != null) modifier.accept(res);
 		return res;
 	}

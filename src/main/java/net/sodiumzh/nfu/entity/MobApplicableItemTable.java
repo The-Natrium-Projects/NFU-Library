@@ -1,5 +1,6 @@
 package net.sodiumzh.nfu.entity;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -512,25 +513,28 @@ public class MobApplicableItemTable
 			this.parser = parser;
 		}
 
-		public void read()
-		{
-			if (builder == null || location == null) return;
-			MinecraftServer server = NFULibrary.getServer();
-			if (server == null) return;
-			ResourceManager mgr = server.getResourceManager();
-			List<Resource> resources = mgr.getResourceStack(location);
-			for (Resource r: resources)
-			{
-				try {
-					InputStream input = r.open();
-					Reader reader = new InputStreamReader(input);
-					JsonElement json = JsonParser.parseReader(reader);
-					parser.accept(json, builder);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}
+		public void read() {
+            if (builder == null || location == null) return;
+            MinecraftServer server = NFULibrary.getServer();
+            if (server == null) return;
+            ResourceManager mgr = server.getResourceManager();
+            List<Resource> resources;
+            try {
+                resources = mgr.getResources(location);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            for (Resource r : resources) {
+                try {
+                    InputStream input = r.getInputStream();
+                    Reader reader = new InputStreamReader(input);
+                    JsonElement json = JsonParser.parseReader(reader);
+                    parser.accept(json, builder);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
 	}
 

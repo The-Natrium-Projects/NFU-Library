@@ -3,7 +3,7 @@ package net.sodiumzh.nfu.effect;
 
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
-import net.minecraftforge.event.entity.living.MobEffectEvent;
+import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -23,8 +23,8 @@ public class EmptyEffect extends MobEffect {
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE, modid = NFULibrary.MOD_ID)
     public static class EventListeners {
         @SubscribeEvent
-        public static void handle(MobEffectEvent.Applicable event) {
-            if (event.getEffectInstance().getEffect() instanceof EmptyEffect)
+        public static void handle(PotionEvent.PotionApplicableEvent event) {
+            if (event.getPotionEffect().getEffect() instanceof EmptyEffect)
                 event.setResult(Event.Result.DENY);
         }
     }

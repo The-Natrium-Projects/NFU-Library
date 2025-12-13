@@ -25,6 +25,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class NFUDataStatics {
 
@@ -257,8 +258,8 @@ public class NFUDataStatics {
     public static List<ResourceLocation> getJsonLocationsUnderPath(LogicalSide side, String path, Predicate<ResourceLocation> filter) {
         ResourceManager mgr = getResourceManager(side).orElse(null);
         if (mgr == null) return List.of();
-        return mgr.listResources(path, l -> filter.test(l) && l.getPath().endsWith(".json"))
-            .keySet().stream().toList();
+        return mgr.listResources(path, l -> filter.test(new ResourceLocation(l)) && l.endsWith(".json"))
+            .stream().toList();
     }
 
     /**
@@ -271,7 +272,7 @@ public class NFUDataStatics {
     /**
      * Get all jsons under a given path and parse them to {@link JsonElement}s.
      * <p> Note: This action is costly, as it will parse many json files. If you don't need the parsed
-     * jsons, use {@link ResourceManager#listResourceStacks} or {@link NFUDataStatics#getJsonLocationsUnderPath} instead.
+     * jsons, use {@link ResourceManager#listResources} or {@link NFUDataStatics#getJsonLocationsUnderPath} instead.
      */
     public static Multimap<ResourceLocation, JsonElement> getJsonsUnderPath(
         LogicalSide side, String path, Predicate<ResourceLocation> filter)
@@ -280,12 +281,15 @@ public class NFUDataStatics {
         ResourceManager mgr = getResourceManager(side).orElse(null);
         if (mgr == null) return res;
         // Get all resource stacks
-        mgr.listResourceStacks(path, l -> filter.test(l) && l.getPath().endsWith(".json"))
+        mgr.listResources(path, l -> filter.test(new ResourceLocation(l)) && l.endsWith(".json"))
+            .stream().collect(Collectors.toMap(r -> r, r -> {
+                try { return mgr.getResources(r);} catch (Exception e) { return List.<Resource>of(); }
+            }))
             // Try open each resource
             .forEach((key, value) ->
                 // For each resource stack, open each json, and collect them to the multimap
                 res.putAll(key, value.stream().map(r -> {
-                    try (InputStream input = r.open()) {
+                    try (InputStream input = r.getInputStream()) {
                         Reader inputReader = new InputStreamReader(input);
                         return JsonParser.parseReader(inputReader);
                     } catch (IOException | RuntimeException e) {
@@ -298,7 +302,7 @@ public class NFUDataStatics {
     /**
      * Get all jsons under a given path and parse them to {@link JsonElement}s.
      * <p> Note: This action is costly, as it will parse many json files. If you don't need the parsed
-     * jsons, use {@link ResourceManager#listResourceStacks} or {@link NFUDataStatics#getJsonLocationsUnderPath} instead.
+     * jsons, use {@link ResourceManager#listResources} or {@link NFUDataStatics#getJsonLocationsUnderPath} instead.
      */
     public static Multimap<ResourceLocation, JsonElement> getJsonsUnderPath(LogicalSide side, String path) {
         return getJsonsUnderPath(side, path, l -> true);

@@ -28,10 +28,10 @@ public class NFUEntityEventHandlers {
         }
     }
 
-    public static void onLivingTick(LivingEvent.LivingTickEvent event) {
+    public static void onLivingTick(LivingEvent.LivingUpdateEvent event) {
         if (NFUConfigs.CACHED_ENABLES_FLYING_SPEED_SCALING_FIX) {
-            Optional.ofNullable(event.getEntity().getAttribute(Attributes.FLYING_SPEED))
-                .ifPresent(i -> event.getEntity().flyingSpeed = (float) i.getValue() * 0.05f);
+            Optional.ofNullable(event.getEntityLiving().getAttribute(Attributes.FLYING_SPEED))
+                .ifPresent(i -> event.getEntityLiving().flyingSpeed = (float) i.getValue() * 0.05f);
         }
     }
 

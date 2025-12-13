@@ -1,11 +1,11 @@
 package net.sodiumzh.nfu.entity.vanillatrade;
 
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.trading.MerchantOffer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
+import java.util.Random;
 
 /**
  * A wrapper of {@link IVanillaTradeListing} that can modify its selection weight without knowing the
@@ -43,7 +43,7 @@ public class ScaledVanillaTradeListing implements IVanillaTradeListing {
 
     @Nonnull
     @Override
-    public MerchantOffer getOffer(Entity pTrader, RandomSource pRandom) {
+    public MerchantOffer getOffer(Entity pTrader, Random pRandom) {
         return original.getOffer(pTrader, pRandom);
     }
 

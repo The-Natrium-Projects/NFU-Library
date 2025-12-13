@@ -35,7 +35,7 @@ public class TagDisplayerItem extends NFUItem {
         if (!player.level.isClientSide) {
             ComponentBuilder builder = ComponentBuilder.create().appendText("Entity: ").append(target.getType().getDescription())
                 .appendText(" Tags: ");
-            List<TagKey<EntityType<?>>> allTags = Optional.ofNullable(ForgeRegistries.ENTITY_TYPES.tags())
+            List<TagKey<EntityType<?>>> allTags = Optional.ofNullable(ForgeRegistries.ENTITIES.tags())
                 .flatMap(tags -> tags.getReverseTag(target.getType()))
                 .map(tag -> tag.getTagKeys().toList()).orElse(List.of());
             for (int i = 0; i < allTags.size(); ++i) {
