@@ -14,9 +14,11 @@ public class NFUConfigs
 	
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_SAVE_DATA_PORTER;
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_TAG_FIX;
-	public static final ForgeConfigSpec.BooleanValue SPEC_DEBUG_MODE;
 
-	public static final ForgeConfigSpec.BooleanValue ENABLES_FLYING_SPEED_SCALING_FIX;
+	public static final ForgeConfigSpec.BooleanValue SPEC_DEBUG_MODE;
+	public static final ForgeConfigSpec.BooleanValue SPEC_BYPASSES_UNBOUND_KEY_CHECK;
+
+	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_FLYING_SPEED_SCALING_FIX;
 
 	static
 	{
@@ -33,9 +35,12 @@ public class NFUConfigs
 		BUILDER.push("debug");
 		SPEC_DEBUG_MODE = BUILDER.comment("If true, it will enable debug actions defined in NFUDebugStatics, like debug output in the chatting box.")
 				.define("debugMode", false);
+		SPEC_BYPASSES_UNBOUND_KEY_CHECK = BUILDER.comment("If true, unbound registry key will not throw exception. Enabling this option might fix some broken world save data " +
+			"caused by \"Unbound values in registry\" error. Use this feature at your own risk.")
+				.define("bypassesUnboundKeyCheck", false);
 		BUILDER.pop();
 		BUILDER.push("fixes");
-		ENABLES_FLYING_SPEED_SCALING_FIX = BUILDER.comment("Vanilla has an issue that some flying mobs' flying " +
+		SPEC_ENABLES_FLYING_SPEED_SCALING_FIX = BUILDER.comment("Vanilla has an issue that some flying mobs' flying " +
 				"speed is not multiplied by AI speed modifiers (MC-172801). Fix this issue. If some mob's flying speed goes wrong, " +
 				"consider disabling this config entry.")
 			.define("enablesFlyingSpeedScalingFix", true);
@@ -46,6 +51,7 @@ public class NFUConfigs
 	public static boolean CACHED_ENABLES_SAVE_DATA_PORTER = true;
 	public static boolean CACHED_ENABLES_TAG_FIX = false;
 	public static boolean CACHED_DEBUG_MODE = false;
+	public static boolean CACHED_BYPASSES_UNBOUND_KEY_CHECK = false;
 	//public static boolean CACHED_CRASHES_WHEN_ENTITY_LOAD_FAILED = false;
 	public static boolean CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = true;
 	
@@ -54,7 +60,8 @@ public class NFUConfigs
 		CACHED_ENABLES_SAVE_DATA_PORTER = SPEC_ENABLES_SAVE_DATA_PORTER.get();
 		CACHED_ENABLES_TAG_FIX = SPEC_ENABLES_TAG_FIX.get();
 		CACHED_DEBUG_MODE = SPEC_DEBUG_MODE.get();
-		CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = ENABLES_FLYING_SPEED_SCALING_FIX.get();
+		CACHED_BYPASSES_UNBOUND_KEY_CHECK = SPEC_BYPASSES_UNBOUND_KEY_CHECK.get();
+		CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = SPEC_ENABLES_FLYING_SPEED_SCALING_FIX.get();
 	}
 	
 	@SubscribeEvent
