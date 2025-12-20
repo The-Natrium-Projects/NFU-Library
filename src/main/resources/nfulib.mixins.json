@@ -5,6 +5,7 @@
   "refmap": "nfulib.refmap.json",
   "mixins": [
     "NFUAreaEffectCloudMixin",
+    "NFUMappedRegistryMixin",
     "NFUMerchantMenuMixin",
     "NFUMixinBlockItem",
     "NFUMixinEnderMan",
