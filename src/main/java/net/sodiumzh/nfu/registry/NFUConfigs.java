@@ -10,7 +10,7 @@ public class NFUConfigs
 	public static ForgeConfigSpec CONFIG;
 	
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_SAVE_DATA_PORTER;
-	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_TAG_FIX;
+	//public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_TAG_FIX;
 
 	public static final ForgeConfigSpec.BooleanValue SPEC_DEBUG_MODE;
 	public static final ForgeConfigSpec.BooleanValue SPEC_BYPASSES_UNBOUND_KEY_CHECK;
