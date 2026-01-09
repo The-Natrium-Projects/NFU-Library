@@ -6,6 +6,7 @@ import net.sodiumzh.nfu.entity.EntityAttributeProvider;
 import net.sodiumzh.nfu.entity.MobApplicableItemTable;
 import net.sodiumzh.nfu.entity.anger.MobAngerReason;
 import net.sodiumzh.nfu.entity.anger.MobAngerRules;
+import net.sodiumzh.nfu.entity.component.EntityComponentType;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListing;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListingCollection;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeRegistry;
@@ -99,5 +100,8 @@ public class NFURegistries {
      * A shortcut to {@link IFieldPattern3D#REGISTRY}.
      */
     public static final NFURegistry<IFieldPattern3D> FIELD_PATTERNS = IFieldPattern3D.REGISTRY;
+
+    public static final NFURegistry<EntityComponentType<?>> ENTITY_COMPONENT_TYPES =
+        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "entity_component_types"));
 
 }
