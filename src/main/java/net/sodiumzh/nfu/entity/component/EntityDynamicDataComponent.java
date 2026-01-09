@@ -65,6 +65,6 @@ public class EntityDynamicDataComponent extends EntityComponentBase {
 
     @Override
     public EntityComponentType<?> getType() {
-        return EntityComponentTypes.DATA.get();
+        return EntityComponentTypes.DYNAMIC_DATA.get();
     }
 }

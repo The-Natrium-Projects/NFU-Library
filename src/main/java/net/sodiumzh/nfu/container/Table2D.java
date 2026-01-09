@@ -72,30 +72,37 @@ public class Table2D<R, C, V> implements ITable2D<R, C, V> {
         this.tableFromValue.removeAll(value);
     }
 
-    public void remove(R row, C column) {
+    public Optional<V> remove(R row, C column) {
         Optional<V> oldV = this.get(row, column);
-        if (oldV.isEmpty()) return;
+        if (oldV.isEmpty()) return oldV;
         this.tableFromRow.get(row).remove(column);
         this.tableFromColumn.get(column).remove(row);
         this.tableFromValue.remove(oldV.get(), new ITable2D.KeyPair<>(row, column));
+        return oldV;
     }
 
-    public void removeRow(R row) {
-        if (!this.containsRow(row)) return;
+    public List<V> removeRow(R row) {
+        if (!this.containsRow(row)) return List.of();
+        List<V> res = new ArrayList<>();
         this.getRow(row).forEach((key, value) -> {
             this.tableFromColumn.get(key).remove(row);
             this.tableFromValue.remove(value, new ITable2D.KeyPair<>(row, key));
+            res.add(value);
         });
         this.tableFromRow.remove(row);
+        return List.copyOf(res);
     }
 
-    public void removeColumn(C column) {
-        if (!this.containsColumn(column)) return;
+    public List<V> removeColumn(C column) {
+        if (!this.containsColumn(column)) return List.of();
+        List<V> res = new ArrayList<>();
         this.getColumn(column).forEach((key, value) -> {
             this.tableFromRow.get(key).remove(column);
             this.tableFromValue.remove(value, new ITable2D.KeyPair<>(key, column));
+            res.add(value);
         });
         this.tableFromColumn.remove(column);
+        return res;
     }
 
     public Stream<ITable2D.Entry<R, C, V>> entryStream() {
@@ -155,15 +162,15 @@ public class Table2D<R, C, V> implements ITable2D<R, C, V> {
             throw new UnsupportedOperationException("Table2D.ImmutableCopy doesn't allow modification.");
         }
 
-        public void remove(R row, C column) {
+        public Optional<V> remove(R row, C column) {
             throw new UnsupportedOperationException("Table2D.ImmutableCopy doesn't allow modification.");
         }
 
-        public void removeRow(R row) {
+        public List<V> removeRow(R row) {
             throw new UnsupportedOperationException("Table2D.ImmutableCopy doesn't allow modification.");
         }
 
-        public void removeColumn(C column) {
+        public List<V> removeColumn(C column) {
             throw new UnsupportedOperationException("Table2D.ImmutableCopy doesn't allow modification.");
         }
 
