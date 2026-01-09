@@ -13,6 +13,7 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.sodiumzh.nfu.entity.anger.MobAngerReason;
 import net.sodiumzh.nfu.entity.anger.MobAngerRules;
+import net.sodiumzh.nfu.entity.component.EntityComponentStatics;
 import net.sodiumzh.nfu.item.bauble.BaubleEquippingConditions;
 import net.sodiumzh.nfu.item.bauble.NFUBaubleAPI;
 import net.sodiumzh.nfu.network.NFUDataSerializers;
@@ -42,6 +43,7 @@ public class NFULibrary {
 		mergeCustomRegistries();
 		portSaveDataKeys();
 		NFUBaubleAPI.init();
+		EntityComponentStatics.init();
 	}
 
 	private void mergeCustomRegistries()

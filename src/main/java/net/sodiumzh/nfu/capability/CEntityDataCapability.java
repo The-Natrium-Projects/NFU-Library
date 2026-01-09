@@ -3,7 +3,11 @@ package net.sodiumzh.nfu.capability;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.util.INBTSerializable;
+import net.sodiumzh.nfu.entity.component.CEntityComponentManager;
+import net.sodiumzh.nfu.entity.component.EntityComponentTypes;
+import net.sodiumzh.nfu.entity.component.EntityDynamicDataComponent;
 import net.sodiumzh.nfu.registry.NFUCapabilities;
+import org.checkerframework.checker.units.qual.C;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -13,7 +17,11 @@ import java.util.Optional;
 /**
  * A simple capability serving as an additional data container.
  */
+@Deprecated(since = "0.x.32", forRemoval = true)
+@AutoRegisterCapability
 public interface CEntityDataCapability extends INBTSerializable<CompoundTag> {
+
+    public Entity getEntity();
 
     /**
      * Get root NBT which will be serialized into/deserialized from the entity save data.
@@ -45,59 +53,83 @@ public interface CEntityDataCapability extends INBTSerializable<CompoundTag> {
      */
     public void removeTransientParameter(String key);
 
+    @Deprecated
     public static class Impl implements CEntityDataCapability {
 
         private CompoundTag nbt = new CompoundTag();
         private final Map<String, Object> transientParameters = new HashMap<>();
+        private final Entity entity;
 
-        public Impl(){}
+        public Impl(Entity e){this.entity = e;}
+
+        @Override
+        public Entity getEntity() {
+            return entity;
+        }
+
+        private Optional<EntityDynamicDataComponent> getDataComponent() {
+            return CEntityComponentManager.getManager(this.getEntity())
+                .getSubComponent("dynamic_data", EntityComponentTypes.DYNAMIC_DATA.get());
+        }
 
         @Override
         public CompoundTag getNBT() {
-            return nbt;
+            return getDataComponent()
+                .map(EntityDynamicDataComponent::getNBT).orElse(new CompoundTag());
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public <T> Optional<T> getTransientParameter(String key, Class<T> asClass) {
-            if (transientParameters.containsKey(key)
-                && asClass.isAssignableFrom(transientParameters.get(key).getClass()))
-            {
-                return Optional.of((T) (transientParameters.get(key)));
-            }
-            else return Optional.empty();
+            return getDataComponent().flatMap(c -> c.getVariable(key, asClass));
         }
 
         @Override
         public Optional<Object> getTransientParameter(String key) {
-            return Optional.ofNullable(transientParameters.get(key));
+            return getDataComponent().map(c -> c.getVariable(key));
         }
 
         @Override
         public void putTransientParameter(String key, @Nullable Object parameter) {
-            if (parameter == null)
-                transientParameters.remove(key);
-            else transientParameters.put(key, parameter);
+            getDataComponent().ifPresent(c -> c.putVariable(key, parameter));
         }
 
         @Override
         public void removeTransientParameter(String key) {
-            transientParameters.remove(key);
+
+            getDataComponent().ifPresent(c -> c.removeVariable(key));
         }
 
         @Override
         public CompoundTag serializeNBT() {
-            return nbt.copy();
+            var c = getDataComponent().orElse(null);
+            if (c != null) {
+                this.nbt.getAllKeys().forEach(key -> {
+                    if (!c.getNBT().contains(key))
+                        c.getNBT().put(key, this.nbt.get(key));
+                });
+            }
+            // Keep the porting process in the next 3 updates
+            return this.nbt.copy();
         }
 
         @Override
-        public void deserializeNBT(CompoundTag nbt) {
-            this.nbt = nbt.copy();
+        public void deserializeNBT(CompoundTag inNBT) {
+            var c = getDataComponent().orElse(null);
+            if (c != null) {
+                inNBT.getAllKeys().forEach(key -> {
+                    if (!c.getNBT().contains(key))
+                        c.getNBT().put(key, inNBT.get(key));
+                });
+            }
+            // Keep the porting process in the next 3 updates
+            this.nbt = inNBT.copy();
         }
     }
 
+    @Deprecated
     public static CEntityDataCapability get(Entity e) {
-        return e.getCapability(NFUCapabilities.CAP_ENTITY_DATA).orElse(new Impl());
+        return e.getCapability(NFUCapabilities.CAP_ENTITY_DATA).orElse(new Impl(e));
     }
 
 }
