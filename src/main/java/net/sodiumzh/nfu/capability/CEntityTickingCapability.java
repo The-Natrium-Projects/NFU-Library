@@ -8,10 +8,28 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A base interface for entity capabilities that are automatically ticked. Needs registration.
- * <p>Use {@code registerTicking()} to register capability to the ticking list after creating, otherwise
- * it won't tick correctly.
- * <p>By default, it only ticks on server. Override {@code getTickingSide} to define on which side(s) it should tick.</>
+ * <p>
+ * CEntityTickingCapability is the base interface for entity capabilities that are automatically ticked every entity tick.
+ * </p>
+ *
+ * <p>
+ * Usage:
+ * <ul>
+ *   <li>Implement this interface in your capability.</li>
+ *   <li>Register your capability for ticking by calling {@link #registerTicking(Capability)} (usually in a static block).</li>
+ *   <li>Override {@link #tick()} to define your tick logic. This will be called every tick on every entity with the capability present and on the side given by {@link #getTickingSide()} (default SERVER).</li>
+ * </ul>
+ * </p>
+ *
+ * <p>
+ * All registered ticking capabilities are automatically ticked for each entity by a global event listener that responds to EntityTickEvent (inserted via Mixin). If the capability also implements {@link CEntityTimerCapability}, {@code tickTimer()} is also called every tick on that capability.
+ * </p>
+ *
+ * <p>
+ * Ticking occurs on the logical side(s) specified by {@link #getTickingSide()}. This ticking is not affected by Forge's LivingTickEvent or LivingUpdateEvent.
+ * </p>
+ *
+ * @param <T> The entity type this capability attaches to.
  */
 @AutoRegisterCapability
 public interface CEntityTickingCapability<T extends Entity>
@@ -22,7 +40,7 @@ public interface CEntityTickingCapability<T extends Entity>
 
 	/**
 	 * Get on which side(s) it should tick. Server by default.
-	 * <p>Be careful to use {@code BOTH}, as it will tick independently on each side, and will not sync by default.</>
+	 * <p>Be careful to use {@code BOTH}, as it will tick independently on each side, and will not sync by default.</p>
 	 */
 	public default TickingSide getTickingSide()
 	{

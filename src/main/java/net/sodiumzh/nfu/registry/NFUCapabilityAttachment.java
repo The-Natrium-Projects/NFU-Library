@@ -23,8 +23,7 @@ public class NFUCapabilityAttachment {
     @SubscribeEvent
     public static void attachCaps(AttachCapabilitiesEvent<Entity> event) {
         event.addCapability(KEY_DATA_CAPABILITY, new NFUEntitySerializableCapProvider<>(
-                event.getObject(), NFUCapabilities.CAP_ENTITY_DATA, CEntityDataCapability.Impl::new));
-
+                event.getObject(), NFUCapabilities.CAP_ENTITY_DATA, () -> new CEntityDataCapability.Impl(event.getObject())));
         if (event.getObject() instanceof Mob mob && event.getObject() instanceof IUsesDefaultAngerHandler uses) {
             event.addCapability(KEY_DEFAULT_ANGER_HANDLER,
                     new CMobAngerHandlerProvider(mob, NFUCapabilities.CAP_MOB_DEFAULT_ANGER_HANDLER, uses.getAngerRules()));

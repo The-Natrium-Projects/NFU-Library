@@ -26,6 +26,11 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 
 	@Shadow public abstract InteractionResult interact(Player pPlayer, InteractionHand pHand);
 
+	@Inject(method = "<init>", at = @At("TAIL"))
+	private void onEntityConstructor(CallbackInfo ci) {
+		MinecraftForge.EVENT_BUS.post(new EntityFinishConstructionEvent(caller()));
+	}
+
 	@Inject(at = @At("HEAD"), method = "hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z", cancellable = true)
 	private void hurt(DamageSource src, float amount, CallbackInfoReturnable<Boolean> callback)
 	{
