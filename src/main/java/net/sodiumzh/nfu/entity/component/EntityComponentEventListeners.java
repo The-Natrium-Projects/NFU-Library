@@ -26,6 +26,7 @@ public class EntityComponentEventListeners {
         event.getEntity().getCapability(EntityComponentStatics.CAP_MANAGER).resolve().ifPresentOrElse(m -> {
             if (event.getEntity() instanceof IEntityComponentManagerHolder holder)
                 holder.initializeComponents(m);
+            createDefaultComponents(event.getEntity(), m);
             MinecraftForge.EVENT_BUS.post(new EntityComponentInitEvent(event.getEntity(), m));
         }, () -> { NFUDebugStatics.errorOnce(EntityComponentEventListeners.class,
             String.format("%s Missing entity component manager", event.getEntity().getName().getString())); });
@@ -33,6 +34,6 @@ public class EntityComponentEventListeners {
 
     private static void createDefaultComponents(Entity e, CEntityComponentManager mgr) {
         mgr.setRequired("/dynamic_data", EntityComponentTypes.DYNAMIC_DATA.get());
-
+        mgr.setRequired("/default_timer", EntityComponentTypes.DEFAULT_TIMER.get());
     }
 }

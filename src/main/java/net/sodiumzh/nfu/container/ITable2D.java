@@ -2,10 +2,8 @@ package net.sodiumzh.nfu.container;
 
 import org.apache.logging.log4j.util.TriConsumer;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import javax.annotation.Nullable;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -29,11 +27,11 @@ public interface ITable2D<R, C, V> {
 
     public void removeValue(V value);
 
-    public void remove(R row, C column);
+    public Optional<V> remove(R row, C column);
 
-    public void removeRow(R row);
+    public List<V> removeRow(R row);
 
-    public void removeColumn(C column);
+    public List<V> removeColumn(C column);
 
     public Stream<Entry<R, C, V>> entryStream();
 
