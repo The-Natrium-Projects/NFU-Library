@@ -1,19 +1,32 @@
 package net.sodiumzh.nfu.entity.component;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
+import net.sodiumzh.nfu.container.ITable2D;
+import net.sodiumzh.nfu.container.Table2D;
+import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 
+import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.Consumer;
 
 public abstract class EntityTimerComponent extends EntityComponentBase {
 
     private final Map<String, Timer> namedTimers = new HashMap<>();
+    private final ITable2D<UUID, String, Timer> uuidSpecificNamedTimers = new Table2D<>();
     private final Map<Runnable, Timer> delayedActionTimers = new HashMap<>();
+    private final ITable2D<UUID, Consumer<UUID>, Timer> uuidSpecificDelayedActionTimers
+            = new Table2D<>();
 
-    List<String> deadKeys = new ArrayList<>();  // Temporary list, only works on tick
-    List<Runnable> deadActions = new ArrayList<>();   // Temporary list, only works on tick
+    private List<String> expiredKeys = new ArrayList<>();  // Temporary list, only works on tick
+    private List<ITable2D.KeyPair<UUID, String>> expiredIdSpecificKeys = new ArrayList<>();
+    private List<Runnable> expiredActions = new ArrayList<>();   // Temporary list, only works on tick
+    private List<ITable2D.KeyPair<UUID, Consumer<UUID>>> expiredIdSpecificActions = new ArrayList<>();
 
     public EntityTimerComponent(Entity entity) {
         super(entity);
@@ -22,29 +35,52 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
     public void tick() {
         for (var entry: namedTimers.entrySet()) {
             entry.getValue().tick();
-            if (entry.getValue().isDead() || entry.getValue().isJustFinishedALoop()) {
+            if (entry.getValue().isExpired() || entry.getValue().isJustFinishedALoop()) {
                 if (this.getEntity() instanceof IEntityTimerComponentHolder holder)
-                    holder.onTimerExpire(entry.getKey(), entry.getValue().isDead());
-                MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), entry.getKey(), entry.getValue().isDead()));
-                if (entry.getValue().isDead()) deadKeys.add(entry.getKey());
+                    holder.onTimerExpire(entry.getKey(), entry.getValue().isExpired(), null);
+                MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), entry.getKey(), entry.getValue().isExpired(), null));
+                if (entry.getValue().isExpired()) expiredKeys.add(entry.getKey());
             }
         }
+        this.uuidSpecificNamedTimers.entryStream().forEach(entry -> {
+            entry.value().tick();
+            if (entry.value().isExpired() || entry.value().isJustFinishedALoop()) {
+                if (this.getEntity() instanceof IEntityTimerComponentHolder holder)
+                    holder.onTimerExpire(entry.columnKey(), entry.value().isExpired(), entry.rowKey());
+                MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), entry.columnKey(), entry.value().isExpired(), entry.rowKey()));
+                if (entry.value().isExpired()) expiredIdSpecificKeys.add(new ITable2D.KeyPair<>(entry.rowKey(), entry.columnKey()));
+            }
+        });
         for (var entry: delayedActionTimers.entrySet()) {
             entry.getValue().tick();
-            if (entry.getValue().isDead() || entry.getValue().isJustFinishedALoop()) {
+            if (entry.getValue().isExpired() || entry.getValue().isJustFinishedALoop()) {
                 entry.getKey().run();
-                if (entry.getValue().dead) deadActions.add(entry.getKey());
+                if (entry.getValue().expired) expiredActions.add(entry.getKey());
             }
         }
-        deadKeys.forEach(this.namedTimers::remove);
-        deadActions.forEach(this.delayedActionTimers::remove);
-        deadKeys.clear();
-        deadActions.clear();
+        this.uuidSpecificDelayedActionTimers.entryStream().forEach(entry -> {
+            entry.value().tick();
+            if (entry.value().isExpired() || entry.value().isJustFinishedALoop()) {
+                entry.columnKey().accept(entry.rowKey());
+                if (entry.value().expired) expiredIdSpecificActions.add(new ITable2D.KeyPair<>(entry.rowKey(), entry.columnKey()));
+            }
+        });
+        expiredKeys.forEach(this.namedTimers::remove);
+        expiredIdSpecificKeys.forEach(keys -> this.uuidSpecificNamedTimers.remove(keys.row(), keys.column()));
+        expiredActions.forEach(this.delayedActionTimers::remove);
+        expiredIdSpecificActions.forEach(keys -> this.uuidSpecificDelayedActionTimers.remove(keys.row(), keys.column()));
+        expiredKeys.clear();
+        expiredIdSpecificKeys.clear();
+        expiredActions.clear();
+        expiredIdSpecificActions.clear();
     }
+
+    // General timers
 
     public void addTimer(String name, int ticks, int loopCount, boolean serialize) {
         if (ticks <= 0) throw new IllegalArgumentException("Ticks must be positive");
         if (loopCount <= 0) throw new IllegalArgumentException("Loop count must be positive");
+        if (name.equals("__uuidSpecific")) throw new IllegalArgumentException("\"__uuidSpecific\" is reserved and cannot use as a name.");
         this.namedTimers.put(name, new Timer(ticks, false, loopCount, serialize));
     }
 
@@ -54,11 +90,12 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
 
     public void addInfiniteLoopTimer(String name, int periodTicks, boolean serialize) {
         if (periodTicks <= 0) throw new IllegalArgumentException("Period must be positive");
+        if (name.equals("__uuidSpecific")) throw new IllegalArgumentException("\"__uuidSpecific\" is reserved and cannot use as a name.");
         this.namedTimers.put(name, new Timer(periodTicks, true, 1, serialize));
     }
 
     public Optional<Timer> getNamedTimer(String name) {
-        return Optional.ofNullable(this.namedTimers.get(name)).filter(t -> !t.isDead());
+        return Optional.ofNullable(this.namedTimers.get(name)).filter(t -> !t.isExpired());
     }
 
     public boolean hasNamedTimer(String name) {
@@ -73,9 +110,43 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
         return this.namedTimers.keySet().stream().toList();
     }
 
-    public List<Runnable> getAllDelayedActions() {
-        return this.delayedActionTimers.keySet().stream().toList();0
+    // UUID-specific timers
 
+    public void addUUIDSpecificTimer(UUID uuid, String name, int ticks, int loopCount, boolean serialize) {
+        if (ticks <= 0) throw new IllegalArgumentException("Ticks must be positive");
+        if (loopCount <= 0) throw new IllegalArgumentException("Loop count must be positive");
+        this.uuidSpecificNamedTimers.put(uuid, name, new Timer(ticks, false, loopCount, serialize));
+    }
+
+    public void addUUIDSpecificInfiniteLoopTimer(UUID uuid, String name, int periodTicks, boolean serialize) {
+        if (periodTicks <= 0) throw new IllegalArgumentException("Period must be positive");
+        this.uuidSpecificNamedTimers.put(uuid, name, new Timer(periodTicks, true, 1, serialize));
+    }
+
+    public Optional<Timer> getUUIDSpecificTimer(UUID uuid, String name) {
+        return this.uuidSpecificNamedTimers.get(uuid, name).filter(t -> !t.isExpired());
+    }
+
+    public Optional<Timer> removeUUIDSpecificTimer(UUID uuid, String name) {
+        return this.uuidSpecificNamedTimers.remove(uuid, name);
+    }
+
+    public boolean hasUUIDSpecificTimer(UUID uuid, String name) {
+        return getUUIDSpecificTimer(uuid, name).isPresent();
+    }
+
+    public List<String> getAllUUIDSpecificTimerNames(UUID uuid) {
+        return this.uuidSpecificNamedTimers.getRow(uuid).keySet().stream().toList();
+    }
+
+    public List<ITable2D.KeyPair<UUID, String>> getAllUUIDSpecificTimerNames() {
+        return this.uuidSpecificNamedTimers.entryStream().map(ITable2D.Entry::keyPair).toList();
+    }
+
+    // Delayed actions
+
+    public List<Runnable> getAllDelayedActions() {
+        return this.delayedActionTimers.keySet().stream().toList();
     }
 
     public void addDelayedAction(Runnable action, int ticks, int loopCount, boolean infiniteLoop, boolean runImmediately) {
@@ -100,15 +171,67 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
         return Optional.ofNullable(this.delayedActionTimers.remove(action));
     }
 
+    // UUID-specific actions
+
+    public void addUUIDSpecificDelayedAction(UUID uuid, Consumer<UUID> action, int ticks, int loopCount, boolean infiniteLoop, boolean runImmediately) {
+        if (ticks <= 0) throw new IllegalArgumentException("Ticks must be positive");
+        if (loopCount <= 0) throw new IllegalArgumentException("Loop count must be positive");
+        this.uuidSpecificDelayedActionTimers.put(uuid, action, new Timer(ticks, infiniteLoop, loopCount, false));
+        if (runImmediately) {
+            this.uuidSpecificDelayedActionTimers.get(uuid, action).ifPresent(timer -> {
+                timer.ticksRemaining = 1;
+                timer.loopCountRemaining++;
+            });
+        }
+
+    }
+
+    public Optional<Timer> getUUIDSpecificDelayedActionTimer(UUID uuid, Consumer<UUID> action) {
+        return this.uuidSpecificDelayedActionTimers.get(uuid, action);
+    }
+
+    public Optional<Timer> removeUUIDSpecificDelayedAction(UUID uuid, Consumer<UUID> action) {
+        return this.uuidSpecificDelayedActionTimers.remove(uuid, action);
+    }
+
+    public boolean hasUUIDSpecificDelayedAction(UUID uuid, Consumer<UUID> action) {
+        return getUUIDSpecificDelayedActionTimer(uuid, action).isPresent();
+    }
+
+    public List<Consumer<UUID>> getAllUUIDSpecificActions(UUID uuid) {
+        return this.uuidSpecificDelayedActionTimers.getRow(uuid).keySet().stream().toList();
+    }
+
+    public List<ITable2D.KeyPair<UUID, Consumer<UUID>>> getAllUUIDSpecificActions() {
+        return this.uuidSpecificDelayedActionTimers.entryStream().map(ITable2D.Entry::keyPair).toList();
+    }
+
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
         this.namedTimers.entrySet().stream().filter(entry -> entry.getValue().shouldSerialize())
             .forEach(entry -> nbt.put(entry.getKey(), entry.getValue().serialize()));
+        ListTag uuidSpecific = new ListTag();
+        this.uuidSpecificNamedTimers.entryStream().filter(entry -> entry.value().shouldSerialize())
+                .forEach(entry -> {
+            CompoundTag entryNBT = new CompoundTag();
+            entryNBT.putUUID("uuid", entry.rowKey());
+            entryNBT.putString("name", entry.columnKey());
+            entryNBT.put("timer", entry.value().serialize());
+            uuidSpecific.add(entryNBT);
+        });
+        nbt.put("__uuidSpecific", uuidSpecific);
         return nbt;
     }
 
     public void deserializeNBT(CompoundTag nbt) {
-        nbt.getAllKeys().forEach(key -> this.namedTimers.put(key, Timer.deserialize(nbt.getCompound(key))));
+        nbt.getAllKeys().stream().filter(k -> !k.equals("__uuidSpecific"))
+                .forEach(key -> this.namedTimers.put(key, Timer.deserialize(nbt.getCompound(key))));
+        nbt.getList("__uuidSpecific", ListTag.TAG_COMPOUND).forEach(tag -> {
+            if (tag instanceof CompoundTag entry) {
+                this.uuidSpecificNamedTimers.put(entry.getUUID("uuid"), entry.getString("name"),
+                        Timer.deserialize(entry.getCompound("timer")));
+            }
+        });
     }
 
     public static class Timer {
@@ -118,7 +241,7 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
         protected int loopCountRemaining;
         protected boolean shouldSerialize;
 
-        private boolean dead = false;
+        private boolean expired = false;
         private boolean justFinishedALoop = false;
 
         private Timer(int setTimeTicks, boolean infiniteLoop, int loopCountRemaining, boolean shouldSerialize) {
@@ -130,12 +253,12 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
         }
 
         public void tick() {
-            if (this.dead) return;
+            if (this.expired) return;
             if (this.justFinishedALoop) justFinishedALoop = false;
             --ticksRemaining;
             if (ticksRemaining <= 0) {
                 if (loopCountRemaining <= 0) { // This should not happen
-                    this.dead = true;
+                    this.expired = true;
                     return;
                 }
                 if (infiniteLoop) {
@@ -148,15 +271,15 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
                         ticksRemaining = setTimeTicks;
                         return;
                     } else {
-                        this.dead = true;
+                        this.expired = true;
                         return;
                     }
                 }
             }
         }
 
-        public boolean isDead() {
-            return this.dead;
+        public boolean isExpired() {
+            return this.expired;
         }
 
         public boolean isJustFinishedALoop() {
@@ -169,7 +292,7 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
             nbt.putInt("ticksRemaining", this.ticksRemaining);
             nbt.putBoolean("infiniteLoop", this.infiniteLoop);
             nbt.putInt("loopCountRemaining", this.loopCountRemaining);
-            nbt.putBoolean("dead", this.dead);
+            nbt.putBoolean("expired", this.expired);
             nbt.putBoolean("justFinishedALoop", this.justFinishedALoop);
             return nbt;
         }
@@ -178,7 +301,7 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
             Timer res = new Timer(nbt.getInt("setTimeTicks"), nbt.getBoolean("infiniteLoop"),
                 nbt.getInt("loopCountRemaining"), true);
             res.ticksRemaining = nbt.getInt("ticksRemaining");
-            res.dead = nbt.getBoolean("dead");
+            res.expired = nbt.getBoolean("expired");
             res.justFinishedALoop = nbt.getBoolean("justFinishedALoop");
             return res;
         }
@@ -207,19 +330,31 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
     public static class ExpireEvent extends NFUEntityEvent<Entity> {
 
         private final String name;
-        private final boolean dying;
+        private final boolean expiring;
+        @Nullable
+        private final UUID uuid;
 
-        public ExpireEvent(Entity entity, String name, boolean dying) {
+        public ExpireEvent(Entity entity, String name, boolean expiring, @Nullable UUID uuid) {
             super(entity);
             this.name = name;
-            this.dying = dying;
+            this.expiring = expiring;
+            this.uuid = uuid;
         }
 
         public String getName() {return name;}
 
-        public boolean isTimerDying() {
-            return dying;
+        public boolean isTimerExpiring() {
+            return expiring;
         }
+
+        public boolean isUUIDSpecific() {
+            return this.uuid != null;
+        }
+
+        public Optional<UUID> getUUID() {
+            return Optional.ofNullable(uuid);
+        }
+
     }
 
 }

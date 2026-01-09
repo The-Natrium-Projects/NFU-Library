@@ -9,6 +9,7 @@ public class EntityComponentStatics {
 
     public static void init(){}
 
+    // Use EntityComponentAPI#getComponentManager to access.
     static Capability<CEntityComponentManager> CAP_MANAGER = CapabilityManager.get(new CapabilityToken<>(){});
 
     static {
