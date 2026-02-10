@@ -8,7 +8,9 @@ import java.util.Optional;
 
 /**
  * Base interface of containers which have the structure of stack.
+ * @deprecated Use {@link java.util.Deque} instead
  */
+@Deprecated
 public interface IStackContainer<T> {
 
     /**

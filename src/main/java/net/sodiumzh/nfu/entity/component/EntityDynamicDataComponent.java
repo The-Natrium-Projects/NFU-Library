@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class EntityDynamicDataComponent extends EntityComponentBase {
+public class EntityDynamicDataComponent extends EntityComponentBase<Entity> {
 
     public EntityDynamicDataComponent(Entity entity) {
         super(entity);
@@ -64,7 +64,7 @@ public class EntityDynamicDataComponent extends EntityComponentBase {
     }
 
     @Override
-    public EntityComponentType<?> getType() {
+    public EntityComponentType<Entity, EntityDynamicDataComponent> getType() {
         return EntityComponentTypes.DYNAMIC_DATA.get();
     }
 }

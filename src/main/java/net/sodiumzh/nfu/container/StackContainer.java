@@ -6,6 +6,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @deprecated Use {@link java.util.ArrayDeque} instead
+ */
+@Deprecated
 public class StackContainer<T> implements IStackContainer<T> {
 
     private final List<T> list = new ArrayList<>();

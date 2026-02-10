@@ -101,7 +101,7 @@ public class NFURegistries {
      */
     public static final NFURegistry<IFieldPattern3D> FIELD_PATTERNS = IFieldPattern3D.REGISTRY;
 
-    public static final NFURegistry<EntityComponentType<?>> ENTITY_COMPONENT_TYPES =
+    public static final NFURegistry<EntityComponentType<?, ?>> ENTITY_COMPONENT_TYPES =
         new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "entity_component_types"));
 
 }

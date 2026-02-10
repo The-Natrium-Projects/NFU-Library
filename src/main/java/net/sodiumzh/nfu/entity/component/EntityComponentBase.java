@@ -1,6 +1,5 @@
 package net.sodiumzh.nfu.entity.component;
 
-import com.google.common.collect.ImmutableMap;
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 
@@ -31,30 +30,30 @@ import java.util.*;
  *   <li>All convenience methods for path browsing, required-subtree assertion, and batch navigation are available via the interface default methods.</li>
  * </ul>
  */
-public abstract class EntityComponentBase implements IEntityComponent {
-    @Nullable protected IEntityComponent parent;
-    protected final Map<String, IEntityComponent> subComponents = new HashMap<>();
-    protected final Entity entity;
-    protected final Map<String, EntityComponentType<?>> required = new HashMap<>();
+public abstract class EntityComponentBase<E extends Entity> implements IEntityComponent<E> {
+    @Nullable protected IEntityComponent<? super E> parent;
+    protected final Map<String, IEntityComponent<? extends E>> subComponents = new HashMap<>();
+    protected final E entity;
+    protected final Map<String, EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>>> required = new HashMap<>();
 
-    public EntityComponentBase(Entity entity) {
+    public EntityComponentBase(E entity) {
         if (entity == null)
             throw new IllegalArgumentException("Entity cannot be null for EntityComponentBase.");
         this.entity = entity;
     }
 
     @Override
-    public Optional<IEntityComponent> getParent() {
+    public Optional<IEntityComponent<? super E>> getParent() {
         return Optional.ofNullable(parent);
     }
 
     @Override
-    public Entity getEntity() {
+    public E getEntity() {
         return entity;
     }
 
     @Override
-    public void addSubComponent(@Nonnull String name, @Nonnull IEntityComponent component) {
+    public void addSubComponent(@Nonnull String name, @Nonnull IEntityComponent<? extends E> component) {
         if (name == null || name.isEmpty())
             throw new IllegalArgumentException("Subcomponent name must not be null or empty.");
         if (name.contains("\\") || name.contains("/"))
@@ -67,18 +66,20 @@ public abstract class EntityComponentBase implements IEntityComponent {
             throw new IllegalArgumentException("Component already has a parent. Detach first.");
         if (subComponents.containsKey(name))
             throw new IllegalArgumentException("Duplicate subcomponent name. Use replaceSubComponent instead.");
+        if (!component.getRequiredEntityClass().isAssignableFrom(this.getEntity().getClass()))
+            throw new IllegalArgumentException("Entity type mismatch: attaching a component for entity class " + component.getRequiredEntityClass().getName()
+            + "to entity class " + this.getEntity().getClass().getName());
         if (createsCycle(component))
             throw new IllegalStateException("Cycle detected: adding would produce a cyclic tree.");
         subComponents.put(name, component);
         // Important: update parent for the child and call updateParent
         component.updateParent(null, this);
-        ((EntityComponentBase) component).parent = this;
     }
 
     @Nullable
     @Override
-    public IEntityComponent removeSubComponent(String name) {
-        IEntityComponent removed = subComponents.remove(name);
+    public IEntityComponent<? extends E> removeSubComponent(String name) {
+        IEntityComponent<? extends E> removed = subComponents.remove(name);
         if (removed != null) {
             removed.updateParent(this, null);
         }
@@ -86,52 +87,58 @@ public abstract class EntityComponentBase implements IEntityComponent {
     }
 
     @Override
-    public Map<String, IEntityComponent> getSubComponents() {
+    public Map<String, IEntityComponent<? extends E>> getSubComponents() {
         return Collections.unmodifiableMap(subComponents);
     }
 
     /**
      * Returns true if adding the given component would cause a cycle.
      */
-    protected boolean createsCycle(IEntityComponent candidate) {
-        IEntityComponent curr = this;
+    protected boolean createsCycle(IEntityComponent<?> candidate) {
+        // As we have entity class hierarchy requirement, component of different entity class is alway safe
+        if (!candidate.getRequiredEntityClass().equals(this.getRequiredEntityClass())) return false;
+        IEntityComponent<?> curr = this;
         while (curr != null) {
             if (curr == candidate) {
                 return true;
             }
-            curr = ((EntityComponentBase) curr).parent;
+            curr = curr.getParent().orElse(null);
         }
         return false;
     }
 
     @Override
     @DontCallManually
-    public void updateParent(@Nullable IEntityComponent oldParent, @Nullable IEntityComponent newParent) {
+    public void updateParent(@Nullable IEntityComponent<? super E> oldParent, @Nullable IEntityComponent<? super E> newParent) {
         this.parent = newParent;
     }
 
-    public void setRequired(String path, EntityComponentType<?> type) {
+    @Override
+    public void setRequired(String path, EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>> type) {
+        if (!type.entityClass().isAssignableFrom(this.getEntity().getClass()))
+            throw new IllegalArgumentException("Entity type mismatch: attaching a component for entity class " + type.entityClass().getName()
+                + " to entity class " + this.getEntity().getClass().getName());
         // Uniformize the format of path
         String pathKey = Arrays.stream(path.split("[/\\\\]")).filter(s -> !s.isEmpty())
             .map(s -> "\\" + s).reduce("", (s1, s2) -> s1 + s2);
         this.required.put(pathKey, type);
-        @Nullable IEntityComponent old = this.getSubComponentByPath(pathKey).orElse(null);
+        @Nullable IEntityComponent<? extends E> old = this.getSubComponentByPath(pathKey).orElse(null);
         if (old != null && !old.getType().equals(type))
             throw new IllegalStateException("Failed to set required sub-component at "
             + pathKey + "\" because it's occupied by a component of another type: \""
             + old.getType().getKey().toString() + "\".");
         if (this.getSubComponentByPath(pathKey).isEmpty())
-            this.addSubComponentByPath(pathKey, type.factory().create(this.getEntity()));
+            this.addSubComponentByPath(pathKey, type.createUnsafe(this.getEntity()));
     }
 
-    public Optional<EntityComponentType<?>> getTypeIfRequired(String path) {
+    public Optional<EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>>> getTypeIfRequired(String path) {
         // Uniformize the format of path
         String pathKey = Arrays.stream(path.split("[/\\\\]")).filter(s -> !s.isEmpty())
             .map(s -> "\\" + s).reduce("", (s1, s2) -> s1 + s2);
         return Optional.ofNullable(this.required.get(pathKey));
     }
 
-    public Map<String, EntityComponentType<?>> getAllRequired() {
+    public Map<String, EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>>> getAllRequired() {
         return Map.copyOf(this.required);
     }
 

@@ -6,6 +6,7 @@ import net.sodiumzh.nfu.capability.NFUEntityCapProvider;
 
 import javax.annotation.Nonnull;
 
+@Deprecated(forRemoval = true, since = "0.x.32")
 public class CMobAngerHandlerProvider extends NFUEntityCapProvider<Mob, CMobAngerHandler> {
 
     public CMobAngerHandlerProvider(Mob entity, Capability<CMobAngerHandler> holder, @Nonnull MobAngerRules angerRules, float damageThreshold) {
