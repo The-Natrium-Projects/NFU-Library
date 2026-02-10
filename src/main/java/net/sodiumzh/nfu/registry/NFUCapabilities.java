@@ -13,7 +13,9 @@ public class NFUCapabilities {
 
     /**
      * A default anger handler.
+     * @deprecated Use {@link NFUEntityComponents#DEFAULT_ANGER_HANDLER} instead.
      */
+    @Deprecated
     public static final Capability<CMobAngerHandler> CAP_MOB_DEFAULT_ANGER_HANDLER = CapabilityManager.get(new CapabilityToken<>() {});
     /**
      * Anger handler only for tamable animals using {@link VanillaAnimalTamingProcess}.
@@ -24,6 +26,7 @@ public class NFUCapabilities {
      */
     public static final Capability<CVanillaAnimalTamingProcessHandler> CAP_VANILLA_ANIMAL_TAMING_PROCESS_HANDLER_CAPABILITY
             = CapabilityManager.get(new CapabilityToken<>() {});
+    @Deprecated
     public static final Capability<CEntityDataCapability> CAP_ENTITY_DATA
             = CapabilityManager.get(new CapabilityToken<>() {});
 

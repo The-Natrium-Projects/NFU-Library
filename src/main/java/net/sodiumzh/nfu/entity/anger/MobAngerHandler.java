@@ -12,7 +12,9 @@ import java.util.*;
 
 /**
  * A default implementation of {@code CMobAngerHandler}.
+ * @deprecated Use {@link MobAngerHandlerComponent} instead.
  */
+@Deprecated(forRemoval = true, since = "0.x.32")
 public class MobAngerHandler implements CMobAngerHandler {
 
     private final Mob mob;

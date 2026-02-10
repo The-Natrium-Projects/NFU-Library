@@ -959,4 +959,27 @@ public class NFUEntityStatics
 		NFUNetworkStatics.sendToAllPlayers(target.level(), NFUNetworkChannels.CHANNEL, packet);
 	}
 
+	/**
+	 * Safely get an attribute from a living entity. This method doesn't error if any input is null,
+	 * the input target object is not a living entity, or the attribute is absent. In these cases, return
+	 * the fallback.
+	 * @param target Object to get attribute. This argument can accept any object and doesn't error, but is valid only when its a {@link LivingEntity}.
+	 * @param attribute Attribute to get.
+	 * @param fallback Return value if any input is invalid, or the attribute is absent for the input living entity.
+	 * @return The attribute value, or the fallback if the attribute is unavailable.
+	 * @throws NullPointerException when {@code attribute} is null.
+	 */
+	public static double safeGetAttribute(Object target, Attribute attribute, double fallback) {
+		if (target == null || attribute == null) return fallback;
+		return Optional.ofNullable(target)
+			.map(o -> NFUMiscStatics.cast(o, LivingEntity.class))
+			.map(l -> l.getAttribute(attribute))
+			.map(AttributeInstance::getValue)
+			.orElse(fallback);
+	}
+
+	public static double safeGetAttribute(Object target, @Nonnull Attribute attribute) {
+		return safeGetAttribute(target, attribute, 0d);
+	}
+
 }

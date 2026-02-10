@@ -4,25 +4,35 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
+import net.sodiumzh.nfu.entity.component.EntityComponentType;
+import net.sodiumzh.nfu.registry.NFUEntityComponents;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 
-public class MobAngerHandlerComponent extends EntityComponentBase {
+/**
+ * {@code CMobAngerHandler} is a capability handling mechanics that mob can be angry with other living entities when some
+ * event happens (e.g. attack). This capability doesn't to anything other than keeping an anger list.
+ */
+public abstract class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
 
-    private final Mob mob;
     private MobAngerRules rules;
     private final Map<UUID, MutableObject<Integer>> angerList = new HashMap<>();
     // Just for preventing tick() from repeatedly creating sets
     private final Set<UUID> tempRemoval = new HashSet<>();
     private float damageThreshold = 1e-3f;
 
-    public MobAngerHandler(Mob mob, MobAngerRules rules) {
-        this.mob = mob;
+    public MobAngerHandlerComponent(Mob mob, MobAngerRules rules) {
+        super(mob);
         this.rules = rules;
+    }
+
+    public MobAngerHandlerComponent(Mob mob) {
+        this(mob, MobAngerRules.ATTACKER.get());
     }
 
     @Override
@@ -41,45 +51,52 @@ public class MobAngerHandlerComponent extends EntityComponentBase {
         }
     }
 
-    @Override
-    public final Mob getEntity() {
-        return mob;
-    }
-
     public final MobAngerRules getAngerRules() {
         return rules;
     }
 
-    @Override
     public void setAngerRules(@Nonnull MobAngerRules rules) {
         this.rules = rules;
     }
 
-    @Override
     public final boolean isAngryAt(LivingEntity target) {
         return angerList.containsKey(target.getUUID());
     }
 
-    @Override
+    /**
+     * Set the mob angry with a target with no reason.
+     * <p>Note: this bypasses the anger rules. Prioritize using
+     * {@link MobAngerHandlerComponent#setAngryAt(LivingEntity, MobAngerReason)} instead.
+     */
     public MobSetAngerResult setAngryAt(LivingEntity target, @Nullable MobAngerReason reason, int forgivingTicks) {
-        if (forgivingTicks != 0) {
-            if (setAngryInternal(target, forgivingTicks))
-            {
-                MobSetAngerResult res = new MobSetAngerResult(target.getUUID(), true, Optional.ofNullable(reason));
-                this.onAngryAt(target, forgivingTicks, res);
-                return res;
-            }
-            else return new MobSetAngerResult(target.getUUID(), false, Optional.ofNullable(reason));
+        if (forgivingTicks == 0)
+            return MobSetAngerResult.unhandled(target, reason);
+        var event = new MobAngryAtEvent(this.getEntity(), target, reason, forgivingTicks);
+        if (MinecraftForge.EVENT_BUS.post(event))
+            return MobSetAngerResult.unhandled(target, reason);
+        if (event.getForgivingTime() == 0)
+            return MobSetAngerResult.unhandled(target, reason);
+        if (setAngryInternal(target, forgivingTicks))
+        {
+            MobSetAngerResult res = MobSetAngerResult.handled(target, reason);
+            this.onAngryAt(target, forgivingTicks, res);
+            return res;
         }
-        return new MobSetAngerResult(target.getUUID(), false, Optional.ofNullable(reason));
+        else return MobSetAngerResult.unhandled(target, reason);
     }
 
-    @Override
+    /**
+     * Set the mob angry with a target, according to the anger rules.
+     */
     public MobSetAngerResult setAngryAt(LivingEntity target, MobAngerReason reason) {
-        return this.setAngryAt(target, reason, this.rules.getForgivingTicks(reason, this.mob, target));
+        return this.setAngryAt(target, reason, this.rules.getForgivingTicks(reason, this.getEntity(), target));
     }
 
-    @Override
+    /**
+     * Set the mob angry with a target with no reason.
+     * <p>Note: this bypasses the anger rules. Prioritize using
+     * {@link MobAngerHandlerComponent#setAngryAt(LivingEntity, MobAngerReason)} instead.
+     */
     public final MobSetAngerResult setAngryAt(LivingEntity target, int forgivingTicks) {
         if (setAngryInternal(target, forgivingTicks)) {
             MobSetAngerResult res = new MobSetAngerResult(target.getUUID(), true, Optional.empty());
@@ -101,12 +118,10 @@ public class MobAngerHandlerComponent extends EntityComponentBase {
         return false;
     }
 
-    @Override
     public final int getRemainingForgivingTicks(LivingEntity target) {
         return isAngryAt(target) ? angerList.get(target.getUUID()).getValue() : 0;
     }
 
-    @Override
     public final MobForgiveResult forgive(LivingEntity target) {
         if (this.angerList.containsKey(target.getUUID())) {
             this.angerList.remove(target.getUUID());
@@ -116,17 +131,14 @@ public class MobAngerHandlerComponent extends EntityComponentBase {
         return new MobForgiveResult(target.getUUID(), false, true);
     }
 
-    @Override
     public final float getDamageThreshold() {
         return this.damageThreshold;
     }
 
-    @Override
     public final void setDamageThreshold(float value) {
         this.damageThreshold = value;
     }
 
-    @Override
     public CompoundTag saveAngerList() {
         CompoundTag nbt = new CompoundTag();
         for (var e : angerList.entrySet()) {
@@ -135,7 +147,6 @@ public class MobAngerHandlerComponent extends EntityComponentBase {
         return nbt;
     }
 
-    @Override
     public void loadAngerList(CompoundTag nbt) {
         angerList.clear();
         for (var key : nbt.getAllKeys()) {
@@ -143,12 +154,10 @@ public class MobAngerHandlerComponent extends EntityComponentBase {
         }
     }
 
-    @Override
     public void onAngryAt(LivingEntity target, int forgivingTicks, MobSetAngerResult setResult) {
 
     }
 
-    @Override
     public void onForgive(UUID target, MobForgiveResult setResult) {
 
     }
@@ -161,6 +170,18 @@ public class MobAngerHandlerComponent extends EntityComponentBase {
     @Override
     public void deserializeNBT(CompoundTag nbt) {
         this.loadAngerList(nbt);
+    }
+
+    public static class Default extends MobAngerHandlerComponent {
+
+        public Default(Mob mob) {
+            super(mob);
+        }
+
+        @Override
+        public EntityComponentType<Mob, MobAngerHandlerComponent.Default> getType() {
+            return NFUEntityComponents.DEFAULT_ANGER_HANDLER.get();
+        }
     }
 
 }

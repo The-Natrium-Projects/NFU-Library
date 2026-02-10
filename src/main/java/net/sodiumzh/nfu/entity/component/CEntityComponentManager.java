@@ -7,6 +7,7 @@ import net.sodiumzh.nfu.capability.CEntityTickingCapability;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Marker interface for entity component tree roots in the capability system.
@@ -26,7 +27,7 @@ import java.util.Map;
  * </ul>
  * <b>Do not implement this interface manually; extend its core implementation to ensure validity and correct bookkeeping.</b>
  */
-public interface CEntityComponentManager extends CEntityTickingCapability<Entity>, IEntityComponent {
+public interface CEntityComponentManager extends CEntityTickingCapability<Entity>, IEntityComponent<Entity> {
 
     /**
      * Dummy factory for type registry.
@@ -48,23 +49,24 @@ public interface CEntityComponentManager extends CEntityTickingCapability<Entity
      */
     default void printComponentTree() {
         // Root node (this) itself may not have a "name", so we print its children at top level.
-        Map<String, IEntityComponent> rootChildren = this.getSubComponents();
+        Map<String, IEntityComponent<? extends Entity>> rootChildren = this.getSubComponents();
         int sz = rootChildren.size();
         int i = 0;
-        for (Map.Entry<String, IEntityComponent> entry : rootChildren.entrySet()) {
+        for (Map.Entry<String, IEntityComponent<? extends Entity>> entry : rootChildren.entrySet()) {
             ++i;
             printComponentTreeRec(entry.getKey(), entry.getValue(), "", i == sz);
         }
     }
 
     // Recursive helper prints node and all descendants with proper ASCII structure
-    private static void printComponentTreeRec(String name, IEntityComponent node, String indent, boolean last) {
+    private static void printComponentTreeRec(String name, IEntityComponent<? extends Entity> node, String indent, boolean last) {
         ResourceLocation typeKey = node.getType().getKey();
         System.out.println(indent + (last ? "└─" : "├─") + name + ": " + typeKey);
-        Map<String, IEntityComponent> children = node.getSubComponents();
+        Map<String, IEntityComponent<? extends Entity>> children = node.getSubComponents().entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> (IEntityComponent<? extends Entity>) (e.getValue())));
         int sz = children.size();
         int idx = 0;
-        for (Map.Entry<String, IEntityComponent> entry : children.entrySet()) {
+        for (Map.Entry<String, IEntityComponent<? extends Entity>> entry : children.entrySet()) {
             ++idx;
             // For all but the last node at the current level, we want "│ " in indentation; for last, "  "
             String newIndent = indent + (last ? "  " : "│ ");

@@ -3,12 +3,15 @@ package net.sodiumzh.nfu.mixin.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.NFUMixinHooks;
@@ -91,5 +94,20 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 		original.call(instance);
 		MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
 		NFUEntityStatics.notifyEntityTickEnd(instance);
+	}
+
+	@Inject(method = "makeStuckInBlock(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/phys/Vec3;)V",
+		at = @At("HEAD"), cancellable = true)
+	private void onStuckInBlock(BlockState pState, Vec3 pMotionMultiplier, CallbackInfo ci,
+								@Local(argsOnly = true) LocalRef<Vec3> multiplierRef)
+	{
+		var event = new EntityStuckInBlockEvent(caller(), pState, pMotionMultiplier);
+		if (MinecraftForge.EVENT_BUS.post(event)) {
+			ci.cancel();
+			return;
+		}
+		if (!event.getMotionMultiplier().equals(event.getOriginalMotionMultiplier())) {
+			multiplierRef.set(event.getMotionMultiplier());
+		}
 	}
 }
