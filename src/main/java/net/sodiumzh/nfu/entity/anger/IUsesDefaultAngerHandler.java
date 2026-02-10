@@ -8,6 +8,7 @@ import net.sodiumzh.nfu.registry.NFUCapabilities;
 
 import javax.annotation.Nonnull;
 
+@Deprecated(forRemoval = true, since = "0.x.32")
 public interface IUsesDefaultAngerHandler extends IMobSpecific<Mob> {
 
     /**

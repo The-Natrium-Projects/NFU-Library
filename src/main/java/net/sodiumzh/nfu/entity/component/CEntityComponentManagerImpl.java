@@ -20,20 +20,20 @@ import java.util.*;
  * Acts as root node and manages child components. Root's parent is always null.
  * Handles ticking the whole component tree: each component is ticked exactly once, in parent-before-children order.
  */
-final class CEntityComponentManagerImpl extends EntityComponentBase implements CEntityComponentManager {
+final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> implements CEntityComponentManager {
 
     public CEntityComponentManagerImpl(Entity entity) {
         super(entity);
     }
 
     @Override
-    public Optional<IEntityComponent> getParent() {
+    public Optional<IEntityComponent<? super Entity>> getParent() {
         // As the root, parent is always null.
         return Optional.empty();
     }
 
     @Override
-    public void attachTo(@Nullable IEntityComponent parent, String name) {
+    public void attachTo(@Nullable IEntityComponent<? super Entity> parent, String name) {
         throw new UnsupportedOperationException("CEntityComponentManager must be root and cannot attach to anything.");
     }
 
@@ -62,7 +62,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase implements C
     }
 
     @Override
-    public EntityComponentType<?> getType() {
+    public EntityComponentType<Entity, CEntityComponentManager> getType() {
         return EntityComponentTypes.ROOT.get();
     }
 
@@ -81,36 +81,52 @@ final class CEntityComponentManagerImpl extends EntityComponentBase implements C
             .map(t -> new Tuple2<>(t.getString("name"), deserializeComponent(this.getEntity(), t)))
             .filter(tp -> tp.getB() != null)
             .forEach(tp -> this.addSubComponent(tp.getA(), tp.getB()));
+        // Sometimes required components are not correctly serialized. Reconstruct if absent.
+        this.getAllRequired().entrySet().stream()
+            .filter(entry -> this.getSubComponentByPath(entry.getKey(), entry.getValue()).isEmpty())
+            .forEach(entry -> this.addSubComponentByPath(entry.getKey(), entry.getValue().createUnsafe(this.getEntity())));
     }
 
-    private CompoundTag serializeComponent(String name, IEntityComponent component) {
-        CompoundTag nbt = new CompoundTag();
-        nbt.putString("name", name);
-        nbt.putString("type", component.getType().getKey().toString());
-        nbt.put("data", component.serializeNBT());
-        ListTag subcomponents = new ListTag();
-        component.getSubComponents().forEach((key, value) -> subcomponents.add(serializeComponent(key, value)));
-        nbt.put("subcomponents", subcomponents);
-        return nbt;
+    private CompoundTag serializeComponent(String name, IEntityComponent<? extends Entity> component) {
+        try {
+            CompoundTag nbt = new CompoundTag();
+            nbt.putString("name", name);
+            nbt.putString("type", component.getType().getKey().toString());
+            nbt.put("data", component.serializeNBT());
+            ListTag subcomponents = new ListTag();
+            component.getSubComponents().forEach((key, value) -> subcomponents.add(serializeComponent(key, value)));
+            nbt.put("subcomponents", subcomponents);
+            return nbt;
+        } catch (RuntimeException e) {
+            LogUtils.getLogger().error(e.getMessage());
+            LogUtils.getLogger().error("Component " + name + " serialization failed. Discarded.");
+            return new CompoundTag();
+        }
     }
 
     @Nullable
-    private IEntityComponent deserializeComponent(Entity e, CompoundTag nbt) {
-        // Name is read in the parent
-        EntityComponentType<?> type = NFURegistries.ENTITY_COMPONENT_TYPES.getValue(new ResourceLocation(nbt.getString("type")));
-        if (type == null) {
-            // If missing factory, cut this branch
+    private IEntityComponent<? extends Entity> deserializeComponent(Entity e, CompoundTag nbt) {
+        try {
+            // Name is read in the parent
+            EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type =
+                NFURegistries.ENTITY_COMPONENT_TYPES.getValue(new ResourceLocation(nbt.getString("type")));
+            if (type == null) {
+                // If missing factory, cut this branch
+                return null;
+            }
+            IEntityComponent<Entity> component = (IEntityComponent<Entity>) type.createUnsafe(e);
+            component.deserializeNBT(nbt.getCompound("data"));
+            ListTag subcomponentTag = nbt.getList("subcomponents", Tag.TAG_COMPOUND);
+            subcomponentTag.stream().map(tag -> NFUMiscStatics.cast(tag, CompoundTag.class))
+                .filter(Objects::nonNull)
+                .map(t -> new Tuple2<>(t.getString("name"), deserializeComponent(e, t)))
+                .filter(tp -> tp.getB() != null)
+                .forEach(tp -> component.addSubComponent(tp.getA(), tp.getB()));
+            return component;
+        } catch (RuntimeException ex) {
+            LogUtils.getLogger().error(ex.getMessage());
             return null;
         }
-        IEntityComponent component = type.factory().create(e);
-        component.deserializeNBT(nbt.getCompound("data"));
-        ListTag subcomponentTag = nbt.getList("subcomponents", Tag.TAG_COMPOUND);
-        subcomponentTag.stream().map(tag -> NFUMiscStatics.cast(tag, CompoundTag.class))
-            .filter(Objects::nonNull)
-            .map(t -> new Tuple2<>(t.getString("name"), deserializeComponent(e, t)))
-            .filter(tp -> tp.getB() != null)
-            .forEach(tp -> component.addSubComponent(tp.getA(), tp.getB()));
-        return component;
     }
 
     private List<RequiredComponentInfo> checkRequiredComponents() {
@@ -120,9 +136,9 @@ final class CEntityComponentManagerImpl extends EntityComponentBase implements C
         return res;
     }
 
-    private static List<RequiredComponentInfo> getMissingRequiredComponents(IEntityComponent component) {
+    private static List<RequiredComponentInfo> getMissingRequiredComponents(IEntityComponent<? extends Entity> component) {
         return component.getAllRequired().entrySet().stream().filter(entry -> {
-            @Nullable IEntityComponent c = component.getSubComponentByPath(entry.getKey()).orElse(null);
+            @Nullable IEntityComponent<? extends Entity> c = component.getSubComponentByPath(entry.getKey()).orElse(null);
             return c == null || !c.getType().equals(entry.getValue());
         }).map(entry -> new RequiredComponentInfo(component, entry.getKey(), entry.getValue())).toList();
     }
@@ -132,5 +148,8 @@ final class CEntityComponentManagerImpl extends EntityComponentBase implements C
         return CEntityTickingCapability.TickingSide.BOTH;
     }
 
-    private static record RequiredComponentInfo(IEntityComponent requiredBy, String relPath, EntityComponentType<?> type){}
+    private static record RequiredComponentInfo(
+        IEntityComponent<? extends Entity> requiredBy,
+        String relPath,
+        EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type){}
 }

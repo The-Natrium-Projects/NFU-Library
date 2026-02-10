@@ -1,21 +1,18 @@
 package net.sodiumzh.nfu.entity.component;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.container.ITable2D;
 import net.sodiumzh.nfu.container.Table2D;
-import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-public abstract class EntityTimerComponent extends EntityComponentBase {
+public abstract class EntityTimerComponent<T extends Entity> extends EntityComponentBase<T> {
 
     private final Map<String, Timer> namedTimers = new HashMap<>();
     private final ITable2D<UUID, String, Timer> uuidSpecificNamedTimers = new Table2D<>();
@@ -23,12 +20,12 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
     private final ITable2D<UUID, Consumer<UUID>, Timer> uuidSpecificDelayedActionTimers
             = new Table2D<>();
 
-    private List<String> expiredKeys = new ArrayList<>();  // Temporary list, only works on tick
-    private List<ITable2D.KeyPair<UUID, String>> expiredIdSpecificKeys = new ArrayList<>();
-    private List<Runnable> expiredActions = new ArrayList<>();   // Temporary list, only works on tick
-    private List<ITable2D.KeyPair<UUID, Consumer<UUID>>> expiredIdSpecificActions = new ArrayList<>();
+    private final List<String> expiredKeys = new ArrayList<>();  // Temporary list, only works on tick
+    private final List<ITable2D.KeyPair<UUID, String>> expiredIdSpecificKeys = new ArrayList<>();
+    private final List<Runnable> expiredActions = new ArrayList<>();   // Temporary list, only works on tick
+    private final List<ITable2D.KeyPair<UUID, Consumer<UUID>>> expiredIdSpecificActions = new ArrayList<>();
 
-    public EntityTimerComponent(Entity entity) {
+    public EntityTimerComponent(T entity) {
         super(entity);
     }
 
@@ -36,7 +33,7 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
         for (var entry: namedTimers.entrySet()) {
             entry.getValue().tick();
             if (entry.getValue().isExpired() || entry.getValue().isJustFinishedALoop()) {
-                if (this.getEntity() instanceof IEntityTimerComponentHolder holder)
+                if (this.getEntity() instanceof IDefaultEntityTimerComponentHolder holder)
                     holder.onTimerExpire(entry.getKey(), entry.getValue().isExpired(), null);
                 MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), entry.getKey(), entry.getValue().isExpired(), null));
                 if (entry.getValue().isExpired()) expiredKeys.add(entry.getKey());
@@ -45,7 +42,7 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
         this.uuidSpecificNamedTimers.entryStream().forEach(entry -> {
             entry.value().tick();
             if (entry.value().isExpired() || entry.value().isJustFinishedALoop()) {
-                if (this.getEntity() instanceof IEntityTimerComponentHolder holder)
+                if (this.getEntity() instanceof IDefaultEntityTimerComponentHolder holder)
                     holder.onTimerExpire(entry.columnKey(), entry.value().isExpired(), entry.rowKey());
                 MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), entry.columnKey(), entry.value().isExpired(), entry.rowKey()));
                 if (entry.value().isExpired()) expiredIdSpecificKeys.add(new ITable2D.KeyPair<>(entry.rowKey(), entry.columnKey()));
@@ -357,4 +354,15 @@ public abstract class EntityTimerComponent extends EntityComponentBase {
 
     }
 
+    public static class Default extends EntityTimerComponent<Entity> {
+
+        public Default(Entity entity) {
+            super(entity);
+        }
+
+        @Override
+        public EntityComponentType<Entity, EntityTimerComponent.Default> getType() {
+            return EntityComponentTypes.DEFAULT_TIMER.get();
+        }
+    }
 }
