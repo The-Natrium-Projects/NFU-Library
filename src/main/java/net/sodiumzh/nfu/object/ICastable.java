@@ -34,7 +34,6 @@ public interface ICastable {
     /**
      * Explicitly cast the object to the target class specified by the parameter.
      */
-    @Nullable
     public default <T> T castTo(Class<T> clazz)
     {
         return cast();
