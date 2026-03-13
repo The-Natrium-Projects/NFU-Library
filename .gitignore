@@ -23,6 +23,8 @@ gradle/*
 eclipse
 libs
 run*
+gradle
+gradle*
 
 !run/saves
 
