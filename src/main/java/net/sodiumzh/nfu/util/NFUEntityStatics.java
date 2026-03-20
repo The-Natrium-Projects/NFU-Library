@@ -42,8 +42,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.sodiumzh.nfu.annotation.DontCallManually;
-import net.sodiumzh.nfu.container.IStackContainer;
-import net.sodiumzh.nfu.container.StackContainer;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinClientLevel;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinEntity;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerLevel;
@@ -59,8 +57,9 @@ import java.util.function.Predicate;
 // Static function library for befriending-related actions.
 public class NFUEntityStatics
 {
-	private static final ThreadLocal<IStackContainer<Entity>> TICKING_ENTITY
-		= ThreadLocal.withInitial(StackContainer::new);
+	// Use as stack
+	private static final ThreadLocal<Deque<Entity>> TICKING_ENTITY
+		= ThreadLocal.withInitial(ArrayDeque::new);
 
 	/**
 	 * Get the entities being ticked. Empty if it's not currently running in an entity ticking cycle.
@@ -72,8 +71,8 @@ public class NFUEntityStatics
 	 * @see NFUMixinServerPlayer
 	 * @see NFUMixinEntity
 	 */
-	public static IStackContainer<Entity> getEntityTickStack() {
-		return Optional.ofNullable(TICKING_ENTITY.get()).orElseGet(StackContainer::new);
+	public static Deque<Entity> getEntityTickStack() {
+		return Optional.ofNullable(TICKING_ENTITY.get()).orElseGet(ArrayDeque::new);
 	}
 
 	/**
@@ -90,8 +89,9 @@ public class NFUEntityStatics
 	 */
 	@DontCallManually
 	public static void notifyEntityTickEnd(Entity e) {
-		if (e != null)
-			TICKING_ENTITY.get().pop(e);
+		while (e != null && TICKING_ENTITY.get().contains(e)) {
+			TICKING_ENTITY.get().pop();
+		}
 	}
 
 	/**
