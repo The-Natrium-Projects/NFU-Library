@@ -1,3 +1,9 @@
+### 0.x.32
+
+Added Entity Component system. Ported data, timer and anger handler to components.
+
+Added Mixin Events: `EntityFinishConstructionEvent `, `EntityStuckInBlockEvent`.
+
 ### 0.x.31
 
 Separated from NFF Services.
