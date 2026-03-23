@@ -52,7 +52,7 @@ public class MobAngerEventListeners {
             EntityComponentAPI.getComponentManager(event.getEntity()).getAllDownstreamComponents().stream()
                 .filter(c -> c instanceof MobAngerHandlerComponent).map(c -> (MobAngerHandlerComponent)c)
                 .forEach(c -> {
-                    if (event.getSource().is(DamageTypes.THORNS)) {
+                    if (event.getSource() instanceof EntityDamageSource eds && eds.isThorns()) {
                         if (event.getAmount() > c.getDamageThreshold())
                             c.setAngryAt(src, MobAngerReason.THORNS.get());
                     }

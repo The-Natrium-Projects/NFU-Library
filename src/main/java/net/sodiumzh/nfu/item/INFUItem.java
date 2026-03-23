@@ -150,7 +150,7 @@ public interface INFUItem extends ICastable, ItemLike {
         }
 
         public static UsageContext forUseOn(Player player, InteractionHand hand, BlockPos pos) {
-            return new UsageContext(1, player, hand, pos, player.level().getBlockState(pos), null);
+            return new UsageContext(1, player, hand, pos, player..getBlockState(pos), null);
         }
 
         public static UsageContext forInteractEntity(Player player, InteractionHand hand, Entity entity) {

@@ -345,7 +345,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
 
     @DontOverride
     default boolean isClientSide() {
-        return this.getEntity().level().isClientSide();
+        return this.getEntity().level.isClientSide();
     }
 
     // INBTSerializable<CompoundTag> methods:
