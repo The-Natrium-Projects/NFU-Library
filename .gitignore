@@ -25,6 +25,8 @@ libs
 run*
 gradle
 gradle*
+gradlew
+gradlew.bat
 
 !run/saves
 
