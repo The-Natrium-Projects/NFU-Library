@@ -18,7 +18,6 @@ import java.util.Optional;
  * A simple capability serving as an additional data container.
  */
 @Deprecated(since = "0.x.32", forRemoval = true)
-@AutoRegisterCapability
 public interface CEntityDataCapability extends INBTSerializable<CompoundTag> {
 
     public Entity getEntity();

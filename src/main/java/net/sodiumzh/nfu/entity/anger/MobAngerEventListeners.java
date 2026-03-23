@@ -58,7 +58,7 @@ public class MobAngerEventListeners {
                     }
                     else {
                         c.setAngryAt(src, event.getAmount() > c.getDamageThreshold() ? MobAngerReason.ATTACKED.get() : MobAngerReason.HIT.get());
-                        c.setAngryAt(event.getEntity(), event.getAmount() > c.getDamageThreshold() ? MobAngerReason.ATTACKING.get() : MobAngerReason.HITTING.get());
+                        c.setAngryAt(event.getEntityLiving(), event.getAmount() > c.getDamageThreshold() ? MobAngerReason.ATTACKING.get() : MobAngerReason.HITTING.get());
                     }
                 });
         }

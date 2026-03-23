@@ -20,7 +20,6 @@ import java.util.UUID;
  * @deprecated Use {@link MobAngerHandlerComponent} instead.
  */
 @CapabilityInterface
-@AutoRegisterCapability
 @Deprecated(forRemoval = true, since = "0.x.32")
 public interface CMobAngerHandler extends CEntityTickingCapability<Mob>, INBTSerializable<CompoundTag> {
 
