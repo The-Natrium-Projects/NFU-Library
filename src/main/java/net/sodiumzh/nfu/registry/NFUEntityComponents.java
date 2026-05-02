@@ -5,6 +5,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.entity.anger.MobAngerHandlerComponent;
+import net.sodiumzh.nfu.entity.anger.MobAngerRules;
 import net.sodiumzh.nfu.entity.component.EntityComponentInitEvent;
 import net.sodiumzh.nfu.entity.component.EntityComponentType;
 
@@ -13,9 +14,9 @@ public class NFUEntityComponents {
     public static final NFURegistryEntryCollection<EntityComponentType<?, ?>> COLLECTION =
         NFURegistryEntryCollection.create(NFURegistries.ENTITY_COMPONENT_TYPES, NFULibrary.MOD_ID);
 
-    public static final NFURegistry.Accessor<EntityComponentType<Mob, MobAngerHandlerComponent.Default>>
+    public static final NFURegistry.Accessor<EntityComponentType<Mob, MobAngerHandlerComponent>>
         DEFAULT_ANGER_HANDLER = COLLECTION.register("default_anger_handler", () ->
-        new EntityComponentType<>(Mob.class, MobAngerHandlerComponent.Default.class, MobAngerHandlerComponent.Default::new));
+        new EntityComponentType<>(Mob.class, MobAngerHandlerComponent.class, mob -> new MobAngerHandlerComponent(mob, MobAngerRules.ATTACKER.get())));
 
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE, modid = NFULibrary.MOD_ID)
     public static class Attachment {

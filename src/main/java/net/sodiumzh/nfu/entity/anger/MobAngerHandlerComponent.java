@@ -2,9 +2,11 @@ package net.sodiumzh.nfu.entity.anger;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.common.MinecraftForge;
+import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.entity.component.EntityComponentType;
 import net.sodiumzh.nfu.registry.NFUEntityComponents;
@@ -18,7 +20,7 @@ import java.util.*;
  * {@code CMobAngerHandler} is a capability handling mechanics that mob can be angry with other living entities when some
  * event happens (e.g. attack). This capability doesn't to anything other than keeping an anger list.
  */
-public abstract class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
+public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
 
     private MobAngerRules rules;
     private final Map<UUID, MutableObject<Integer>> angerList = new HashMap<>();
@@ -172,16 +174,21 @@ public abstract class MobAngerHandlerComponent extends EntityComponentBase<Mob> 
         this.loadAngerList(nbt);
     }
 
-    public static class Default extends MobAngerHandlerComponent {
+    public static List<MobAngerHandlerComponent> getAllAngerHandlers(Entity e) {
+       return EntityComponentAPI.getComponentManager(e).getDownstreamComponents().stream()
+                .filter(c -> c instanceof MobAngerHandlerComponent)
+                .map(c -> (MobAngerHandlerComponent)c)
+                .toList();
+    }
 
-        public Default(Mob mob) {
-            super(mob);
-        }
-
-        @Override
-        public EntityComponentType<Mob, MobAngerHandlerComponent.Default> getType() {
-            return NFUEntityComponents.DEFAULT_ANGER_HANDLER.get();
-        }
+    /**
+     * Set angry at a target for a mob in all its anger handlers.
+     */
+    public static void setAngryAtForMob(Mob mob, LivingEntity target, MobAngerReason reason) {
+        EntityComponentAPI.getComponentManager(mob).getDownstreamComponents().stream()
+                .filter(c -> c instanceof MobAngerHandlerComponent)
+                .map(c -> (MobAngerHandlerComponent)c)
+                .forEach(c -> c.setAngryAt(target, reason));
     }
 
 }
