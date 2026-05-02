@@ -8,7 +8,6 @@ import net.sodiumzh.nfu.entity.anger.MobAngerHandlerComponent;
 import net.sodiumzh.nfu.entity.component.EntityComponentInitEvent;
 import net.sodiumzh.nfu.entity.component.EntityComponentType;
 
-
 public class NFUEntityComponents {
 
     public static final NFURegistryEntryCollection<EntityComponentType<?, ?>> COLLECTION =

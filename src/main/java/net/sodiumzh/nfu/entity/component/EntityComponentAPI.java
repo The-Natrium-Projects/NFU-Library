@@ -3,6 +3,9 @@ package net.sodiumzh.nfu.entity.component;
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * NFU Entity Component API
  * ------------------------
@@ -43,11 +46,11 @@ public class EntityComponentAPI {
         });
     }
 
-    public static EntityDynamicDataComponent getDynamicDataComponent(Entity e) {
+    public static EntityDynamicDataComponent<Entity> getDynamicDataComponent(Entity e) {
         return getComponentManager(e).getSubComponent("dynamic_data", EntityComponentTypes.DYNAMIC_DATA.get()).orElseGet(() -> {
             NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing dynamic data component. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
-            return new EntityDynamicDataComponent(e);
+            return new EntityDynamicDataComponent<>(e);
         });
     }
 
@@ -55,7 +58,11 @@ public class EntityComponentAPI {
         return getComponentManager(e).getSubComponent("default_timer", EntityComponentTypes.DEFAULT_TIMER.get()).orElseGet(() -> {
             NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
-            return new EntityTimerComponent.Default(e);
+            return new EntityTimerComponent<>(e);
         });
+    }
+
+    public static Set<IEntityComponent<? extends Entity>> getAllComponents(Entity target) {
+        return getComponentManager(target).getSelfAndDownstreamComponents();
     }
 }
