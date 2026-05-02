@@ -22,9 +22,7 @@ public class MobAngerEventListeners {
             for (var cap : CMobAngerHandler.ALL_HANDLERS) {
                 event.getEntity().getCapability(cap).ifPresent(c -> c.setAngryAt(mob.getTarget(), MobAngerReason.TARGETING.get()));
             }
-            EntityComponentAPI.getComponentManager(event.getEntity()).getDownstreamComponents().stream()
-                .filter(c -> c instanceof MobAngerHandlerComponent).map(c -> (MobAngerHandlerComponent)c)
-                .forEach(c -> c.setAngryAt(mob.getTarget(), MobAngerReason.TARGETING.get()));
+            MobAngerHandlerComponent.setAngryAtForMob(mob, mob.getTarget(), MobAngerReason.TARGETING.get());
         }
     }
 
@@ -49,8 +47,7 @@ public class MobAngerEventListeners {
                             event.getAmount() > c.getDamageThreshold() ? MobAngerReason.ATTACKING.get() : MobAngerReason.HITTING.get()));
                 }
             }
-            EntityComponentAPI.getComponentManager(event.getEntity()).getDownstreamComponents().stream()
-                .filter(c -> c instanceof MobAngerHandlerComponent).map(c -> (MobAngerHandlerComponent)c)
+            MobAngerHandlerComponent.getAllAngerHandlers(event.getEntity())
                 .forEach(c -> {
                     if (event.getSource() instanceof EntityDamageSource eds && eds.isThorns()) {
                         if (event.getAmount() > c.getDamageThreshold())
