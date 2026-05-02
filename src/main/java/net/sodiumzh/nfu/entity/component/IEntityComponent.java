@@ -5,10 +5,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.annotation.DontOverride;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The core interface representing a node in the entity component tree.
@@ -40,7 +42,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Gets the entity's base class requirement to use this component. Note that a component
      * can only be attached to a parent supers its entity class.
      */
-    default public Class<E> getRequiredEntityClass() {
+    default public Class<? extends E> getRequiredEntityClass() {
         return this.getType().entityClass();
     }
     
@@ -166,18 +168,43 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     }
 
     /**
-     * Returns a list of all downstream components: all direct and indirect (recursive) subcomponents.
+     * Returns a set of all downstream (subtree) components into a given set: all direct and indirect (recursive) subcomponents.
+     * Each upstream component is guaranteed to appear before any of its own downstream components
+     * (i.e., preorder traversal). Order between branches is not defined. Not including self.
+     * @param outSet Set to put components in. It will NOT be cleared before addition to allow recursion without
+     *               creating multiple sets.
+     */
+    @DontOverride
+    @ApiStatus.Internal
+    @ApiStatus.NonExtendable
+    default void collectDownstreamComponentsTo(@Nonnull HashSet<IEntityComponent> outSet) {
+        for (IEntityComponent child : getSubComponents().values()) {
+            outSet.add(child);
+            child.collectDownstreamComponentsTo(outSet);
+        }
+    }
+
+    /**
+     * Returns a set of all downstream (subtree) components: all direct and indirect (recursive) subcomponents.
      * Each upstream component is guaranteed to appear before any of its own downstream components
      * (i.e., preorder traversal). Order between branches is not defined. Not including self.
      */
-    @DontOverride
-    default List<IEntityComponent<? extends E>> getAllDownstreamComponents() {
-        List<IEntityComponent<? extends E>> result = new ArrayList<>();
-        for (IEntityComponent<? extends E> child : getSubComponents().values()) {
-            result.add(child);
-            result.addAll(child.getAllDownstreamComponents());
-        }
-        return result;
+    default Set<IEntityComponent<? extends E>> getDownstreamComponents() {
+        HashSet<IEntityComponent> res = new HashSet<>();
+        collectDownstreamComponentsTo(res);
+        return res.stream().map(c -> (IEntityComponent<? extends E>)c).collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns a list of self and all downstream (subtree) components: all direct and indirect (recursive) subcomponents.
+     * Each upstream component is guaranteed to appear before any of its own downstream components
+     * (i.e., preorder traversal). Order between branches is not defined.
+     */
+    default Set<IEntityComponent<? extends E>> getSelfAndDownstreamComponents() {
+        HashSet<IEntityComponent> res = new HashSet<>();
+        collectDownstreamComponentsTo(res);
+        res.add(this);
+        return res.stream().map(c -> (IEntityComponent<? extends E>)c).collect(Collectors.toSet());
     }
 
     /**
@@ -189,7 +216,13 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Get the component type of this component. Note tha the component type must be registered
      * in {@link net.sodiumzh.nfu.registry.NFURegistries#ENTITY_COMPONENT_TYPES}, or it will cause an exception.
      */
-    EntityComponentType<E, ? extends IEntityComponent<E>> getType();
+    @Nonnull EntityComponentType<E, ? extends IEntityComponent<E>> getType();
+
+    /**
+     * Set the component type.
+     */
+    @ApiStatus.OverrideOnly
+    void setType(EntityComponentType<E, ? extends IEntityComponent<E>> type);
 
     /**
      * Get a component from this component's downstream tree with its path.
@@ -351,4 +384,5 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     // INBTSerializable<CompoundTag> methods:
     // CompoundTag serializeNBT();
     // void deserializeNBT(CompoundTag nbt);
+
 }

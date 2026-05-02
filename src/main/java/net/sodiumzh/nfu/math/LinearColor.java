@@ -74,7 +74,14 @@ public class LinearColor
 		int ib = (code & 0x000000ff); 
 		return fromRGB(ir, ig, ib);
 	}
-	
+
+	/**
+	 * Utility, converting normalized RGB to integer code.
+	 */
+	public static int codeOf(double r, double g, double b) {
+		return new LinearColor(r, g, b).toCode();
+	}
+
 	/**
 	 * Convert to Vec3i in XYZ = RGB (0 - 255 integer) 
 	 */

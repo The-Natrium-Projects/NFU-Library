@@ -21,7 +21,7 @@ import java.util.*;
  */
 final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> implements CEntityComponentManager {
 
-    public CEntityComponentManagerImpl(Entity entity) {
+    CEntityComponentManagerImpl(Entity entity) {
         super(entity);
     }
 
@@ -57,7 +57,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
                 throw new IllegalStateException("Missing required component or type mismatch. See log above for details.");
             }
         }
-        this.getAllDownstreamComponents().forEach(IEntityComponent::tick);
+        this.getDownstreamComponents().forEach(IEntityComponent::tick);
     }
 
     @Override
@@ -130,7 +130,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
 
     private List<RequiredComponentInfo> checkRequiredComponents() {
         List<RequiredComponentInfo> res = new ArrayList<>(getMissingRequiredComponents(this));
-        this.getAllDownstreamComponents().stream().map(CEntityComponentManagerImpl::getMissingRequiredComponents)
+        this.getDownstreamComponents().stream().map(CEntityComponentManagerImpl::getMissingRequiredComponents)
             .forEach(res::addAll);
         return res;
     }

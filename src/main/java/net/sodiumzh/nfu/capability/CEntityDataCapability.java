@@ -66,7 +66,7 @@ public interface CEntityDataCapability extends INBTSerializable<CompoundTag> {
             return entity;
         }
 
-        private Optional<EntityDynamicDataComponent> getDataComponent() {
+        private Optional<EntityDynamicDataComponent<Entity>> getDataComponent() {
             return CEntityComponentManager.getManager(this.getEntity())
                 .getSubComponent("dynamic_data", EntityComponentTypes.DYNAMIC_DATA.get());
         }

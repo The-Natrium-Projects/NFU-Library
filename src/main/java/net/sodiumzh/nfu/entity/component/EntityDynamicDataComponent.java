@@ -1,16 +1,19 @@
 package net.sodiumzh.nfu.entity.component;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
-public class EntityDynamicDataComponent extends EntityComponentBase<Entity> {
+public class EntityDynamicDataComponent<E extends Entity> extends EntityComponentBase<E> {
 
-    public EntityDynamicDataComponent(Entity entity) {
+    public EntityDynamicDataComponent(E entity) {
         super(entity);
     }
 
@@ -63,8 +66,4 @@ public class EntityDynamicDataComponent extends EntityComponentBase<Entity> {
     public void tick() {
     }
 
-    @Override
-    public EntityComponentType<Entity, EntityDynamicDataComponent> getType() {
-        return EntityComponentTypes.DYNAMIC_DATA.get();
-    }
 }
