@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class NFUNetworkStatics
@@ -45,23 +46,12 @@ public class NFUNetworkStatics
 	}
 
 	/**
-	 * Register a default game packet sent from server to client player(s). The packet must have a
-	 * constructor receiving only one argument of {@link FriendlyByteBuf}.
+	 * Register a default game packet sent from server to client player(s).
 	 */
-	public static <T extends Packet<ClientGamePacketListener>>
-			void registerDefaultClientGamePacket(int id, SimpleChannel channel, Class<T> packetClass)
+	public static <T extends Packet<ClientGamePacketListener>> void registerDefaultClientGamePacket(
+		int id, SimpleChannel channel, Class<T> packetClass, Function<FriendlyByteBuf, T> reader)
 	{
-		channel.registerMessage(id, packetClass, Packet::write,
-			(buffer) -> {
-				try
-				{
-					return packetClass.getConstructor(FriendlyByteBuf.class).newInstance(buffer);
-				}
-				catch (Exception e)
-				{
-					throw new IllegalArgumentException("NFUNetworkStatics::registerDefaultClientGamePacket packet class missing constructor.", e);
-				}
-			},
+		channel.registerMessage(id, packetClass, Packet::write, reader,
 			(pack, ctx) -> {
 				ctx.get().enqueueWork(() ->
 					Optional.ofNullable(Minecraft.getInstance().getConnection()).ifPresent(pack::handle));
@@ -71,24 +61,57 @@ public class NFUNetworkStatics
 	}
 
 	/**
-	 * Register a default game packet sent from client player to server. The packet must have a
+	 * Register a default game packet sent from server to client player(s). The packet must have a
 	 * constructor receiving only one argument of {@link FriendlyByteBuf}.
+	 * @deprecated Use reader-explicit version for performance reason (preventing reflection usage).
 	 */
-	public static <T extends Packet<ServerGamePacketListener>>
-		void registerDefaultServerGamePacket(int id, SimpleChannel channel, Class<T> packetClass)
+	@Deprecated
+	public static <T extends Packet<ClientGamePacketListener>>
+			void registerDefaultClientGamePacket(int id, SimpleChannel channel, Class<T> packetClass)
 	{
-		channel.registerMessage(id,packetClass, Packet::write, buffer -> {
-				try {
+		registerDefaultClientGamePacket(id, channel, packetClass, (buffer) -> {
+				try
+				{
 					return packetClass.getConstructor(FriendlyByteBuf.class).newInstance(buffer);
-				} catch (Exception e) {
-					throw new IllegalArgumentException("NFUNetworkStatics::registerDefaultServerGamePacket packet class missing constructor.", e);
 				}
-			}, (pack, ctx) -> {
+				catch (Exception e)
+				{
+					throw new IllegalArgumentException("NFUNetworkStatics::registerDefaultClientGamePacket packet class missing constructor.", e);
+				}
+			});
+	}
+
+	/**
+	 * Register a default game packet sent from client player to server.
+	 */
+	@Deprecated
+	public static <T extends Packet<ServerGamePacketListener>> void registerDefaultServerGamePacket(
+		int id, SimpleChannel channel, Class<T> packetClass, Function<FriendlyByteBuf, T> reader)
+	{
+		channel.registerMessage(id,packetClass, Packet::write, reader, (pack, ctx) -> {
 				ctx.get().enqueueWork(() ->
 					Optional.ofNullable(ctx.get().getSender()).map(p -> p.connection).ifPresent(pack::handle));
 				ctx.get().setPacketHandled(true);
 			}
 		);
+	}
+
+	/**
+	 * Register a default game packet sent from client player to server. The packet must have a
+	 * constructor receiving only one argument of {@link FriendlyByteBuf}.
+	 * @deprecated Use reader-explicit version for performance reason (preventing reflection usage).
+	 */
+	@Deprecated
+	public static <T extends Packet<ServerGamePacketListener>>
+		void registerDefaultServerGamePacket(int id, SimpleChannel channel, Class<T> packetClass)
+	{
+		registerDefaultServerGamePacket(id, channel, packetClass, buffer -> {
+				try {
+					return packetClass.getConstructor(FriendlyByteBuf.class).newInstance(buffer);
+				} catch (Exception e) {
+					throw new IllegalArgumentException("NFUNetworkStatics::registerDefaultServerGamePacket packet class missing constructor.", e);
+				}
+		});
 	}
 
 	/**

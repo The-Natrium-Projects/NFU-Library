@@ -35,5 +35,6 @@ public class EntityComponentEventListeners {
     private static void createDefaultComponents(Entity e, CEntityComponentManager mgr) {
         mgr.setRequired("/dynamic_data", EntityComponentTypes.DYNAMIC_DATA.get());
         mgr.setRequired("/default_timer", EntityComponentTypes.DEFAULT_TIMER.get());
+        mgr.setRequired("/default_syncher", EntityComponentTypes.DEFAULT_SYNCHER.get());
     }
 }

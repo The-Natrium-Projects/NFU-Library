@@ -12,7 +12,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-public abstract class EntityTimerComponent<T extends Entity> extends EntityComponentBase<T> {
+public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<T> {
 
     private final Map<String, Timer> namedTimers = new HashMap<>();
     private final ITable2D<UUID, String, Timer> uuidSpecificNamedTimers = new Table2D<>();
@@ -29,12 +29,19 @@ public abstract class EntityTimerComponent<T extends Entity> extends EntityCompo
         super(entity);
     }
 
+    public final boolean isDefaultTimerComponent() {
+        return this.equals(EntityComponentAPI.getDefaultTimer(this.getEntity()));
+    }
+
     public void tick() {
         for (var entry: namedTimers.entrySet()) {
             entry.getValue().tick();
             if (entry.getValue().isExpired() || entry.getValue().isJustFinishedALoop()) {
-                if (this.getEntity() instanceof IDefaultEntityTimerComponentHolder holder)
-                    holder.onTimerExpire(entry.getKey(), entry.getValue().isExpired(), null);
+                if (this.getEntity() instanceof IEntityTimerComponentUser user) {
+                    user.onTimerExpire(this, entry.getKey(), entry.getValue().isExpired(), null);
+                    if (this.isDefaultTimerComponent())
+                        user.onDefaultTimerExpire(entry.getKey(), entry.getValue().isExpired(), null);
+                }
                 MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), entry.getKey(), entry.getValue().isExpired(), null));
                 if (entry.getValue().isExpired()) expiredKeys.add(entry.getKey());
             }
@@ -42,8 +49,11 @@ public abstract class EntityTimerComponent<T extends Entity> extends EntityCompo
         this.uuidSpecificNamedTimers.entryStream().forEach(entry -> {
             entry.value().tick();
             if (entry.value().isExpired() || entry.value().isJustFinishedALoop()) {
-                if (this.getEntity() instanceof IDefaultEntityTimerComponentHolder holder)
-                    holder.onTimerExpire(entry.columnKey(), entry.value().isExpired(), entry.rowKey());
+                if (this.getEntity() instanceof IEntityTimerComponentUser user) {
+                    user.onTimerExpire(this, entry.columnKey(), entry.value().isExpired(), entry.rowKey());
+                    if (this.isDefaultTimerComponent())
+                        user.onDefaultTimerExpire(entry.columnKey(), entry.value().isExpired(), entry.rowKey());
+                }
                 MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), entry.columnKey(), entry.value().isExpired(), entry.rowKey()));
                 if (entry.value().isExpired()) expiredIdSpecificKeys.add(new ITable2D.KeyPair<>(entry.rowKey(), entry.columnKey()));
             }
@@ -354,15 +364,4 @@ public abstract class EntityTimerComponent<T extends Entity> extends EntityCompo
 
     }
 
-    public static class Default extends EntityTimerComponent<Entity> {
-
-        public Default(Entity entity) {
-            super(entity);
-        }
-
-        @Override
-        public EntityComponentType<Entity, EntityTimerComponent.Default> getType() {
-            return EntityComponentTypes.DEFAULT_TIMER.get();
-        }
-    }
 }

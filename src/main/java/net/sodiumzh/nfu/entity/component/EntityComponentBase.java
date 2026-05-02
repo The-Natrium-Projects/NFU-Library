@@ -31,10 +31,12 @@ import java.util.*;
  * </ul>
  */
 public abstract class EntityComponentBase<E extends Entity> implements IEntityComponent<E> {
+
     @Nullable protected IEntityComponent<? super E> parent;
     protected final Map<String, IEntityComponent<? extends E>> subComponents = new HashMap<>();
     protected final E entity;
     protected final Map<String, EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>>> required = new HashMap<>();
+    protected EntityComponentType<E, ? extends IEntityComponent<E>> type;
 
     public EntityComponentBase(E entity) {
         if (entity == null)
@@ -142,4 +144,15 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
         return Map.copyOf(this.required);
     }
 
+    @Override
+    public EntityComponentType<E, ? extends IEntityComponent<E>> getType() {
+        if (type == null)
+            throw new IllegalStateException("NFU Entity Component: Missing type. Maybe not initialized? Always create component from type instead of directly using new.");
+        return type;
+    }
+
+    @Override
+    public void setType(EntityComponentType<E, ? extends IEntityComponent<E>> type) {
+        this.type = type;
+    }
 }
