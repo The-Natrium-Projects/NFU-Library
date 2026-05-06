@@ -86,7 +86,8 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
             .forEach(entry -> this.addSubComponentByPath(entry.getKey(), entry.getValue().createUnsafe(this.getEntity())));
     }
 
-    private CompoundTag serializeComponent(String name, IEntityComponent<? extends Entity> component) {        try {
+    private CompoundTag serializeComponent(String name, IEntityComponent<? extends Entity> component) {
+        try {
             CompoundTag nbt = new CompoundTag();
             nbt.putString("name", name);
             nbt.putString("type", component.getType().getKey().toString());
@@ -136,7 +137,8 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
 
     private static List<RequiredComponentInfo> getMissingRequiredComponents(IEntityComponent<? extends Entity> component) {
         return component.getAllRequired().entrySet().stream().filter(entry -> {
-            @Nullable IEntityComponent<? extends Entity> c = component.getSubComponentByPath(entry.getKey()).orElse(null);            return c == null || !c.getType().equals(entry.getValue());
+            @Nullable IEntityComponent<? extends Entity> c = component.getSubComponentByPath(entry.getKey()).orElse(null);
+            return c == null || !c.getType().equals(entry.getValue());
         }).map(entry -> new RequiredComponentInfo(component, entry.getKey(), entry.getValue())).toList();
     }
 
