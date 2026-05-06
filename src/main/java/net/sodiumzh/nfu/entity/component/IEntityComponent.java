@@ -27,8 +27,9 @@ import java.util.stream.Collectors;
  *   <li>Works seamlessly with Forge's NBT serialization and capability APIs for snapshotting and restoring stateful data.</li>
  * </ul>
  * <b>Best practice is to extend {@link EntityComponentBase} for field-backed implementations unless a very specialized structure is needed.</b>
- * @param <E> Required base entity class for this component. Note that a component can only be attached to parents with the
- *           entity class supers this component's entity class.
+ * @param <E> Required base entity class for this component. Note that a component can only be
+ *           attached to entities whose class extends this component's entity class. There is no
+ *           restriction on the entity class of its sub-components.
  */
 public interface IEntityComponent<E extends Entity> extends INBTSerializable<CompoundTag> {
 
@@ -36,11 +37,11 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Gets the parent component of this component in the tree.
      * @return Optional parent component, or empty if this is the root, or if not yet attached.
      */
-    Optional<IEntityComponent<? super E>> getParent();
+    Optional<IEntityComponent<?>> getParent();
 
     /**
      * Gets the entity's base class requirement to use this component. Note that a component
-     * can only be attached to a parent supers its entity class.
+     * can only be attached to an entity whose class extends this component's entity class.
      */
     default public Class<? extends E> getRequiredEntityClass() {
         return this.getType().entityClass();
@@ -60,7 +61,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * parent-changing actions (e.g. {@code attachTo}, {@code addSubComponent}), and not be called elsewhere.
      */
     @DontCallManually
-    default void updateParent(@Nullable IEntityComponent<? super E> oldParent, @Nullable IEntityComponent<? super E> newParent) {}
+    default void updateParent(@Nullable IEntityComponent<?> oldParent, @Nullable IEntityComponent<?> newParent) {}
 
     /**
      * Sets the parent component and name for this component. Should be called by the manager when attaching or rebuilding the tree.
@@ -69,7 +70,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * @param name The local subcomponent name (unique within parent), or null if root or.
      */
     @DontOverride
-    default void attachTo(@Nullable IEntityComponent<? super E> parent, String name) {
+    default void attachTo(@Nullable IEntityComponent<?> parent, String name) {
         if (parent == null) {
             this.detachFromParent();
             return;
@@ -95,7 +96,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * The subcomponent cannot have an existing parent, or it throws. Detach first.
      * The name must not be present, or it throws. To replace, call replaceSubComponent instead.
      */
-    void addSubComponent(@Nonnull String name, @Nonnull IEntityComponent<? extends E> component);
+    void addSubComponent(@Nonnull String name, @Nonnull IEntityComponent<? extends Entity> component);
 
     /**
      * Replace the existing subcomponent as the new one. Returns the old one (absent = return null).
@@ -103,8 +104,8 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      */
     @Nullable
     @DontOverride
-    default IEntityComponent<? extends E> replaceSubComponent(@Nonnull String name, @Nullable IEntityComponent<? extends E> newComponent) {
-        IEntityComponent<? extends E> res = this.removeSubComponent(name);
+    default IEntityComponent<? extends Entity> replaceSubComponent(@Nonnull String name, @Nullable IEntityComponent<? extends Entity> newComponent) {
+        IEntityComponent<? extends Entity> res = this.removeSubComponent(name);
         if (newComponent == null) return res;
         this.addSubComponent(name, newComponent);
         return res;
@@ -116,10 +117,10 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * @return the removed component, or null if not removed.
      */
     @Nullable
-    IEntityComponent<? extends E> removeSubComponent(String name);
+    IEntityComponent<? extends Entity> removeSubComponent(String name);
 
     @DontOverride
-    default void removeSubComponent(IEntityComponent<? extends E> component) {
+    default void removeSubComponent(IEntityComponent<? extends Entity> component) {
         this.getSubComponents().entrySet().stream().filter(e -> e.getValue() == component)
             .toList().forEach(e -> this.removeSubComponent(e.getKey()));
     }
@@ -127,7 +128,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     /**
      * Gets an unmodifiable map of all direct subcomponents keyed by their local name.
      */
-    Map<String, IEntityComponent<? extends E>> getSubComponents();
+    Map<String, IEntityComponent<? extends Entity>> getSubComponents();
 
     /**
      * Gets a direct subcomponent by name.
@@ -135,7 +136,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * @return The subcomponent or empty if not found.
      */
     @DontOverride
-    default Optional<IEntityComponent<? extends E>> getSubComponent(String name) {
+    default Optional<IEntityComponent<? extends Entity>> getSubComponent(String name) {
         return Optional.ofNullable(this.getSubComponents().get(name));
     }
 
@@ -145,7 +146,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * @return The subcomponent. Empty if not found or type mismatch.
      */
     @SuppressWarnings("unchecked")
-    default <C extends IEntityComponent<? extends E>> Optional<C> getSubComponent(String name, EntityComponentType<? extends E, C> type) {
+    default <C extends IEntityComponent<? extends Entity>> Optional<C> getSubComponent(String name, EntityComponentType<? extends Entity, C> type) {
         return this.getSubComponent(name).filter(c -> c.getType().equals(type)).map(c -> (C)c);
     }
 
@@ -153,7 +154,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Get the name if the input component is a direct sub-component of this component. Empty if it's not.
      */
     @DontOverride
-    default Optional<String> getSubComponentName(@Nonnull IEntityComponent<? extends E> subComponent) {
+    default Optional<String> getSubComponentName(@Nonnull IEntityComponent<? extends Entity> subComponent) {
         return this.getSubComponents().entrySet().stream().filter(e -> e.getValue() == subComponent).findAny().map(Map.Entry::getKey);
     }
 
@@ -189,10 +190,10 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Each upstream component is guaranteed to appear before any of its own downstream components
      * (i.e., preorder traversal). Order between branches is not defined. Not including self.
      */
-    default Set<IEntityComponent<? extends E>> getDownstreamComponents() {
+    default Set<IEntityComponent<? extends Entity>> getDownstreamComponents() {
         HashSet<IEntityComponent> res = new HashSet<>();
         collectDownstreamComponentsTo(res);
-        return res.stream().map(c -> (IEntityComponent<? extends E>)c).collect(Collectors.toSet());
+        return res.stream().map(c -> (IEntityComponent<? extends Entity>)c).collect(Collectors.toSet());
     }
 
     /**
@@ -200,11 +201,11 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Each upstream component is guaranteed to appear before any of its own downstream components
      * (i.e., preorder traversal). Order between branches is not defined.
      */
-    default Set<IEntityComponent<? extends E>> getSelfAndDownstreamComponents() {
+    default Set<IEntityComponent<? extends Entity>> getSelfAndDownstreamComponents() {
         HashSet<IEntityComponent> res = new HashSet<>();
         collectDownstreamComponentsTo(res);
         res.add(this);
-        return res.stream().map(c -> (IEntityComponent<? extends E>)c).collect(Collectors.toSet());
+        return res.stream().map(c -> (IEntityComponent<? extends Entity>)c).collect(Collectors.toSet());
     }
 
     /**
@@ -231,10 +232,10 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      *             flatMap(c -> c.getSubComponent("component"))}.
      * @return The component, or empty if the component is missing.
      */
-    default Optional<IEntityComponent<? extends E>> getSubComponentByPath(String path) {
+    default Optional<IEntityComponent<? extends Entity>> getSubComponentByPath(String path) {
         List<String> parts = Arrays.stream(path.split("[/\\\\]+"))
             .filter(str -> !str.isEmpty()).toList();
-        Optional<IEntityComponent<? extends E>> res = Optional.of(this);
+        Optional<IEntityComponent<? extends Entity>> res = Optional.of(this);
         for (String name: parts) {
             res = res.flatMap(c -> c.getSubComponent(name));
         }
@@ -249,10 +250,10 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * @return The component, or empty if the component is missing / type mismatching.
      */
     @SuppressWarnings("unchecked")
-    default <C extends IEntityComponent<? extends E>> Optional<C> getSubComponentByPath(String path, EntityComponentType<? extends E, C> type) {
+    default <C extends IEntityComponent<? extends Entity>> Optional<C> getSubComponentByPath(String path, EntityComponentType<? extends Entity, C> type) {
         List<String> parts = Arrays.stream(path.split("[/\\\\]+"))
             .filter(str -> !str.isEmpty()).toList();
-        Optional<IEntityComponent<? extends E>> res = Optional.of(this);
+        Optional<IEntityComponent<? extends Entity>> res = Optional.of(this);
         for (String name: parts) {
             res = res.flatMap(c -> c.getSubComponent(name));
         }
@@ -261,13 +262,12 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
 
     /**
      * Add an indirect sub-component by its relevant path from this component.
-     * @throws IllegalStateException When the direct parent of the path to add is absent, or the direct parent's entity class
-     * doesn't super the component to add.
+     * @throws IllegalStateException When the direct parent of the path to add is absent.
      */
-    default void addSubComponentByPath(String path, IEntityComponent<? extends E> component) {
+    default void addSubComponentByPath(String path, IEntityComponent<? extends Entity> component) {
         List<String> parts = Arrays.stream(path.split("[/\\\\]+"))
             .filter(str -> !str.isEmpty()).toList();
-        Optional<IEntityComponent<? extends E>> res = Optional.of(this);
+        Optional<IEntityComponent<? extends Entity>> res = Optional.of(this);
         StringBuilder rebuiltPath = new StringBuilder();
         for (int i = 0; i < parts.size() - 1; ++i) {
             int j = i;
@@ -279,22 +279,16 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
         if (res.isEmpty()) {
             throw new IllegalStateException("Failed to add sub-component \"" + path
              + "\" because \"" + rebuiltPath + "\" is absent.");
-        }
-        else if (!res.orElseThrow().getRequiredEntityClass().isAssignableFrom(component.getRequiredEntityClass())) {
-            throw new IllegalStateException("Failed to add sub-component \"" 
-                    + path + "\" because its parent requires entity class " + res.orElseThrow().getRequiredEntityClass().getName()
-            + "but the component is for " + component.getRequiredEntityClass().getName());
         } else {
-            IEntityComponent<E> resCast = (IEntityComponent<E>) (res.orElseThrow());
-            resCast.addSubComponent(parts.get(parts.size() - 1), component);
+            res.orElseThrow().addSubComponent(parts.get(parts.size() - 1), component);
         }
     }
 
     /**
      * Get the root of the component tree this component belongs to.
      */
-    default IEntityComponent<? super E> getRoot() {
-        IEntityComponent<? super E> ptr = this;
+    default IEntityComponent<?> getRoot() {
+        IEntityComponent<?> ptr = this;
         while (ptr.getParent().isPresent()) {
             ptr = ptr.getParent().orElseThrow();
         }
@@ -313,7 +307,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Get the full path from the root of component tree this component belongs to.
      */
     default String getPathFromRoot() {
-        IEntityComponent<? super E> ptr = this;
+        IEntityComponent<?> ptr = this;
         StringBuilder res = new StringBuilder();
         while (ptr.getParent().isPresent()) {
             ptr = ptr.getParent().orElseThrow();
@@ -327,8 +321,8 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * @return relative path from the upstream component to {@code this}. Empty string (i.e. {@code Optional.of("")})
      * if input == this. {@link Optional#empty()} if the input is not an upstream component.
      */
-    default Optional<String> getPathFrom(IEntityComponent<? super E> upstreamComponent) {
-        IEntityComponent<? super E> ptr = this;
+    default Optional<String> getPathFrom(IEntityComponent<?> upstreamComponent) {
+        IEntityComponent<?> ptr = this;
         if (upstreamComponent == this) return Optional.of("");
         StringBuilder res = new StringBuilder();
         while (ptr.getParent().filter(c -> c != upstreamComponent).isPresent()) {
@@ -343,7 +337,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * @return relative path from {@code this} to the downstream component. Empty string (i.e. {@code Optional.of("")})
      * if input == this. {@link Optional#empty()} if the input is not a downstream component.
      */
-    default Optional<String> getPathTo(IEntityComponent<? extends E> downstreamComponent) {
+    default Optional<String> getPathTo(IEntityComponent<? extends Entity> downstreamComponent) {
         return downstreamComponent.getPathFrom(this);
     }
 
@@ -356,9 +350,9 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * @throws IllegalStateException When the path is occupied by a component of wrong type,
      * or the parent component of the desired path is absent.
      */
-    void setRequired(String path, EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>> type);
+    void setRequired(String path, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type);
 
-    default void setRequiredIfClassMatches(String path, EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>> type) {
+    default void setRequiredIfClassMatches(String path, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type) {
         if (type.entityClass().isAssignableFrom(this.getEntity().getClass()))
             this.setRequired(path, type);
     }
@@ -369,12 +363,12 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * <p>Note: this method doesn't handle the presence check of the required component instances.
      * It's done in {@link CEntityComponentManager}.
      */
-    Optional<EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>>> getTypeIfRequired(String path);
+    Optional<EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>>> getTypeIfRequired(String path);
 
     /**
      * Get an immutable map of all required paths and corresponding types.
      */
-    Map<String, EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>>> getAllRequired();
+    Map<String, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>>> getAllRequired();
 
     @DontOverride
     default boolean isClientSide() {
