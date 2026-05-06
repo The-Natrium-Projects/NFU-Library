@@ -26,13 +26,13 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     }
 
     @Override
-    public Optional<IEntityComponent<? super Entity>> getParent() {
+    public Optional<IEntityComponent<?>> getParent() {
         // As the root, parent is always null.
         return Optional.empty();
     }
 
     @Override
-    public void attachTo(@Nullable IEntityComponent<? super Entity> parent, String name) {
+    public void attachTo(@Nullable IEntityComponent<?> parent, String name) {
         throw new UnsupportedOperationException("CEntityComponentManager must be root and cannot attach to anything.");
     }
 
@@ -86,8 +86,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
             .forEach(entry -> this.addSubComponentByPath(entry.getKey(), entry.getValue().createUnsafe(this.getEntity())));
     }
 
-    private CompoundTag serializeComponent(String name, IEntityComponent<? extends Entity> component) {
-        try {
+    private CompoundTag serializeComponent(String name, IEntityComponent<? extends Entity> component) {        try {
             CompoundTag nbt = new CompoundTag();
             nbt.putString("name", name);
             nbt.putString("type", component.getType().getKey().toString());
@@ -113,7 +112,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
                 // If missing factory, cut this branch
                 return null;
             }
-            IEntityComponent<Entity> component = (IEntityComponent<Entity>) type.createUnsafe(e);
+            IEntityComponent<? extends Entity> component = type.createUnsafe(e);
             component.deserializeNBT(nbt.getCompound("data"));
             ListTag subcomponentTag = nbt.getList("subcomponents", Tag.TAG_COMPOUND);
             subcomponentTag.stream().map(tag -> NFUMiscStatics.cast(tag, CompoundTag.class))
@@ -137,8 +136,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
 
     private static List<RequiredComponentInfo> getMissingRequiredComponents(IEntityComponent<? extends Entity> component) {
         return component.getAllRequired().entrySet().stream().filter(entry -> {
-            @Nullable IEntityComponent<? extends Entity> c = component.getSubComponentByPath(entry.getKey()).orElse(null);
-            return c == null || !c.getType().equals(entry.getValue());
+            @Nullable IEntityComponent<? extends Entity> c = component.getSubComponentByPath(entry.getKey()).orElse(null);            return c == null || !c.getType().equals(entry.getValue());
         }).map(entry -> new RequiredComponentInfo(component, entry.getKey(), entry.getValue())).toList();
     }
 
@@ -150,5 +148,4 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     private static record RequiredComponentInfo(
         IEntityComponent<? extends Entity> requiredBy,
         String relPath,
-        EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type){}
-}
+        EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type){}}

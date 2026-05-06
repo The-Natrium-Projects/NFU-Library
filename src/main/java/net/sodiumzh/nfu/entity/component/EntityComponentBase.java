@@ -32,10 +32,10 @@ import java.util.*;
  */
 public abstract class EntityComponentBase<E extends Entity> implements IEntityComponent<E> {
 
-    @Nullable protected IEntityComponent<? super E> parent;
-    protected final Map<String, IEntityComponent<? extends E>> subComponents = new HashMap<>();
+    @Nullable protected IEntityComponent<?> parent;
+    protected final Map<String, IEntityComponent<? extends Entity>> subComponents = new HashMap<>();
     protected final E entity;
-    protected final Map<String, EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>>> required = new HashMap<>();
+    protected final Map<String, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>>> required = new HashMap<>();
     protected EntityComponentType<E, ? extends IEntityComponent<E>> type;
 
     public EntityComponentBase(E entity) {
@@ -45,7 +45,7 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     }
 
     @Override
-    public Optional<IEntityComponent<? super E>> getParent() {
+    public Optional<IEntityComponent<?>> getParent() {
         return Optional.ofNullable(parent);
     }
 
@@ -55,7 +55,7 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     }
 
     @Override
-    public void addSubComponent(@Nonnull String name, @Nonnull IEntityComponent<? extends E> component) {
+    public void addSubComponent(@Nonnull String name, @Nonnull IEntityComponent<? extends Entity> component) {
         if (name == null || name.isEmpty())
             throw new IllegalArgumentException("Subcomponent name must not be null or empty.");
         if (name.contains("\\") || name.contains("/"))
@@ -68,9 +68,6 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
             throw new IllegalArgumentException("Component already has a parent. Detach first.");
         if (subComponents.containsKey(name))
             throw new IllegalArgumentException("Duplicate subcomponent name. Use replaceSubComponent instead.");
-        if (!component.getRequiredEntityClass().isAssignableFrom(this.getEntity().getClass()))
-            throw new IllegalArgumentException("Entity type mismatch: attaching a component for entity class " + component.getRequiredEntityClass().getName()
-            + "to entity class " + this.getEntity().getClass().getName());
         if (createsCycle(component))
             throw new IllegalStateException("Cycle detected: adding would produce a cyclic tree.");
         subComponents.put(name, component);
@@ -80,8 +77,8 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
 
     @Nullable
     @Override
-    public IEntityComponent<? extends E> removeSubComponent(String name) {
-        IEntityComponent<? extends E> removed = subComponents.remove(name);
+    public IEntityComponent<? extends Entity> removeSubComponent(String name) {
+        IEntityComponent<? extends Entity> removed = subComponents.remove(name);
         if (removed != null) {
             removed.updateParent(this, null);
         }
@@ -89,7 +86,7 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     }
 
     @Override
-    public Map<String, IEntityComponent<? extends E>> getSubComponents() {
+    public Map<String, IEntityComponent<? extends Entity>> getSubComponents() {
         return Collections.unmodifiableMap(subComponents);
     }
 
@@ -97,8 +94,6 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
      * Returns true if adding the given component would cause a cycle.
      */
     protected boolean createsCycle(IEntityComponent<?> candidate) {
-        // As we have entity class hierarchy requirement, component of different entity class is alway safe
-        if (!candidate.getRequiredEntityClass().equals(this.getRequiredEntityClass())) return false;
         IEntityComponent<?> curr = this;
         while (curr != null) {
             if (curr == candidate) {
@@ -111,20 +106,17 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
 
     @Override
     @DontCallManually
-    public void updateParent(@Nullable IEntityComponent<? super E> oldParent, @Nullable IEntityComponent<? super E> newParent) {
+    public void updateParent(@Nullable IEntityComponent<?> oldParent, @Nullable IEntityComponent<?> newParent) {
         this.parent = newParent;
     }
 
     @Override
-    public void setRequired(String path, EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>> type) {
-        if (!type.entityClass().isAssignableFrom(this.getEntity().getClass()))
-            throw new IllegalArgumentException("Entity type mismatch: attaching a component for entity class " + type.entityClass().getName()
-                + " to entity class " + this.getEntity().getClass().getName());
+    public void setRequired(String path, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type) {
         // Uniformize the format of path
         String pathKey = Arrays.stream(path.split("[/\\\\]")).filter(s -> !s.isEmpty())
             .map(s -> "\\" + s).reduce("", (s1, s2) -> s1 + s2);
         this.required.put(pathKey, type);
-        @Nullable IEntityComponent<? extends E> old = this.getSubComponentByPath(pathKey).orElse(null);
+        @Nullable IEntityComponent<? extends Entity> old = this.getSubComponentByPath(pathKey).orElse(null);
         if (old != null && !old.getType().equals(type))
             throw new IllegalStateException("Failed to set required sub-component at "
             + pathKey + "\" because it's occupied by a component of another type: \""
@@ -133,14 +125,14 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
             this.addSubComponentByPath(pathKey, type.createUnsafe(this.getEntity()));
     }
 
-    public Optional<EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>>> getTypeIfRequired(String path) {
+    public Optional<EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>>> getTypeIfRequired(String path) {
         // Uniformize the format of path
         String pathKey = Arrays.stream(path.split("[/\\\\]")).filter(s -> !s.isEmpty())
             .map(s -> "\\" + s).reduce("", (s1, s2) -> s1 + s2);
         return Optional.ofNullable(this.required.get(pathKey));
     }
 
-    public Map<String, EntityComponentType<? extends E, ? extends IEntityComponent<? extends E>>> getAllRequired() {
+    public Map<String, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>>> getAllRequired() {
         return Map.copyOf(this.required);
     }
 
