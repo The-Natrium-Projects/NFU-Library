@@ -6,7 +6,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.entity.anger.MobAngerHandlerComponent;
 import net.sodiumzh.nfu.entity.anger.MobAngerRules;
-import net.sodiumzh.nfu.entity.component.EntityComponentInitEvent;
+import net.sodiumzh.nfu.entity.component.EntityComponentSetupEvent;
 import net.sodiumzh.nfu.entity.component.EntityComponentType;
 
 public class NFUEntityComponents {
@@ -22,8 +22,9 @@ public class NFUEntityComponents {
     public static class Attachment {
 
         @SubscribeEvent
-        public static void onInitComponents(EntityComponentInitEvent event) {
-            event.getComponentManager().setRequiredIfClassMatches("/default_anger_handler", NFUEntityComponents.DEFAULT_ANGER_HANDLER.get());
+        public static void onInitComponents(EntityComponentSetupEvent event) {
+            if (event.getEntity() instanceof Mob mob)
+                event.addComponent("/default_anger_handler", NFUEntityComponents.DEFAULT_ANGER_HANDLER.get());
         }
 
     }

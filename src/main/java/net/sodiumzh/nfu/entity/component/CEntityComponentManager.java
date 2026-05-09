@@ -4,6 +4,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.capability.CEntityTickingCapability;
+import net.sodiumzh.nfu.registry.NFUEntityComponents;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
  * </ul>
  * <b>Do not implement this interface manually; extend its core implementation to ensure validity and correct bookkeeping.</b>
  */
+@ApiStatus.NonExtendable
 public interface CEntityComponentManager extends CEntityTickingCapability<Entity>, IEntityComponent<Entity> {
 
     /**
@@ -72,6 +75,14 @@ public interface CEntityComponentManager extends CEntityTickingCapability<Entity
             String newIndent = indent + (last ? "  " : "│ ");
             printComponentTreeRec(entry.getKey(), entry.getValue(), newIndent, idx == sz);
         }
+    }
+
+    /**
+     * Add a hierarchy node component of given path that doesn't do anything itself.
+     */
+    @ApiStatus.NonExtendable
+    public default void addNode(String path) {
+        this.addSubComponentByPath(path, EntityComponentTypes.NODE.get().create(this.getEntity()));
     }
 
 }
