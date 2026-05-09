@@ -26,6 +26,13 @@ import java.util.stream.Collectors;
  *   <li>Default methods are provided for most navigation, path management, and convenience contract operations; implementations only need to handle state.</li>
  *   <li>Works seamlessly with Forge's NBT serialization and capability APIs for snapshotting and restoring stateful data.</li>
  * </ul>
+ * <b>Terms:</b>
+ * <ul>
+ *     <li>Sub-component: a component as a <b>direct child node</b> of self in the hierarchy tree.</li>
+ *     <li>Parent component: a component as <b>the direct parent node</b> of self in the hierarchy tree.</li>
+ *     <li>Downstream component: any component as a <b>child, grandchild... node</b> of self in the hierarchy tree.</li>
+ *     <li>Upstream component: any component as <b>parent, grandparent... nodes</b> of self in the hierarchy tree. </li>
+ * </ul>
  * <b>Best practice is to extend {@link EntityComponentBase} for field-backed implementations unless a very specialized structure is needed.</b>
  * @param <E> Required base entity class for this component. Note that a component can only be
  *           attached to entities whose class extends this component's entity class. There is no
@@ -261,6 +268,14 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     }
 
     /**
+     * Get a mapping of all components with its
+     */
+    default <T extends IEntityComponent<? extends Entity>> Map<String, T> getSubComponentsByType(EntityComponentType<?, T> type) {
+        return this.getSubComponents().values().stream().filter(c -> c.getType().equals(type))
+            .collect(Collectors.toMap(IEntityComponent::getPathFromRoot, c -> (T)c));
+    }
+
+    /**
      * Add an indirect sub-component by its relevant path from this component.
      * @throws IllegalStateException When the direct parent of the path to add is absent.
      */
@@ -378,5 +393,23 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     // INBTSerializable<CompoundTag> methods:
     // CompoundTag serializeNBT();
     // void deserializeNBT(CompoundTag nbt);
+
+    /**
+     * Split a string representation of a path (separated by either '\' or '/') to string array.
+     * <p>For example: input "aa\\bb/cc", output {"aa", "bb", "cc"} (redundant '\' and '/' will be removed)</p>
+     */
+    public static String[] splitPath(String path) {
+        return Arrays.stream(path.split("[/\\\\]+")).filter(str -> !str.isEmpty()).toArray(String[]::new);
+    }
+
+    /**
+     * Convert a valid string representation to standard format (like "/aa/bb/cc").
+     * <p>For example: input "/\aa/bb\ccc", output "/aa/bb/ccc"</p>
+     * <p>Used for comparing the hierarchy of two unformatted paths.
+     */
+    public static String formatPath(String path) {
+        return Arrays.stream(path.split("[/\\\\]+")).filter(str -> !str.isEmpty())
+            .map(str -> "/" + str).reduce("", (s1, s2) -> s1 + s2);
+    }
 
 }

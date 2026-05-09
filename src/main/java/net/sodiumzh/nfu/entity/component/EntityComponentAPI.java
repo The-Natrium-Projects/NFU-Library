@@ -3,7 +3,7 @@ package net.sodiumzh.nfu.entity.component;
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -50,16 +50,28 @@ public class EntityComponentAPI {
         return getComponentManager(e).getSubComponent("dynamic_data", EntityComponentTypes.DYNAMIC_DATA.get()).orElseGet(() -> {
             NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing dynamic data component. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
-            return new EntityDynamicDataComponent<>(e);
+            return EntityComponentTypes.DYNAMIC_DATA.get().create(e);
         });
     }
 
     public static EntityTimerComponent<Entity> getDefaultTimer(Entity e) {
-        return getComponentManager(e).getSubComponent("default_timer", EntityComponentTypes.DEFAULT_TIMER.get()).orElseGet(() -> {
+        return getComponentManager(e).getSubComponent("timer", EntityComponentTypes.TIMER.get()).orElseGet(() -> {
             NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
-            return new EntityTimerComponent<>(e);
+            return EntityComponentTypes.TIMER.get().create(e);
         });
+    }
+
+    public static EntitySyncherComponent<Entity> getDefaultSyncher(Entity e) {
+        return getComponentManager(e).getSubComponent("syncher", EntityComponentTypes.SYNCHER.get()).orElseGet(() -> {
+            NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
+                "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
+            return EntityComponentTypes.SYNCHER.get().create(e);
+        });
+    }
+
+    public static <T extends IEntityComponent<? extends Entity>> Optional<T> getComponentByPath(Entity e, String path, EntityComponentType<?, T> type) {
+        return getComponentManager(e).getSubComponentByPath(path, type);
     }
 
     public static Set<IEntityComponent<? extends Entity>> getAllComponents(Entity target) {

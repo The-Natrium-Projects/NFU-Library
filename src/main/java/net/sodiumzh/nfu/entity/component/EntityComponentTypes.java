@@ -18,10 +18,13 @@ public class EntityComponentTypes {
     public static final NFURegistry.Accessor<EntityComponentType<Entity, EntityDynamicDataComponent<Entity>>> DYNAMIC_DATA =
         COLLECTION.register("dynamic_data", () ->
             new EntityComponentType<>(Entity.class, EntityDynamicDataComponent.class, EntityDynamicDataComponent::new));
-    public static final NFURegistry.Accessor<EntityComponentType<Entity, EntityTimerComponent<Entity>>> DEFAULT_TIMER =
-        COLLECTION.register("default_timer", () ->
+    public static final NFURegistry.Accessor<EntityComponentType<Entity, EntityTimerComponent<Entity>>> TIMER =
+        COLLECTION.register("timer", () ->
             new EntityComponentType<>(Entity.class, EntityTimerComponent.class, EntityTimerComponent::new));
-    public static final NFURegistry.Accessor<EntityComponentType<Entity, EntitySyncherComponent<Entity>>> DEFAULT_SYNCHER =
-        COLLECTION.register("default_syncher", () ->
+    public static final NFURegistry.Accessor<EntityComponentType<Entity, EntitySyncherComponent<Entity>>> SYNCHER =
+        COLLECTION.register("syncher", () ->
             new EntityComponentType<>(Entity.class, EntitySyncherComponent.class, EntitySyncherComponent::new));
+    public static final NFURegistry.Accessor<EntityComponentType<Entity, EntityNodeComponent>> NODE =
+        COLLECTION.register("node", () ->
+            new EntityComponentType<>(Entity.class, EntityNodeComponent.class, EntityNodeComponent::new));
 }
