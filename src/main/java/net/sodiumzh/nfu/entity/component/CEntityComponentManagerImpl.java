@@ -26,13 +26,13 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     }
 
     @Override
-    public Optional<IEntityComponent<? super Entity>> getParent() {
+    public Optional<IEntityComponent<?>> getParent() {
         // As the root, parent is always null.
         return Optional.empty();
     }
 
     @Override
-    public void attachTo(@Nullable IEntityComponent<? super Entity> parent, String name) {
+    public void attachTo(@Nullable IEntityComponent<?> parent, String name) {
         throw new UnsupportedOperationException("CEntityComponentManager must be root and cannot attach to anything.");
     }
 
@@ -113,7 +113,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
                 // If missing factory, cut this branch
                 return null;
             }
-            IEntityComponent<Entity> component = (IEntityComponent<Entity>) type.createUnsafe(e);
+            IEntityComponent<? extends Entity> component = type.createUnsafe(e);
             component.deserializeNBT(nbt.getCompound("data"));
             ListTag subcomponentTag = nbt.getList("subcomponents", Tag.TAG_COMPOUND);
             subcomponentTag.stream().map(tag -> NFUMiscStatics.cast(tag, CompoundTag.class))
@@ -150,5 +150,4 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     private static record RequiredComponentInfo(
         IEntityComponent<? extends Entity> requiredBy,
         String relPath,
-        EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type){}
-}
+        EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type){}}
