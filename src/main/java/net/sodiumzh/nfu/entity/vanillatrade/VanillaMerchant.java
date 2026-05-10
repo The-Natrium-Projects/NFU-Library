@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
  * <p>{@code public class YourImplementation extends VanillaMerchant implements YourInterface}
  * <p>to create an instantiatable subclass.
  */
+// TODO Make a component instead
 public abstract class VanillaMerchant implements CVanillaMerchant
 {
 	private final Mob mob;
