@@ -12,6 +12,7 @@ import net.sodiumzh.nfu.mixin.event.entity.EntityTickEvent;
 public class NFUCapsEventListeners
 {
 	@SubscribeEvent
+	@Deprecated(forRemoval = true)
 	public static void onEntityTick(EntityTickEvent event)
 	{
 		for (var cap: CEntityTickingCapability.ALL_CAPS)

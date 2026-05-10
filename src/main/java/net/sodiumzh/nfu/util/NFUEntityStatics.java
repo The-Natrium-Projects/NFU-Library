@@ -799,10 +799,6 @@ public class NFUEntityStatics
 		NFUReflectionStatics.forceSet(mob, Mob.class, "f_21362_", newTarget);	// Mob.target
 	}
 
-	/**
-	 * @deprecated Use {@link ServerLevel#getEntity(UUID)} instead.
-	 */
-	@Deprecated
 	@Nullable
 	public static Entity getEntityByUUID(Level level, UUID uuid)
 	{

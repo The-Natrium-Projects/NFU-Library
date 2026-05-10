@@ -16,6 +16,7 @@ import net.sodiumzh.nfu.exception.DuplicateRegistryEntryException;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.object.DirectedGraphNode;
 import net.sodiumzh.nfu.object.LimitedMutable;
+import net.sodiumzh.nfu.object.Validatable;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,10 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     private int generateOnSetupPhase = 0;   // 0 = common setup: 1 = server setup; 2 = client setup
     private SetupPhase[] unavailableBefore = new SetupPhase[]{};
     private AvailableSide availableSide = AvailableSide.BOTH;
+    /**
+     * Reverse map for key getting.
+     */
+    private Validatable<HashMap<T, ResourceLocation>> reverseMap = new Validatable<>(new HashMap<>());
     /**
      * Indicates this registry should be loaded before the listed registries.
      */
@@ -176,6 +181,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      */
     public void regenerateValue(ResourceLocation key)
     {
+
         this.table.get(key).regenerate();
     }
 
