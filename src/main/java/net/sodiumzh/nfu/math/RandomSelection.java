@@ -31,20 +31,6 @@ public class RandomSelection<T>
 	}
 
 	/**
-	 * @deprecated Use the constructor instead.
-	 */
-	@Deprecated
-	public static <T> RandomSelection<T> create(T fallback) {
-		return new RandomSelection<T>(fallback);
-	}
-
-	@Deprecated
-	public static DoubleRandomSelection createDouble(double fallback)
-	{
-		return new DoubleRandomSelection(fallback);
-	}
-	
-	/**
 	 * Add a result and its probability.
 	 * <p>Note: if the accumulated probability is over 1, the entries added later may change or be omitted.
 	 * For example, if there's a sequence: (1, 10%; 2, 25%; 3, 40%; 4, 60%; 5, 85%), then the actual
@@ -54,7 +40,7 @@ public class RandomSelection<T>
 	public RandomSelection<T> add(T value, double probability) {
 		if (probability < 0)
 			throw new IllegalArgumentException();
-		double last = this.probSequence.size() > 0 ? this.probSequence.get(probSequence.size() - 1) : 0d;
+		double last = !this.probSequence.isEmpty() ? this.probSequence.get(probSequence.size() - 1) : 0d;
 		probSequence.add(last + probability);
 		valSequence.add(value);
 		return this;

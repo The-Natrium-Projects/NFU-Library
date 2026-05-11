@@ -2,7 +2,7 @@ package net.sodiumzh.nfu.util;
 
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.sodiumzh.nfu.container.MapPair;
+import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.math.ThreadSafeRandomSource;
 import net.sodiumzh.nfu.math.WeightedRandomSelector;
 
@@ -12,6 +12,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Utility static methods for containers (List, Set, Map, etc).
@@ -203,13 +204,10 @@ public class NFUContainerStatics
 	 */
 	@SafeVarargs
 	@SuppressWarnings("unchecked")
-	public static <T, U> HashMap<T, U> mapOf(MapPair<T, U>... entries)
+	public static <T, U> HashMap<T, U> mapOf(Map.Entry<T, U>... entries)
 	{
 		HashMap<T, U> map = new HashMap<T, U>();
-		for (MapPair<T, U> entry: entries)
-		{
-			map.put(entry.getK(), entry.getV());
-		}
+		Stream.of(entries).forEach(e -> map.put(e.getKey(), e.getValue()));
 		return map;
 	}
 	
@@ -263,10 +261,10 @@ public class NFUContainerStatics
 	/**
 	 * Randomly pick a key-value pair in a map
 	 */
-	public static <K, V> MapPair<K, V> randomPick(Map<K, V> map)
+	public static <K, V> Tuple2<K, V> randomPick(Map<K, V> map)
 	{
 		K k = randomPickCollection(map.keySet());
-		return MapPair.of(k, map.get(k));
+		return Tuple2.of(k, map.get(k));
 	}
 	
 	/**
