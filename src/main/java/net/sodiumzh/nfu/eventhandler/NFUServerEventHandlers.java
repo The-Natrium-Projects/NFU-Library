@@ -28,11 +28,11 @@ public class NFUServerEventHandlers {
 	{
 		NFURegistry.SERVER_SETUP_DONE.trySet(true);
 		List<NFURegistry<?>> shouldGenerate = NFURegistry.allRegistries().values().stream()
-				.filter(reg -> reg.shouldGenerateOnSetup() && reg.getGenerateOnSetupPhase() == 1)
+				.filter(reg -> reg.isAvailableOnServer() && reg.getLoadTiming().equals(NFURegistry.LoadTiming.SIDE_SETUP))
 				.toList();
 		shouldGenerate = NFURegistry.sortByLoadingOrder(shouldGenerate);
 		shouldGenerate.forEach(reg -> MinecraftForge.EVENT_BUS.post(new NFURegistryGenerateValuesEvent.ServerBefore(reg, event.getServer())));
-		shouldGenerate.forEach(NFURegistry::generateAllValues);
+		shouldGenerate.forEach(NFURegistry::load);
 		shouldGenerate.forEach(reg -> MinecraftForge.EVENT_BUS.post(new NFURegistryGenerateValuesEvent.ServerAfter(reg, event.getServer())));
 	}
 }

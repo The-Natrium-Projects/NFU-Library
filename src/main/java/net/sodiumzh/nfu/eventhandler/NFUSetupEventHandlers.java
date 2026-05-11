@@ -26,11 +26,11 @@ public class NFUSetupEventHandlers {
         event.enqueueWork(() -> {
             NFURegistry.COMMON_SETUP_DONE.trySet(true);
             List<NFURegistry<?>> shouldGenerate = NFURegistry.allRegistries().values().stream()
-                    .filter(reg -> reg.shouldGenerateOnSetup() && reg.getGenerateOnSetupPhase() == 0)
+                    .filter(reg -> reg.getLoadTiming().equals(NFURegistry.LoadTiming.COMMON_SETUP))
                     .toList();
             shouldGenerate = NFURegistry.sortByLoadingOrder(shouldGenerate);
             shouldGenerate.forEach(reg -> ModLoader.get().postEvent(new NFURegistryGenerateValuesEvent.CommonBefore(reg)));
-            shouldGenerate.forEach(NFURegistry::generateAllValues);
+            shouldGenerate.forEach(NFURegistry::load);
             shouldGenerate.forEach(reg -> ModLoader.get().postEvent(new NFURegistryGenerateValuesEvent.CommonAfter(reg)));
         });
     }
