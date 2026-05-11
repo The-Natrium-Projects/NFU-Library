@@ -4,27 +4,22 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.sodiumzh.nfu.annotation.DontOverride;
 import net.sodiumzh.nfu.entity.IMobSpecific;
-import net.sodiumzh.nfu.registry.NFUCapabilities;
+import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
+import net.sodiumzh.nfu.entity.component.EntityComponentTypes;
+import net.sodiumzh.nfu.registry.NFUEntityComponents;
 
 import javax.annotation.Nonnull;
 
-@Deprecated(forRemoval = true, since = "0.x.32")
 public interface IUsesDefaultAngerHandler extends IMobSpecific<Mob> {
 
     /**
-     * Get the anger rules. Override in the mob class to configure rules.
-     */
-    @Nonnull
-    public MobAngerRules getAngerRules();
-
-    /**
-     * Get the capability instance of the default handler.
+     * Get the component instance of the default handler.
      */
     @Nonnull
     @DontOverride
-    public default CMobAngerHandler getDefaultAngerHandler() {
-        return this.asMob().getCapability(NFUCapabilities.CAP_MOB_DEFAULT_ANGER_HANDLER)
-                .orElseGet(() -> new MobAngerHandler(this.asMob(), this.getAngerRules()));
+    public default MobAngerHandlerComponent getDefaultAngerHandler() {
+        return EntityComponentAPI.getComponentByPath(this.asMob(), "/default_anger_handler", NFUEntityComponents.DEFAULT_ANGER_HANDLER.get())
+            .orElseGet(() -> NFUEntityComponents.DEFAULT_ANGER_HANDLER.get().create(this.asMob()));
     }
 
     /**
