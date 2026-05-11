@@ -1,33 +1,31 @@
 package net.sodiumzh.nfu.registry;
 
 import com.google.common.collect.HashBiMap;
-import com.mojang.logging.LogUtils;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.util.thread.EffectiveSide;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
-import net.sodiumzh.nfu.eventlistener.NFUSetupEventHandlers;
+import net.sodiumzh.nfu.annotation.NotYetImplemented;
 import net.sodiumzh.nfu.exception.DuplicateRegistryEntryException;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.object.DirectedGraphNode;
 import net.sodiumzh.nfu.object.LimitedMutable;
 import net.sodiumzh.nfu.object.Validatable;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
+import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 /**
- * A simple registry. It's internally a {@link HashBiMap} with keys of {@link ResourceLocation}s.
- * Note that this is NOT a part of Minecraft registry system.
+ * A simple lazy-loaded registry. Built after Forge registry and mod loading.
+ * Note that this is NOT linked to Minecraft registry system.
  */
 public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
 {
@@ -35,21 +33,22 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     public static final LimitedMutable<Boolean> CLIENT_SETUP_DONE = new LimitedMutable<>(false, 1);
     public static final LimitedMutable<Boolean> SERVER_SETUP_DONE = new LimitedMutable<>(false, 1);
 
-    /** All declared registries. */
+    /** Collection of all declared registries. */
     private static final HashBiMap<ResourceLocation, NFURegistry<?>> REGISTRIES = HashBiMap.create();
+    /** Internal map. */
     private final HashMap<ResourceLocation, Entry<? extends T>> table = new HashMap<>();
-    private boolean shouldGenerateOnSetup = false;
-    private int generateOnSetupPhase = 0;   // 0 = common setup: 1 = server setup; 2 = client setup
-    private SetupPhase[] unavailableBefore = new SetupPhase[]{};
+    /** Indicates when the registry should be built. */
+    private LoadTiming loadTiming = LoadTiming.COMMON_SETUP;
+    /** Indicates which side this registry can be accessed. Values are all {@code null} if on the wrong side. */
     private AvailableSide availableSide = AvailableSide.BOTH;
-    /**
-     * Reverse map for key getting.
-     */
+    /** Reverse map for key getting. This map's availability also indicates if the registry has been built. */
     private Validatable<HashMap<T, ResourceLocation>> reverseMap = new Validatable<>(new HashMap<>());
-    /**
-     * Indicates this registry should be loaded before the listed registries.
-     */
+    /** Indicates this registry should be loaded before the listed registries. */
     private final List<NFURegistry<?>> shouldLoadBefore = new ArrayList<>();
+    /** If false, access will never be allowed before loading and will always return null. */
+    private boolean allowsAccessBeforeLoading = true;
+
+    // Methods below //
 
     /**
      * @param registryKey Key of this registry in the table of all registries.
@@ -59,10 +58,15 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         REGISTRIES.put(registryKey, this);
     }
 
+
+    // Registry of registries related //
+
+    /**  Collection of all registries */
     public static Map<ResourceLocation, NFURegistry<?>> allRegistries()
     {
         return REGISTRIES;
     }
+
 
     public static NFURegistry<?> registryByKey(ResourceLocation key)
     {
@@ -70,222 +74,30 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     /**
-     * Get this registry's key in the registry of all {@code NFURegistry}s.
+     * Get this registry's key in the registry of all {@code NFURegsitry} instances.
      */
     public ResourceLocation getKeyOfRegistry()
     {
         return REGISTRIES.inverse().get(this);
     }
 
-    public int size() {
-        return table.size();
-    }
-
-    public boolean isEmpty() {
-        return table.isEmpty();
-    }
-
-    public boolean containsKey(ResourceLocation key) {
-        return table.containsKey(key);
-    }
-
-    public boolean containsValue(T value)
-    {
-        for (var entry: this.table.values())
-        {
-            if (value.equals(entry.get())) return true;
-        }
-        return false;
-    }
-
-    /**
-     * Get the value from key. Note that if the supplier throws an exception,
-     * it will not crash but print stacktrace and return null.
-     */
-    @Nullable
-    public T getValue(ResourceLocation key) {
-        Entry<? extends T> entry = table.get(key);
-        if (entry == null) return null;
-        return entry.get();
-    }
-
-    public Optional<T> getOptionalValue(ResourceLocation key) {
-        return Optional.ofNullable(getValue(key));
-    }
-
-    @Nullable
-    public ResourceLocation getKey(T value) {
-        return this.getOptionalKey(value).orElse(null);
-    }
-
-    public Optional<ResourceLocation> getOptionalKey(T value) {
-        if (value == null) return Optional.empty();
-        return this.table.entrySet().stream()
-            .filter(entry -> Objects.equals(entry.getValue().get(), value))
-            .findAny()
-            .map(Map.Entry::getKey);
-    }
-
-    public Set<ResourceLocation> keySet() {
-        return table.keySet();
-    }
-
-    /**
-     * Get all values.
-     * <p>If a value appears twice in the registry, it will appear twice in this list. Null values will be removed.
-     * <p>Note: this method will cause all entries to generate values. Take care of the timing if the values are valid!
-     */
-    public List<? extends T> values() {
-        return table.values().stream().map(Entry::get).filter(Objects::nonNull).toList();
-    }
-
-    /**
-     * Register an object from supplier.
-     * @return An {@code Accessor} for getting the object, so that you can assign it to a
-     * static field. Its usage is similar to {@link RegistryObject}.
-     * <p>It's recommended to use {@link NFURegistryEntryCollection} instead (just like using {@link DeferredRegister}).
-     * Directly registering may cause issues if the class in which you're registering objects is not loaded on setup phase.
-     */
-    public <U extends T> Accessor<U> register(ResourceLocation key, Supplier<U> supplier)
-    {
-        if (this.containsKey(key)) throw DuplicateRegistryEntryException.registeredTwice(key.toString());
-        Entry<U> entry = new Entry<>(this, supplier, key);
-        this.table.put(key, entry);
-        return new Accessor<>(entry);
-    }
-
-    /**
-     * Register an object from supplier if it's not present.
-     * @return An {@code Optional<Accessor>} if registered. {@code Optional#empty()} if the entry exists.
-     */
-    public <U extends T> Optional<Accessor<U>> registerIfAbsent(ResourceLocation key, Supplier<U> supplier)
-    {
-        if (this.containsKey(key)) return Optional.empty();
-        Entry<U> entry = new Entry<>(this, supplier, key);
-        this.table.put(key, entry);
-        return Optional.of(new Accessor<>(entry));
-    }
-
-    /**
-     * Only for {@link NFURegistryEntryCollection}.
-     */
-    void registerRaw(ResourceLocation key, Entry<? extends T> value)
-    {
-        this.table.put(key, value);
-    }
-
-    /**
-     * Regenerate the value of the given key, i.e. rerun the supplier and generate a new value.
-     * <p><b>Take extreme care calling this.</b> This operation will probably generate a new value instance and may invalidate
-     * the old references.
-     */
-    public void regenerateValue(ResourceLocation key)
-    {
-
-        this.table.get(key).regenerate();
-    }
-
-    /**
-     * Generate all values that haven't generated. It doesn't impact values already generated.
-     */
-    public void generateAllValues()
-    {
-        this.table.keySet().forEach(this::getValue);
-    }
-
-
-    /**
-     * Regenerate all values, i.e. rerun all suppliers and generate new values.
-     * <p><b>Take extreme care calling this.</b> This operation will probably generate new value instances and may invalidate
-     * the old references.
-     */
-    public void regenerateAllValues()
-    {
-        this.table.keySet().forEach(this::regenerateValue);
-    }
-
-    /**
-     * Called only in {@link NFUSetupEventHandlers#generateRegistries}.
-     */
-    public boolean shouldGenerateOnSetup()
-    {
-        return this.shouldGenerateOnSetup;
-    }
-
-    /**
-     * Labels that this registry's all values should be generated on the common setup phase.
-     * Registries with this label will generate values on {@link FMLCommonSetupEvent}.
-     * @return {@code this}.
-     */
-    public NFURegistry<T> setShouldGenerateOnCommonSetup()
-    {
-        this.shouldGenerateOnSetup = true;
-        return this;
-    }
-
-    /**
-     * Labels that this registry's all values should be generated on server setup phase (e.g. requiring data reading).
-     * Registries with this label will generate values on {@link ServerAboutToStartEvent}.
-     * <p>Note: Use this only for server-side registries. Values will not generate on client.
-     * @return {@code this}.
-     */
-    public NFURegistry<T> setShouldGenerateOnServerSetup()
-    {
-        this.shouldGenerateOnSetup = true;
-        this.generateOnSetupPhase = 1;
-        return this;
-    }
-
-    /**
-     * Labels that this registry's all values should be generated on server setup phase (e.g. requiring data reading).
-     * Registries with this label will generate values on {@link ServerStartingEvent}.
-     * @return {@code this}.
-     */
-    public NFURegistry<T> setShouldGenerateOnClientSetup()
-    {
-        this.shouldGenerateOnSetup = true;
-        this.generateOnSetupPhase = 2;
-        return this;
-    }
-
-    /**
-     * Get which phase should this registry generate values.
-     * 0 = common setup: 1 = client setup; 2 = server setup.
-     * Note that if it {@code shouldGenerateOnSetup()} is false,
-     * this value will be invalid.
-     */
-    public int getGenerateOnSetupPhase()
-    {
-        if (!this.shouldGenerateOnSetup())
-            LogUtils.getLogger().warn(String.format("NFURegistry %s calling getGenerateOnSetupPhase, " +
-                    "but shouldGenerateOnSetup() is false. Note that the result is invalid.", this.getKeyOfRegistry().toString()));
-        return this.generateOnSetupPhase;
-    }
-
-    /**
-     * Check if this registry is unavailable before a given phase. If {@link Accessor#get()} is called before this phase,
-     * it will always return {@code null}.
-     */
-    public boolean isUnavailableBefore(SetupPhase phase) {
-        return Arrays.stream(unavailableBefore).toList().contains(phase);
-    }
-
-    /**
-     * Set this registry is unavailable before given phase(s). If {@link Accessor#get()} is called before the set phase(s),
-     * it will always return {@code null}.
-     */
-    public NFURegistry<T> setUnavailableBefore(SetupPhase... phases) {
-        this.unavailableBefore = phases;
-        return this;
-    }
+    // Accessibility policies //
 
     /**
      * Check if the registry is called on the correct logical side.
      */
     public boolean isCorrectSide() {
         return this.availableSide.equals(AvailableSide.BOTH) ||
-                (EffectiveSide.get().isClient() && this.availableSide.equals(AvailableSide.CLIENT)) ||
-                (EffectiveSide.get().isServer() && this.availableSide.equals(AvailableSide.SERVER));
+            (EffectiveSide.get().isClient() && this.availableSide.equals(AvailableSide.CLIENT)) ||
+            (EffectiveSide.get().isServer() && this.availableSide.equals(AvailableSide.SERVER));
+    }
+
+    public boolean isAvailableOnClient() {
+        return this.availableSide.equals(AvailableSide.BOTH) || this.availableSide.equals(AvailableSide.CLIENT);
+    }
+
+    public boolean isAvailableOnServer() {
+        return this.availableSide.equals(AvailableSide.BOTH) || this.availableSide.equals(AvailableSide.SERVER);
     }
 
     /**
@@ -294,6 +106,55 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      */
     public NFURegistry<T> setSide(AvailableSide side) {
         this.availableSide = side;
+        return this;
+    }
+
+    public boolean allowsAccessBeforeLoading() {
+        return allowsAccessBeforeLoading;
+    }
+
+    public NFURegistry<T> setAllowsAccessBeforeLoading(boolean value) {
+        this.allowsAccessBeforeLoading = value;
+        return this;
+    }
+
+    // Loading related //
+
+    /**
+     * Load all values that haven't been loaded, and label the registry as loaded (by validating the reverse map).
+     * It doesn't impact values already loaded.
+     */
+    public void load()
+    {
+        // For those available on both sides and loaded on side setup, it may be loaded twice, and first wins
+        if (this.isLoaded()) return;
+        this.table.forEach((k, v) -> {
+            if (!v.loaded) {
+                v.loadFinal();
+                T value = v.get();
+                if (value != null) {
+                    this.reverseMap.modify(m -> {
+                        if (m.containsKey(value))
+                            throw DuplicateRegistryEntryException.duplicateValue(m.get(value).toString(), k.toString());
+                        m.put(value, k);
+                    });
+                }
+            }
+        });
+        this.reverseMap.validate();
+    }
+
+    public boolean isLoaded() {
+        return reverseMap.isValidated();
+    }
+
+    public LoadTiming getLoadTiming()
+    {
+        return this.loadTiming;
+    }
+
+    public NFURegistry<T> setLoadTiming(LoadTiming phase) {
+        this.loadTiming = phase;
         return this;
     }
 
@@ -310,8 +171,8 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                 StringBuilder cycleInfo = new StringBuilder(cycle.get(0).getKeyOfRegistry().toString());
                 for (int i = 1; i < cycle.size(); ++i)
                     cycleInfo.append(" -> ").append(cycle.get(i).getKeyOfRegistry().toString());
-                throw new IllegalArgumentException("NFURegistry loading order error: cyclic dependency detected.\n" +
-                        "Cycle: " + cycleInfo);
+                throw new IllegalArgumentException("NaUtilsRegistry loading order error: cyclic dependency detected.\n" +
+                    "Cycle: " + cycleInfo);
             }
         }
         return this;
@@ -336,11 +197,125 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     /**
-     * @return Registries that should be loaded after this registry.
+     * @return Registries that should be loaded after this registry. This method is only called on deciding
+     * registry loading ordering.
      */
+    @ApiStatus.Internal
     @Override
     public Set<NFURegistry<?>> children() {
         return Set.copyOf(this.shouldLoadBefore);
+    }
+
+    // Queries //
+
+    /**
+     * Total amount of entries in this registry, including unloaded and error entries.
+     */
+    public int size() {
+        return table.size();
+    }
+
+    public boolean isEmpty() {
+        return table.isEmpty();
+    }
+
+    /**
+     * Whether the registry contains the given key. It doesn't check if the value is loaded or null.
+     */
+    public boolean containsKey(ResourceLocation key) {
+        return table.containsKey(key);
+    }
+
+    /**
+     * Whether the registry contains a given value. ONLY available after registry building.
+     */
+    public boolean containsValue(T value)
+    {
+        if (!this.isLoaded()) return false;
+        return this.reverseMap.get().containsKey(value);
+    }
+
+    /**
+     * Get the value from key. Note that if the supplier throws an exception,
+     * it will not crash but print stacktrace and return null.
+     */
+    @Nullable
+    public T getValue(ResourceLocation key) {
+        Entry<? extends T> entry = table.get(key);
+        if (entry == null) return null;
+        return entry.get();
+    }
+
+    public Optional<T> getOptionalValue(ResourceLocation key) {
+        return Optional.ofNullable(getValue(key));
+    }
+
+    @Nullable
+    public ResourceLocation getKey(T value) {
+        if (!this.isLoaded()) return null;
+        return this.reverseMap.get().get(value);
+    }
+
+    public Optional<ResourceLocation> getOptionalKey(T value) {
+        return Optional.ofNullable(this.getKey(value));
+    }
+
+    public Set<ResourceLocation> keySet() {
+        return table.keySet();
+    }
+
+    /**
+     * Get all values.
+     * <p>If a value appears twice in the registry, it will appear twice in this list. Null values will be removed.
+     * <p>Note: this method will cause all entries to generate values. Take care of the timing if the values are valid!
+     */
+    public Set<? extends T> values() {
+        if (!this.isLoaded()) return Set.of();
+        return this.reverseMap.get().keySet();
+    }
+
+    /**
+     * Register an object from supplier.
+     * @return An {@code Accessor} for getting the object, so that you can assign it to a
+     * static field. Its usage is similar to {@link RegistryObject}.
+     * <p>It's recommended to use {@link NFURegistryEntryCollection} instead (just like using {@link DeferredRegister}).
+     * Directly registering may cause issues if the class in which you're registering objects is not loaded on setup phase.
+     */
+    public <U extends T> Accessor<U> register(ResourceLocation key, Supplier<U> supplier)
+    {
+        if (this.containsKey(key)) throw DuplicateRegistryEntryException.registeredTwice(key.toString());
+        Entry<U> entry = new Entry<>(this, supplier, key);
+        this.table.put(key, entry);
+        // Handle case when the entry is registered after loading (not recommended)
+        if (this.isLoaded()) {
+            entry.loadFinal();
+            T value = entry.get();
+            if (value != null) {
+                if (this.reverseMap.get().containsKey(value))
+                    throw DuplicateRegistryEntryException.duplicateValue(this.reverseMap.get().get(value).toString(), key.toString());
+                this.reverseMap.get().put(value, key);
+            }
+        }
+        return new Accessor<>(entry);
+    }
+
+    /**
+     * Register an object from supplier if it's not present.
+     * @return An {@code Optional<Accessor>} if registered. {@code Optional#empty()} if the entry exists.
+     */
+    public <U extends T> Optional<Accessor<U>> registerIfAbsent(ResourceLocation key, Supplier<U> supplier)
+    {
+        if (this.containsKey(key)) return Optional.empty();
+        return Optional.of(this.register(key, supplier));
+    }
+
+    /**
+     * Only for {@link NFURegistryEntryCollection}.
+     */
+    @ApiStatus.Internal
+    void registerRaw(ResourceLocation key, Entry<? extends T> value)
+    {
+        this.table.put(key, value);
     }
 
     static class Entry<T>
@@ -349,6 +324,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         private T cachedValue;
         private final NFURegistry<? super T> registry;
         private final ResourceLocation key;
+        private boolean loaded = false;
 
         public Entry(@Nonnull NFURegistry<? super T> registry, @Nonnull Supplier<T> supplier, ResourceLocation key)
         {
@@ -367,46 +343,59 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         {
             if (!registry.isCorrectSide())
                 return null;
-            if (registry.isUnavailableBefore(SetupPhase.COMMON_SETUP) && !NFURegistry.COMMON_SETUP_DONE.get())
-                return null;
-            if (registry.isUnavailableBefore(SetupPhase.CLIENT_SETUP) && !NFURegistry.CLIENT_SETUP_DONE.get() && EffectiveSide.get().isClient())
-                return null;
-            if (registry.isUnavailableBefore(SetupPhase.SERVER_SETUP) && !NFURegistry.SERVER_SETUP_DONE.get() && !EffectiveSide.get().isClient())
-                return null;
-            if (cachedValue == null) {
-                try {
-                    cachedValue = supplier.get();
-                } catch (RuntimeException e)
-                {
-                    // If running supplier encountered error, don't crash but
-                    // set the cache to null so that the supplier will rerun next time.
-                    NFUDebugStatics.errorOnce(NFURegistry.Accessor.class,
-                            "Registry entry getting value failed. Registry=\"" + this.registry.getKeyOfRegistry()
-                    + "\", key=\"" + this.key + "\".");
-                    cachedValue = null;
+            if (!this.isLoaded()) {
+                // this.loadFinal() will be invoked on registry loading. If not accessible before load,
+                // any access before this.loaded is set will be illegal, and this.loaded will be set true only
+                // loadFinal(), and tryLoad() will never be invoked
+                if (!registry.allowsAccessBeforeLoading())
                     return null;
-                }
+                if (this.cachedValue != null)
+                    throw new IllegalStateException("NFURegistry.Entry value is present but not labeled loaded.");
+                this.tryLoad();
                 return cachedValue;
             }
             else return cachedValue;
         }
 
-        public void regenerate() {
-            this.cachedValue = this.supplier.get();
+        private void tryLoad() {
+            try {
+                cachedValue = supplier.get();
+                if (cachedValue != null) this.loaded = true;
+            } catch (RuntimeException e)
+            {
+                // If running supplier encountered error, don't crash but
+                // set the cache to null so that the supplier will rerun next time.
+                NFUDebugStatics.errorOnce(NFURegistry.Accessor.class,
+                    "Registry entry getting value failed. Registry=\"" + this.registry.getKeyOfRegistry()
+                        + "\", key=\"" + this.key + "\".");
+                cachedValue = null;
+            }
+        }
+
+        /**
+         * Load the value, and label this entry as built. A built entry will never try loading again even if it's null.
+         */
+        public void loadFinal() {
+            if (!this.isLoaded()) {
+                this.cachedValue = this.supplier.get();
+            }
+            this.loaded = true;
+        }
+
+        public boolean isLoaded() {
+            return this.loaded;
         }
     }
 
     public static class Accessor<T> implements Supplier<T>
     {
-        private Entry<T> entry;
+        private final Entry<T> entry;
         private boolean validated;  // Labels whether this entry has been registered into a registry. If it's false, the get() will always return null.
 
         Accessor(Entry<T> entry) {
             this.entry = entry;
             this.validated = true;
         }
-
-
 
         static <U> Accessor<U> createInvalid(Entry<U> entry)
         {
@@ -425,8 +414,8 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         Accessor<T> validate() {this.validated = true; return this;}
     }
 
-    public static enum SetupPhase {
-        COMMON_SETUP, CLIENT_SETUP, SERVER_SETUP;
+    public static enum LoadTiming {
+        COMMON_SETUP, SIDE_SETUP;
     }
 
     public static enum AvailableSide {
@@ -446,6 +435,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      * @param encoder How the data should be written to buffer.
      * @param decoder How the data should be generated from buffer.
      */
+    @NotYetImplemented
     public static record SyncPolicy<T>(boolean shouldSync, LogicalSide from, BiConsumer<FriendlyByteBuf, T> encoder, Function<FriendlyByteBuf, T> decoder) {
 
         public static <T> SyncPolicy<T> noSync() {
