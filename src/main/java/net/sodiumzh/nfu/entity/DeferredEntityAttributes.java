@@ -10,7 +10,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.sodiumzh.nfu.NFULibrary;
+import net.sodiumzh.nfu.annotation.NotYetImplemented;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +25,8 @@ import java.util.function.Supplier;
  * <p>Note that this registration will overwrite the attributes registered in {@link EntityAttributeCreationEvent}
  */
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@ApiStatus.Experimental
+@NotYetImplemented
 public class DeferredEntityAttributes {
 
     private static final Map<Supplier<EntityType<? extends LivingEntity>>, Supplier<AttributeSupplier.Builder>> TABLE = new HashMap<>();

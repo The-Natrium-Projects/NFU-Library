@@ -1,5 +1,6 @@
 package net.sodiumzh.nfu.util;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.*;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -9,37 +10,11 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class NFUNBTStatics {
-
-	@Deprecated
-	public static final int TAG_BYTE_ID = 1;
-	@Deprecated
-	public static final int TAG_SHORT_ID = 2;
-	@Deprecated
-	public static final int TAG_INT_ID = 3;
-	@Deprecated
-	public static final int TAG_LONG_ID = 4;
-	@Deprecated
-	public static final int TAG_FLOAT_ID = 5;
-	@Deprecated
-	public static final int TAG_DOUBLE_ID = 6;
-	@Deprecated
-	public static final int TAG_BYTE_ARRAY_ID = 7;
-	@Deprecated
-	public static final int TAG_STRING_ID = 8;
-	@Deprecated
-	public static final int TAG_LIST_ID = 9;
-	@Deprecated
-	public static final int TAG_COMPOUND_ID = 10;
-	@Deprecated
-	public static final int TAG_INT_ARRAY_ID = 11;
-	@Deprecated
-	public static final int TAG_LONG_ARRAY_ID = 12;
-	@Deprecated
-	public static final int TAG_ANY_NUMERIC_ID = 99;
-	
 	
 	// Generate a unique key from the base key in a compound tag
 	public static String getUniqueKey(String baseKey, CompoundTag cpd)
@@ -127,37 +102,7 @@ public class NFUNBTStatics {
 		toMob.setItemSlot(EquipmentSlot.OFFHAND, readItemStack(inTag, "nbt_helper_equipment_item_off_hand"));
 	}
 
-	@Deprecated // Use NaUtilsNBTStatics.TAG_XXX_ID constants instead
-	public static enum TagType
-	{
-		   TAG_BYTE(1),
-		   TAG_SHORT(2),
-		   TAG_INT(3),
-		   TAG_LONG(4),
-		   TAG_FLOAT(5),
-		   TAG_DOUBLE(6),
-		   TAG_BYTE_ARRAY(7),
-		   TAG_STRING(8),
-		   TAG_LIST(9),
-		   TAG_COMPOUND(10),
-		   TAG_INT_ARRAY(11),
-		   TAG_LONG_ARRAY(12),
-		   TAG_ANY_NUMERIC(99);
-		
-		protected int id;
-		
-		private TagType(int id)
-		{
-			this.id = id;
-		}
-		
-		public int getID()
-		{
-			return id;
-		}
-		
-	}
-	
+	@Deprecated
 	public static void putVec3(CompoundTag toTag, String key, Vec3 val)
 	{
 		ListTag listtag = new ListTag();
@@ -168,13 +113,55 @@ public class NFUNBTStatics {
 
 		toTag.put(key, listtag);
 	}
-	
+
+	@Deprecated
 	public static Vec3 getVec3(CompoundTag fromTag, String key)
 	{
 		ListTag listtag = fromTag.getList(key, 6);
 		return new Vec3(listtag.getDouble(0), listtag.getDouble(1), listtag.getDouble(2));
 	}
-	
+
+	/**
+	 * Write a {@link Vec3} to a {@link ListTag}. This tag should be read with {@link NFUNBTStatics#getVec3(Tag)}.
+	 */
+	public static ListTag ofVec3(Vec3 v) {
+		ListTag listtag = new ListTag();
+		listtag.add(DoubleTag.valueOf(v.x));
+		listtag.add(DoubleTag.valueOf(v.y));
+		listtag.add(DoubleTag.valueOf(v.z));
+		return listtag;
+	}
+
+	/**
+	 * Read a {@link Vec3} written by {@link NFUNBTStatics#ofVec3(Vec3)}. Returns empty if it's not a valid {@link Vec3}.
+	 */
+	public static Optional<Vec3> getVec3(Tag nbt) {
+		if (nbt == null) return Optional.empty();
+		if (nbt.getId() == Tag.TAG_LIST && nbt instanceof ListTag listTag
+			&& listTag.getElementType() == Tag.TAG_DOUBLE && listTag.size() == 3)
+		{
+			return Optional.of(new Vec3(listTag.getDouble(0), listTag.getDouble(1), listTag.getDouble(2)));
+		}
+		return Optional.empty();
+	}
+
+	/**
+	 * Read a UUID of vanilla type. Unlike {@link NbtUtils#loadUUID(Tag)}, this loader returns empty if the
+	 * format is wrong, and doesn't produce exceptions.
+	 */
+	public static Optional<UUID> getUUID(Tag nbt) {
+		if (nbt.getType() != IntArrayTag.TYPE) {
+			return Optional.empty();
+		} else {
+			int[] aint = ((IntArrayTag)nbt).getAsIntArray();
+			if (aint.length != 4) {
+				return Optional.empty();
+			} else {
+				return Optional.of(UUIDUtil.uuidFromIntArray(aint));
+			}
+		}
+	}
+
 	// Shift a tag from old key to new key inside a compound tag.
 	// For save data shifting after tag key change.
 	// This is not to be removed, but just add a warning to every position calling this.
@@ -352,6 +339,14 @@ public class NFUNBTStatics {
 			nbt.put(toKey.apply(t), toValue.apply(t));
 		}
 		return nbt;
+	}
+
+	public static void forEach(CompoundTag nbt, BiConsumer<String, Tag> action) {
+		nbt.getAllKeys().forEach(k -> action.accept(k, nbt.get(k)));
+	}
+
+	public static Set<Map.Entry<String, Tag>> entrySet(CompoundTag nbt) {
+		return nbt.getAllKeys().stream().map(k -> new AbstractMap.SimpleEntry<>(k, nbt.get(k))).collect(Collectors.toSet());
 	}
 
 }

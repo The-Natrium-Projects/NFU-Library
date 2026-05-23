@@ -18,7 +18,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -47,6 +46,12 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     private final List<NFURegistry<?>> shouldLoadBefore = new ArrayList<>();
     /** If false, access will never be allowed before loading and will always return null. */
     private boolean allowsAccessBeforeLoading = true;
+    /**
+     * If true, the values will keep {@code null} if entry construction throws an exception on registry loading. Otherwise, the exception will be thrown out.
+     * <p>This configuration doesn't throw if an entry loads correctly but gets a {@code null}, and doesn't guarantee non-null if false.
+     * <p>This configuration doesn't impact access attempts before register loading. In this case, it will still return null if exception happens.
+     */
+    private boolean allowsLoadingFailures = false;
 
     // Methods below //
 
@@ -159,6 +164,25 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     /**
+     * If true, the values will keep {@code null} if entry construction throws an exception on registry loading. Otherwise, the exception will be thrown out.
+     * <p>This configuration doesn't throw if an entry loads correctly but gets a {@code null}, and doesn't guarantee non-null if false.
+     * <p>This configuration doesn't impact access attempts before register loading. In this case, it will still return null if exception happens.
+     */
+    public boolean allowsLoadingFailures() {
+        return this.allowsLoadingFailures;
+    }
+
+    /**
+     * If set true, the values will keep {@code null} if an entry construction throws an exception on registry loading. Otherwise, the exception will be thrown out.
+     * <p>This configuration doesn't throw if an entry loads correctly but gets a {@code null}, and doesn't guarantee non-null if false.
+     * <p>This configuration doesn't impact access attempts before register loading. In this case, it will still return null if exception happens.
+     */
+    public NFURegistry<T> setAllowsLoadingFailures(boolean value) {
+        this.allowsLoadingFailures = value;
+        return this;
+    }
+
+    /**
      * Set that this registry should be loaded before the following registries.
      */
     public NFURegistry<T> setLoadBefore(NFURegistry<?>... registries) {
@@ -231,7 +255,13 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      */
     public boolean containsValue(T value)
     {
-        if (!this.isLoaded()) return false;
+        if (!this.isLoaded()) {
+            if (this.getLoadTiming().equals(LoadTiming.FIRST_ACCESS)) {
+                this.load();
+                return this.reverseMap.get().containsKey(value);
+            }
+            else return false;
+        }
         return this.reverseMap.get().containsKey(value);
     }
 
@@ -252,7 +282,13 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
 
     @Nullable
     public ResourceLocation getKey(T value) {
-        if (!this.isLoaded()) return null;
+        if (!this.isLoaded()) {
+            if (this.getLoadTiming().equals(LoadTiming.FIRST_ACCESS)) {
+                this.load();
+                return this.reverseMap.get().get(value);
+            }
+            else return null;
+        }
         return this.reverseMap.get().get(value);
     }
 
@@ -270,7 +306,13 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      * <p>Note: this method will cause all entries to generate values. Take care of the timing if the values are valid!
      */
     public Set<? extends T> values() {
-        if (!this.isLoaded()) return Set.of();
+        if (!this.isLoaded()) {
+            if (this.getLoadTiming().equals(LoadTiming.FIRST_ACCESS)) {
+                this.load();
+                return this.reverseMap.get().keySet();
+            }
+            else return Set.of();
+        }
         return this.reverseMap.get().keySet();
     }
 
@@ -321,7 +363,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     static class Entry<T>
     {
         private final Supplier<T> supplier;
-        private T cachedValue;
+        private @Nullable T cachedValue;
         private final NFURegistry<? super T> registry;
         private final ResourceLocation key;
         private boolean loaded = false;
@@ -344,9 +386,15 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
             if (!registry.isCorrectSide())
                 return null;
             if (!this.isLoaded()) {
-                // this.loadFinal() will be invoked on registry loading. If not accessible before load,
-                // any access before this.loaded is set will be illegal, and this.loaded will be set true only
-                // loadFinal(), and tryLoad() will never be invoked
+                /* this.loadFinal() will be invoked on registry loading. If not accessible before load,
+                 any access before this.loaded is set will be illegal, and this.loaded will be set true only
+                 loadFinal(), and tryLoad() will never be invoked */
+                if (this.registry.getLoadTiming().equals(LoadTiming.FIRST_ACCESS)) {
+                    // registry load() will call Entry.get(), so load self first to prevent inf recursion
+                    this.loadFinal();
+                    this.registry.load();
+                    return this.cachedValue;
+                }
                 if (!registry.allowsAccessBeforeLoading())
                     return null;
                 if (this.cachedValue != null)
@@ -377,7 +425,14 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
          */
         public void loadFinal() {
             if (!this.isLoaded()) {
-                this.cachedValue = this.supplier.get();
+                try {
+                    this.cachedValue = this.supplier.get();
+                } catch (RuntimeException e) {
+                    if (this.registry.allowsLoadingFailures) {
+                        this.cachedValue = null;
+                    }
+                    else throw e;
+                }
             }
             this.loaded = true;
         }
@@ -415,7 +470,20 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     public static enum LoadTiming {
-        COMMON_SETUP, SIDE_SETUP;
+        /**
+         * Load entries on common setup.
+         */
+        COMMON_SETUP,
+        /**
+         * Load entries on client and/or server setup.
+         * <p>In single-player game, client setup will happen first and load the values, which is shared between server and client.
+         */
+        SIDE_SETUP,
+        /**
+         * Do not load on a specific phase, but load all values on the first access in any form.
+         * <p>Note: this option is relatively risky. Ensure that all entries are possible to be loaded before access.
+         */
+        FIRST_ACCESS;
     }
 
     public static enum AvailableSide {
