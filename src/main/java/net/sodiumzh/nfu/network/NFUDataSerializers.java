@@ -133,8 +133,12 @@ public class NFUDataSerializers {
                 VEC3.fromTag(t.get("scale")), VEC3.fromTag(t.get("translation")), BOUNDING_BOX.fromTag(t.get("defDomain")))
         );
 
+    /**
+     * @deprecated Use {@code INEQUALITY_3D.getOptionalSerializer()} instead
+     */
+    @Deprecated
     public static final NFUDataSerializer<Optional<Inequality3D>> OPTIONAL_INEQUALITY_3D =
-        NFUDataSerializer.optionalOf(INEQUALITY_3D);
+        NFUDataSerializer.createOptional(INEQUALITY_3D);
 
     public static final NFUDataSerializer<Field3D> FIELD_3D =
         NFUDataSerializer.create(Field3D.class, CompoundTag.class,
@@ -161,8 +165,11 @@ public class NFUDataSerializers {
                 VEC3.fromTag(t.get("valueAddition")), OPTIONAL_INEQUALITY_3D.fromTag(t.get("defDomain")).orElse(null))
     );
 
+    /**
+     * @deprecated Use {@code FILED_3D.getOptionalSerializer()} instead
+     */
     public static final NFUDataSerializer<Optional<Field3D>> OPTIONAL_FIELD_3D =
-        NFUDataSerializer.optionalOf(FIELD_3D);
+        NFUDataSerializer.createOptional(FIELD_3D);
 
     static {
         SERIALIZERS.register("boolean", () -> BOOLEAN);

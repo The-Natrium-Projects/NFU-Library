@@ -15,9 +15,9 @@ public class EntityComponentTypes {
     public static final NFURegistry.Accessor<EntityComponentType<Entity, CEntityComponentManager>> ROOT =
         COLLECTION.register("root", () ->
             new EntityComponentType<>(Entity.class, CEntityComponentManager.class, CEntityComponentManager::factory));
-    public static final NFURegistry.Accessor<EntityComponentType<Entity, EntityDynamicDataComponent<Entity>>> DYNAMIC_DATA =
-        COLLECTION.register("dynamic_data", () ->
-            new EntityComponentType<>(Entity.class, EntityDynamicDataComponent.class, EntityDynamicDataComponent::new));
+    public static final NFURegistry.Accessor<EntityComponentType<Entity, EntityDataComponent<Entity>>> DATA =
+        COLLECTION.register("data", () ->
+            new EntityComponentType<>(Entity.class, EntityDataComponent.class, EntityDataComponent::new));
     public static final NFURegistry.Accessor<EntityComponentType<Entity, EntityTimerComponent<Entity>>> TIMER =
         COLLECTION.register("timer", () ->
             new EntityComponentType<>(Entity.class, EntityTimerComponent.class, EntityTimerComponent::new));

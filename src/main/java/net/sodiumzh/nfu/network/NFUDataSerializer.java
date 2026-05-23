@@ -11,6 +11,8 @@ import net.sodiumzh.nfu.annotation.DontOverride;
 import net.sodiumzh.nfu.registry.NFUEntityDataSerializers;
 import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.registry.NFURegistry;
+import net.sodiumzh.nfu.registry.NFURegistryGenerateValuesEvent;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -148,7 +150,7 @@ public interface NFUDataSerializer<T>
 	 * (E.g. by calling the class owning the instances somehow in the mod main class constructor)
 	 */
 	@SuppressWarnings("unchecked")
-	public static <O> NFUDataSerializer<List<O>> listOf(final NFUDataSerializer<O> original)
+	public static <O> NFUDataSerializer<List<O>> createList(final NFUDataSerializer<O> original)
 	{
 		Class<?> clazz = List.class;
 		return NFUDataSerializer.create((Class<List<O>>)clazz, ListTag.class,
@@ -186,7 +188,7 @@ public interface NFUDataSerializer<T>
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <O> NFUDataSerializer<Optional<O>> optionalOf(final NFUDataSerializer<O> original) {
+	public static <O> NFUDataSerializer<Optional<O>> createOptional(final NFUDataSerializer<O> original) {
 		Class<?> clazz = Optional.class;
 		return NFUDataSerializer.create((Class<Optional<O>>)clazz, CompoundTag.class,
 			(FriendlyByteBuf b, Optional<O> optional) -> {
@@ -207,6 +209,36 @@ public interface NFUDataSerializer<T>
 					return Optional.of(original.fromTag(t.get("value")));
 				else return Optional.empty();
 			});
+	}
+
+	/**
+	 * Get the optional variant of this serializer. It's automatically created after loading the registry (via {@link net.sodiumzh.nfu.eventhandler.NFUSetupEventHandlers#onGenerateRegistries(NFURegistryGenerateValuesEvent.CommonAfter)}).
+	 */
+	@ApiStatus.NonExtendable
+	public default NFUDataSerializer<Optional<T>> getOptionalSerializer() {
+		if (this.getObjectClass().equals(List.class) && this.getKey().getPath().endsWith("_list") ) {
+			throw new IllegalStateException("List serializer doesn't have its optional serializer. Serializer: " + this.getKey());
+		}
+		if (this.getObjectClass().equals(Optional.class) && this.getKey().getPath().startsWith("optional_")) {
+			throw new IllegalStateException("Optional serializer doesn't have its optional serializer. Serializer: " + this.getKey());
+		}
+		return (NFUDataSerializer<Optional<T>>) NFURegistries.DATA_SERIALIZERS.getOptionalValue(new ResourceLocation(this.getKey().getNamespace(), "optional_" + this.getKey().getPath()))
+			.filter(s -> s.getObjectClass().equals(Optional.class)).orElseThrow(() -> new IllegalStateException("Missing optional serializer " + new ResourceLocation(this.getKey().getNamespace(), "optional_" + this.getKey().getPath()).toString() + ". An existing manually-registered non-optional serializer?"));
+	}
+
+	/**
+	 * Get the list variant of this serializer from registry. It's automatically created after loading the registry (via {@link net.sodiumzh.nfu.eventhandler.NFUSetupEventHandlers#onGenerateRegistries(NFURegistryGenerateValuesEvent.CommonAfter)}).
+	 */
+	@ApiStatus.NonExtendable
+	public default NFUDataSerializer<List<T>> getListSerializer() {
+		if (this.getObjectClass().equals(List.class) && this.getKey().getPath().endsWith("_list") ) {
+			throw new IllegalStateException("List serializer doesn't have its list serializer. Serializer: " + this.getKey());
+		}
+		if (this.getObjectClass().equals(Optional.class) && this.getKey().getPath().startsWith("optional_")) {
+			throw new IllegalStateException("Optional serializer doesn't have its list serializer. Serializer: " + this.getKey());
+		}
+		return (NFUDataSerializer<List<T>>) NFURegistries.DATA_SERIALIZERS.getOptionalValue(new ResourceLocation(this.getKey().getNamespace(), this.getKey().getPath() + "_list"))
+			.filter(s -> s.getObjectClass().equals(List.class)).orElseThrow(() -> new IllegalStateException("Missing list serializer " + this.getKey().toString() + "_list. An existing manually-registered non-optional serializer?"));
 	}
 
 	@DontOverride
