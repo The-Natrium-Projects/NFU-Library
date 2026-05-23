@@ -21,6 +21,8 @@ public class EntityComponentClientPacketHandlers {
             .getSubComponentByPath(packet.componentPath)
             .map(c -> c instanceof EntitySyncherComponent<?> esc ? esc : null).orElse(null);
         if (syncher == null) return;
+        if (syncher.lastReceivedPacketId > packet.packetId) return; // This means the packet is out-of-date
+        syncher.lastReceivedPacketId = packet.packetId;
         packet.dataValues().forEach(syncher::setSynchedDataClient);
         packet.getterValues().forEach(syncher::setSynchedGetterClient);
     }

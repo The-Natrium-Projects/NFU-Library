@@ -29,13 +29,14 @@ public class EntityComponentEventListeners {
             EntityComponentSetupEvent initEvent = new EntityComponentSetupEvent(event.getEntity(), m);
             MinecraftForge.EVENT_BUS.post(initEvent);
             initEvent.collect();
+            MinecraftForge.EVENT_BUS.post(new EntityComponentFinalizeSetupEvent(event.getEntity(), m));
         }, () -> { NFUDebugStatics.errorOnce(EntityComponentEventListeners.class,
             String.format("%s Missing entity component manager", event.getEntity().getName().getString())); });
     }
 
     @SubscribeEvent
     public static void createDefaultComponents(EntityComponentSetupEvent event) {
-        event.addComponent("/dynamic_data", EntityComponentTypes.DYNAMIC_DATA.get());
+        event.addComponent("/data", EntityComponentTypes.DATA.get());
         event.addComponent("/timer", EntityComponentTypes.TIMER.get());
         event.addComponent("/syncher", EntityComponentTypes.SYNCHER.get());
     }
