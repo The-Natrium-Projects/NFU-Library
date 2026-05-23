@@ -46,11 +46,11 @@ public class EntityComponentAPI {
         });
     }
 
-    public static EntityDynamicDataComponent<Entity> getDynamicDataComponent(Entity e) {
-        return getComponentManager(e).getSubComponent("dynamic_data", EntityComponentTypes.DYNAMIC_DATA.get()).orElseGet(() -> {
+    public static EntityDataComponent<Entity> getDataComponent(Entity e) {
+        return getComponentManager(e).getSubComponent("dynamic_data", EntityComponentTypes.DATA.get()).orElseGet(() -> {
             NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing dynamic data component. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
-            return EntityComponentTypes.DYNAMIC_DATA.get().create(e);
+            return EntityComponentTypes.DATA.get().create(e);
         });
     }
 

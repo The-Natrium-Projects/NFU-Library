@@ -38,10 +38,10 @@ public class NFUAreaEffectCloudMixin implements NFUMixin<AreaEffectCloud> {
         // reducing the risk that someone else mixins into this process
         boolean isModified = !NFUContainerStatics.listEquals(actualList, effects);
         // Store effects to transient data
-        EntityComponentAPI.getDynamicDataComponent(this.caller())
-            .putVariable("NFUMixin_PostEffectEvent_EffectListModified", isModified);
-        EntityComponentAPI.getDynamicDataComponent(this.caller())
-            .putVariable("NFUMixin_PostEffectEvent_ActualEffectList", actualList);
+        EntityComponentAPI.getDataComponent(this.caller())
+            .putTransientVariable("NFUMixin_PostEffectEvent_EffectListModified", isModified);
+        EntityComponentAPI.getDataComponent(this.caller())
+            .putTransientVariable("NFUMixin_PostEffectEvent_ActualEffectList", actualList);
     }
 
     @ModifyReceiver(method = "tick()V", at = @At(value = "INVOKE",
@@ -50,12 +50,12 @@ public class NFUAreaEffectCloudMixin implements NFUMixin<AreaEffectCloud> {
         // Keep vanilla behavior if not modified, to prevent potential mixin compat issues
 
 
-        if (!EntityComponentAPI.getDynamicDataComponent(this.caller())
+        if (!EntityComponentAPI.getDataComponent(this.caller())
             .getVariable("NFUMixin_PostEffectEvent_EffectListModified", Boolean.class).orElse(false)) {
             return instance;
         }
         List<MobEffectInstance> effects = new ArrayList<>();
-        EntityComponentAPI.getDynamicDataComponent(this.caller())
+        EntityComponentAPI.getDataComponent(this.caller())
             .getVariable("NFUMixin_PostEffectEvent_ActualEffectList", List.class).ifPresent(effects::addAll);
         return effects;
     }
@@ -66,13 +66,13 @@ public class NFUAreaEffectCloudMixin implements NFUMixin<AreaEffectCloud> {
     private float nfu_ModifyRadiusConsumption(float original, @Local(ordinal = 0) List<MobEffectInstance> effects)
     {
         // Keep vanilla behavior if not modified, to prevent potential mixin compat issues
-        if (!EntityComponentAPI.getDynamicDataComponent(this.caller())
+        if (!EntityComponentAPI.getDataComponent(this.caller())
             .getVariable("NFUMixin_PostEffectEvent_EffectListModified", Boolean.class).orElse(false))
         {
             return original;
         }
         AtomicReference<Integer> actualAppliedEffectCount = new AtomicReference<>(0);
-        EntityComponentAPI.getDynamicDataComponent(this.caller())
+        EntityComponentAPI.getDataComponent(this.caller())
             .getVariable("NFUMixin_PostEffectEvent_ActualEffectList", List.class)
                 .map(List::size).ifPresent(actualAppliedEffectCount::set);
         int expectedCount = effects.size();
@@ -85,18 +85,18 @@ public class NFUAreaEffectCloudMixin implements NFUMixin<AreaEffectCloud> {
     private int nfu_ModifyDurationConsumption(int original, @Local(ordinal = 0) List<MobEffectInstance> effects)
     {
         // Keep vanilla behavior if not modified, to prevent potential mixin compat issues
-        if (!EntityComponentAPI.getDynamicDataComponent(this.caller())
+        if (!EntityComponentAPI.getDataComponent(this.caller())
             .getVariable("NFUMixin_PostEffectEvent_EffectListModified", Boolean.class).orElse(false))
         {
             return original;
         }
         AtomicReference<Integer> actualAppliedEffectCount = new AtomicReference<>(0);
-        EntityComponentAPI.getDynamicDataComponent(this.caller())
+        EntityComponentAPI.getDataComponent(this.caller())
             .getVariable("NFUMixin_PostEffectEvent_ActualEffectList", List.class)
                 .map(List::size).ifPresent(actualAppliedEffectCount::set);
         int expectedCount = effects.size();
-        EntityComponentAPI.getDynamicDataComponent(this.caller()).removeVariable("NFUMixin_PostEffectEvent_EffectListModified");
-        EntityComponentAPI.getDynamicDataComponent(this.caller()).removeVariable("NFUMixin_PostEffectEvent_ActualEffectList");
+        EntityComponentAPI.getDataComponent(this.caller()).putTransientVariable("NFUMixin_PostEffectEvent_EffectListModified", null);
+        EntityComponentAPI.getDataComponent(this.caller()).putTransientVariable("NFUMixin_PostEffectEvent_ActualEffectList", null);
         return Math.round((float) original * (float) (actualAppliedEffectCount.get()) / (float)expectedCount);
     }
 }

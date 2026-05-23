@@ -9,6 +9,7 @@ import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.exception.WrongSideException;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
+import net.sodiumzh.nfu.object.ServerOnly;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import net.sodiumzh.nfu.util.NFUNetworkStatics;
 
@@ -23,7 +24,8 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
     protected Map<String, SynchedData> synchedData = new HashMap<>();
     protected Map<String, SynchedGetter> synchedGetters = new HashMap<>();
     private Set<String> changedDataKeys = new HashSet<>();
-    private Set<String> changedGetters = new HashSet<>();
+    long lastReceivedPacketId = -1; // accessed on client, to prevent out-of-date packets received after a newer packet
+    private int syncInterval = 1;
 
     public EntitySyncherComponent(E entity) {
         super(entity);
@@ -45,22 +47,32 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
     }
 
     public <T> Optional<T> getSynchedData(String key, Class<T> dataClass) {
-        return Optional.ofNullable(hasSynchedData(key, dataClass) ? (T)synchedData.get(key).get() : null);
+        if (hasSynchedData(key, dataClass)) {
+            // Access also label dirty because an object may be changed internally without changing the reference
+            this.changedDataKeys.add(key);
+            return Optional.ofNullable((T)synchedData.get(key).get());
+        }
+        else return Optional.empty();
     }
 
     public <T> Optional<T> getSynchedDataUnchecked(String key) {
-        return Optional.ofNullable(hasSynchedData(key, Object.class) ? (T)synchedData.get(key).get() : null);
+        if (hasSynchedData(key, Object.class)) {
+            // Access also label dirty because an object may be changed internally without changing the reference
+            this.changedDataKeys.add(key);
+            return Optional.ofNullable((T)synchedData.get(key).get());
+        }
+        else return Optional.empty();
     }
 
     /**
-     * Set synched data value. Only on server.
+     * Set synched data value. Only on server. Invocation on client will do nothing.
      * @param key Synched data key
      * @param dataClass Expected data class. <i>This is a salt to ensure you know what class this field expects to receive.</i>
      * @param value New value.
      */
-    public <T> void setSynchedDataServer(String key, Class<T> dataClass, T value) {
+    public <T> void setSynchedData(String key, Class<T> dataClass, T value) {
         if (this.getEntity().level().isClientSide)
-            throw new WrongSideException("setSynchedDataServer invoked on client.");
+            return;
         if (this.hasSynchedData(key, dataClass)) {
             this.synchedData.get(key).value = value;
             this.changedDataKeys.add(key);
@@ -71,7 +83,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
     /**
      * Invoked only on sync.
      */
-    public void setSynchedDataClient(String key, Object value) {
+    void setSynchedDataClient(String key, Object value) {
         if (this.getEntity().level().isClientSide)
             throw new WrongSideException("setSynchedDataClient invoked on server.");
         if (this.hasSynchedData(key, Object.class)) {
@@ -138,6 +150,14 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         }
     }
 
+    public int getSyncInterval() {
+        return syncInterval;
+    }
+
+    public void setSyncInterval(int syncInterval) {
+        this.syncInterval = syncInterval;
+    }
+
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
@@ -161,17 +181,36 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
     }
 
     public void tick() {
-        // Track synched getters
+        if (!this.isClientSide()) {
+            // Track synched getters
+            this.synchedGetters.forEach((k, g) -> {
+                g.cache = g.getter.apply(this.getEntity());
+            });
+            // Sync
+            if ((this.getEntity().tickCount % this.syncInterval) == 0) {
+                ClientboundEntitySyncherComponentSyncPacket packet = new ClientboundEntitySyncherComponentSyncPacket(this);
+                NFUNetworkStatics.sendToAllPlayers(this.getEntity().level(), NFUNetworkChannels.CHANNEL, packet);
+                this.changedDataKeys.clear();
+            }
+        }
+    }
+
+    /**
+     * Manually sync all data and getters from server to client. Do nothing if invoked on client.
+     */
+    public void syncAll() {
+        if (this.isClientSide())
+            return;
+        // Update synched getters
         this.synchedGetters.forEach((k, g) -> {
-            Object v = g.getter.apply(this.getEntity());
-            if (v != g.cache) this.changedGetters.add(k);
-            g.cache = v;
+            g.cache = g.getter.apply(this.getEntity());
         });
         // Sync
-        if (!changedDataKeys.isEmpty() || !changedGetters.isEmpty()) {
-            ClientboundEntitySyncherComponentSyncPacket packet = new ClientboundEntitySyncherComponentSyncPacket(this);
-            NFUNetworkStatics.sendToAllPlayers(this.getEntity().level(), NFUNetworkChannels.CHANNEL, packet);
-        }
+        // Label all keys changed, so that we sync all data
+        this.changedDataKeys.addAll(this.synchedData.keySet());
+        ClientboundEntitySyncherComponentSyncPacket packet = new ClientboundEntitySyncherComponentSyncPacket(this);
+        NFUNetworkStatics.sendToAllPlayers(this.getEntity().level(), NFUNetworkChannels.CHANNEL, packet);
+        this.changedDataKeys.clear();
     }
 
     public static class SynchedData {
@@ -226,26 +265,31 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
 
     public static class ClientboundEntitySyncherComponentSyncPacket implements Packet<ClientGamePacketListener> {
 
-        public final EntitySyncherComponent<? extends Entity> syncher;  // Only valid on server
+        private static final ServerOnly<Long> CURRENT_PACKET_ID = new ServerOnly<>(0L);
+        public final long packetId;
+        @Nullable   // Non-null on server, null on client
+        public final EntitySyncherComponent<? extends Entity> syncher;
         public final int entityID;
         public final String componentPath;
         public final Map<String, ValueEntry> data = new HashMap<>();
         public final Map<String, ValueEntry> getters = new HashMap<>();
 
-
         public ClientboundEntitySyncherComponentSyncPacket(EntitySyncherComponent<? extends Entity> syncher) {
+            this.packetId = CURRENT_PACKET_ID.get();
+            CURRENT_PACKET_ID.set(CURRENT_PACKET_ID.get() + 1);
             this.syncher = syncher;
             this.entityID = syncher.getEntity().getId();
             this.componentPath = syncher.getPathFromRoot();
             for (String key: syncher.changedDataKeys) {
                 this.data.put(key, new ValueEntry(syncher.synchedData.get(key).serializer, syncher.synchedData.get(key).value));
             }
-            for (String key: syncher.changedGetters) {
+            for (String key: syncher.synchedGetters.keySet()) {
                 this.getters.put(key, new ValueEntry(syncher.synchedGetters.get(key).serializer, syncher.synchedGetters.get(key).cache));
             }
         }
 
         public ClientboundEntitySyncherComponentSyncPacket(FriendlyByteBuf buf) {
+            this.packetId = buf.readLong();
             this.syncher = null;
             this.entityID = buf.readInt();
             this.componentPath = buf.readUtf();
@@ -255,6 +299,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
 
         @Override
         public void write(FriendlyByteBuf buf) {
+            buf.writeLong(this.packetId);
             buf.writeInt(this.entityID);
             buf.writeUtf(componentPath);
             buf.writeMap(data, FriendlyByteBuf::writeUtf, (b, v) -> v.write(b));
