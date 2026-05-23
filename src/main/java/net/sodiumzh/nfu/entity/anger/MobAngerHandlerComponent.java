@@ -133,11 +133,11 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
         return new MobForgiveResult(target.getUUID(), false, true);
     }
 
-    public final float getDamageThreshold() {
+    public float getDamageThreshold() {
         return this.damageThreshold;
     }
 
-    public final void setDamageThreshold(float value) {
+    public void setDamageThreshold(float value) {
         this.damageThreshold = value;
     }
 

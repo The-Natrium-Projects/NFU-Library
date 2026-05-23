@@ -19,9 +19,6 @@ public class MobAngerEventListeners {
     {
         // TODO: remove legacy anger handler cap, use component instead
         if (!event.isCanceled() && event.getEntity() instanceof Mob mob && mob.getTarget() != null) {
-            for (var cap : CMobAngerHandler.ALL_HANDLERS) {
-                event.getEntity().getCapability(cap).ifPresent(c -> c.setAngryAt(mob.getTarget(), MobAngerReason.TARGETING.get()));
-            }
             MobAngerHandlerComponent.setAngryAtForMob(mob, mob.getTarget(), MobAngerReason.TARGETING.get());
         }
     }
@@ -31,22 +28,6 @@ public class MobAngerEventListeners {
         if (!event.isCanceled()
                 && event.getSource().getEntity() != null
                 && event.getSource().getEntity() instanceof LivingEntity src) {
-            // TODO: remove legacy anger handler cap, use component instead
-            for (var cap : CMobAngerHandler.ALL_HANDLERS) {
-                if (event.getSource() instanceof EntityDamageSource eds && eds.isThorns())
-                {
-                    event.getEntity().getCapability(cap).ifPresent(c -> {
-                        if (event.getAmount() > c.getDamageThreshold())
-                            c.setAngryAt(src, MobAngerReason.THORNS.get());
-                    });
-                }
-                else {
-                    event.getEntity().getCapability(cap).ifPresent(c -> c.setAngryAt(src,
-                            event.getAmount() > c.getDamageThreshold() ? MobAngerReason.ATTACKED.get() : MobAngerReason.HIT.get()));
-                    src.getCapability(cap).ifPresent(c -> c.setAngryAt(event.getEntity(),
-                            event.getAmount() > c.getDamageThreshold() ? MobAngerReason.ATTACKING.get() : MobAngerReason.HITTING.get()));
-                }
-            }
             MobAngerHandlerComponent.getAllAngerHandlers(event.getEntity())
                 .forEach(c -> {
                     if (event.getSource() instanceof EntityDamageSource eds && eds.isThorns()) {
