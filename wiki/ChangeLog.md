@@ -1,3 +1,17 @@
+### 0.x.33
+
+NFU Registry refactor.
+
+* Now entry values will get immutable after registry loading (previously called "generating").
+* Register loading is mandatory now. There are three options of loading timing: on common setup, on side (client, server) setup, and on first access.
+* Added a internal reverse map to improve the performance of getting key from value.
+
+Removed a bunch of legacy classes and methods.
+
+- Removed entity data capability. Use data component (path: `/data`) instead.
+- Removed entity timer capability. Use timer component (path: `/timer`) instead.
+- 
+
 ### 0.x.32
 
 Added Entity Component system. Ported data, timer and anger handler to components.

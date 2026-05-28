@@ -50,13 +50,13 @@ It returns a `NFURegistry.Accessor` which is similar to `RegistryObject` for For
 
 Registering above only adds entries into `RegistryEntryCollection`, and you need to merge the registered entries into registry. You can do this by calling `REGISTER.merge()` in your mod main class' constructor.
 
-#### Access
+#### ~~Access~~
 
-As `NFURegistry` uses `Supplier`s as values, it must generate values before accessing. By default, this will be done at the first time you call `NFURegistry#Accessor#get()`. Note that once the `NFURegistry.Accessor` outputs a non-null instance, the `Supplier` will be no longer called and the output results will no longer change.
+~~As `NFURegistry` uses `Supplier`s as values, it must generate values before accessing. By default, this will be done at the first time you call `NFURegistry#Accessor#get()`. Note that once the `NFURegistry.Accessor` outputs a non-null instance, the `Supplier` will be no longer called and the output results will no longer change.~~
 
-##### Pre-generating
+##### ~~Pre-generating~~
 
-Optionally, you can manually generate all instances for a registry at a given phase of game setup. This action can be done by calling `setShouldGenerateOnCommonSetup()`, `setShouldGenerateOnClientSetup()` and `setShouldGenerateOnServerSetup()` on registry declaration to make the registry to generate all entries on common setup, on client setup and on server setup respectively.
+~~Optionally, you can manually generate all instances for a registry at a given phase of game setup. This action can be done by calling `setShouldGenerateOnCommonSetup()`, `setShouldGenerateOnClientSetup()` and `setShouldGenerateOnServerSetup()` on registry declaration to make the registry to generate all entries on common setup, on client setup and on server setup respectively.~~
 
 #### Built-in registries
 
@@ -66,7 +66,7 @@ NFU built-in registries are declared in `NFURegistries `class.
 
 There are also some registries or utilities for registration that are not in `NFURegistry`.
 
-#### `DeferredEntityAttributeRegisterEvent`
+#### `DeferredEntityAttributeRegisterEvent`(NYI)
 
 Event for registering `AttributeSupplier`s that should be added on server start, not on mod setup. This is for attributes depending on data which is not available on mod setup (e.g. config attributes).
 
@@ -104,7 +104,25 @@ Removed the `ItemStack` argument of `interactLivingEntity`. The `ItemStack` is a
 
 
 
+## Entity Component API
 
+Entity Component API is a highly flexible management system of plug-and-use standalone modules on the Entity. It's similar to Forge Capability, but has a hierarchical tree and some additional functionalities.
+
+
+
+### Entity Component
+
+A standalone module that can be bound to entities. For example, you can write a component module to do something, and attach it to any entities of allowed types to make it work for the entity.
+
+Entity Components have base interface `IEntityComponent<E>` in which E is the required entity class. Attaching to entities not extending `E` will produce an exception.
+
+`EntityComponentBase<E>` is the default implementation template of `IEntityComponent<E>`, and it's recommended to let your custom component extend `EntityComponentBase<E>`.
+
+Any entity component must have a registered type (of class `EntityComponentType<E, T extends IEntityComponent<? super E>`). Instantiation of entity components should always call `create()` or `createUnsafe` (generic type-unsafe), not the constructor, as the latter will be missing the type and produce exception.
+
+### `CEntityComponentManager`
+
+The root component of the component tree, and it's also a Forge Capability which is finally handled in the capability system. The manager is accessed by `EntityComponentAPI#getComponentManager` but not directly through Forge Capability. 
 
 ## Mob Anger API
 
