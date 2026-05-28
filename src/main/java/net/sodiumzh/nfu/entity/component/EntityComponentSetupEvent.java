@@ -63,8 +63,8 @@ public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
     public void collect() {
         componentTypes.entrySet().stream().sorted((e1, e2) -> {
             if (e1.getKey().equals(e2.getKey())) return 0;
-            else if (e1.getKey().contains(e2.getKey())) return 1;
-            else if (e2.getKey().contains(e1.getKey())) return -1;
+            else if (e1.getKey().startsWith(e2.getKey())) return -1;
+            else if (e2.getKey().startsWith(e1.getKey())) return 1;
             else return 0;
         }).forEach(e -> this.manager.addSubComponentByPath(e.getKey(), e.getValue().createUnsafe(this.getEntity())));
     }
