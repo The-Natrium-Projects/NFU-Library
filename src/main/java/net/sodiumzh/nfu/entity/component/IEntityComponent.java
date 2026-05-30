@@ -356,35 +356,6 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
         return downstreamComponent.getPathFrom(this);
     }
 
-    /**
-     * Declares that a sub-component with given type and path should always be present. If
-     * the required sub-component is not present in the given position, it will be auto created
-     * through factory.
-     * The component manager will check the presence of all required components, and throw
-     * if not found.
-     * @throws IllegalStateException When the path is occupied by a component of wrong type,
-     * or the parent component of the desired path is absent.
-     */
-    void setRequired(String path, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type);
-
-    default void setRequiredIfClassMatches(String path, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type) {
-        if (type.entityClass().isAssignableFrom(this.getEntity().getClass()))
-            this.setRequired(path, type);
-    }
-
-    /**
-     * Check if a path has a required component. If yes, return an {@link Optional} of
-     * the required component type, otherwise empty.
-     * <p>Note: this method doesn't handle the presence check of the required component instances.
-     * It's done in {@link CEntityComponentManager}.
-     */
-    Optional<EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>>> getTypeIfRequired(String path);
-
-    /**
-     * Get an immutable map of all required paths and corresponding types.
-     */
-    Map<String, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>>> getAllRequired();
-
     @DontOverride
     default boolean isClientSide() {
         return this.getEntity().level().isClientSide();
@@ -393,6 +364,10 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     // INBTSerializable<CompoundTag> methods:
     // CompoundTag serializeNBT();
     // void deserializeNBT(CompoundTag nbt);
+
+    boolean shouldSerialize();
+
+    void setSerialize(boolean shouldSerialize);
 
     /**
      * Split a string representation of a path (separated by either '\' or '/') to string array.

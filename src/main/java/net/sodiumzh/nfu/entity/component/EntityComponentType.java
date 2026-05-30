@@ -28,10 +28,19 @@ public record EntityComponentType<E extends Entity, T extends IEntityComponent<E
      * Create component from entity. Always use this to create components, and don't call raw constructors as it doesn't
      * initialize type, unless you do this manually!!
      */
-    public T create(E entity) {
+    public T create(E entity, boolean serialized) {
         T res = this.factory().apply(entity);
         res.setType(this);
+        res.setSerialize(serialized);
         return res;
+    }
+
+    /**
+     * Create component from entity. Always use this to create components, and don't call raw constructors as it doesn't
+     * initialize type, unless you do this manually!!
+     */
+    public T create(E entity) {
+        return create(entity, true);
     }
 
     /**
@@ -40,12 +49,21 @@ public record EntityComponentType<E extends Entity, T extends IEntityComponent<E
      * @param e Entity parameter.
      * @return New component.
      */
-    public T createUnsafe(Entity e) {
+    public T createUnsafe(Entity e, boolean serialized) {
         if (this.entityClass().isAssignableFrom(e.getClass()))
-            return this.create((E) e);
+            return this.create((E) e, serialized);
         else
             throw new IllegalArgumentException("Entity type mismatch: creating component type " + this.componentClass().getName()
                 + " for entity class " + this.entityClass().getName() + ", but input entity is " + e.getClass().getName());
+    }
+
+    /**
+     * Create the default component from a raw Entity reference. This will detect if type matches and throw if not.
+     * @param e Entity parameter.
+     * @return New component.
+     */
+    public T createUnsafe(Entity e) {
+        return createUnsafe(e, true);
     }
 
 }
