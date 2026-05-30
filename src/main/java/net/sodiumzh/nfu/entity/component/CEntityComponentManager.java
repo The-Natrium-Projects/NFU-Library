@@ -8,6 +8,8 @@ import net.sodiumzh.nfu.registry.NFUEntityComponents;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
