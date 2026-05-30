@@ -35,8 +35,8 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     @Nullable protected IEntityComponent<?> parent;
     protected final Map<String, IEntityComponent<? extends Entity>> subComponents = new HashMap<>();
     protected final E entity;
-    protected final Map<String, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>>> required = new HashMap<>();
     protected EntityComponentType<E, ? extends IEntityComponent<E>> type;
+    protected boolean serialize = true;
 
     public EntityComponentBase(E entity) {
         if (entity == null)
@@ -111,32 +111,6 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     }
 
     @Override
-    public void setRequired(String path, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type) {
-        // Uniformize the format of path
-        String pathKey = Arrays.stream(path.split("[/\\\\]")).filter(s -> !s.isEmpty())
-            .map(s -> "\\" + s).reduce("", (s1, s2) -> s1 + s2);
-        this.required.put(pathKey, type);
-        @Nullable IEntityComponent<? extends Entity> old = this.getSubComponentByPath(pathKey).orElse(null);
-        if (old != null && !old.getType().equals(type))
-            throw new IllegalStateException("Failed to set required sub-component at "
-            + pathKey + "\" because it's occupied by a component of another type: \""
-            + old.getType().getKey().toString() + "\".");
-        if (this.getSubComponentByPath(pathKey).isEmpty())
-            this.addSubComponentByPath(pathKey, type.createUnsafe(this.getEntity()));
-    }
-
-    public Optional<EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>>> getTypeIfRequired(String path) {
-        // Uniformize the format of path
-        String pathKey = Arrays.stream(path.split("[/\\\\]")).filter(s -> !s.isEmpty())
-            .map(s -> "\\" + s).reduce("", (s1, s2) -> s1 + s2);
-        return Optional.ofNullable(this.required.get(pathKey));
-    }
-
-    public Map<String, EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>>> getAllRequired() {
-        return Map.copyOf(this.required);
-    }
-
-    @Override
     public EntityComponentType<E, ? extends IEntityComponent<E>> getType() {
         if (type == null)
             throw new IllegalStateException("NFU Entity Component: Missing type. Maybe not initialized? Always create component from type instead of directly using new.");
@@ -147,4 +121,13 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     public void setType(EntityComponentType<E, ? extends IEntityComponent<E>> type) {
         this.type = type;
     }
+
+    public boolean shouldSerialize() {
+        return this.serialize;
+    }
+
+    public void setSerialize(boolean shouldSerialize) {
+        this.serialize = shouldSerialize;
+    }
+
 }
