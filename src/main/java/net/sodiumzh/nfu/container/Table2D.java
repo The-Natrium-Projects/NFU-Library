@@ -24,6 +24,10 @@ public class Table2D<R, C, V> implements ITable2D<R, C, V> {
     public Table2D() {
     }
 
+    public Table2D(ITable2D<? extends R, ? extends C, ? extends V> from) {
+
+    }
+
     public Optional<V> get(R row, C column) {
         if (tableFromRow.containsKey(row)
             && tableFromRow.get(row).containsKey(column))
@@ -37,6 +41,10 @@ public class Table2D<R, C, V> implements ITable2D<R, C, V> {
         this.tableFromColumn.putIfAbsent(column, new HashMap<>());
         this.tableFromColumn.get(column).put(row, value);
         this.tableFromValue.put(value, new ITable2D.KeyPair<>(row, column));
+    }
+
+    public void putAll(ITable2D<? extends R, ? extends C, ? extends V> source) {
+        source.forEach(this::put);
     }
 
     public boolean contains(R row, C column) {
@@ -114,72 +122,9 @@ public class Table2D<R, C, V> implements ITable2D<R, C, V> {
         return this.tableFromValue.isEmpty();
     }
 
-    public static class ImmutableSnapshot<R, C, V> implements ITable2D<R, C, V> {
-
-        private final List<ITable2D.Entry<R, C, V>> entries;
-
-        public ImmutableSnapshot(ITable2D<R, C, V> source) {
-            this.entries = source.entryStream().toList();
-        }
-
-        public Optional<V> get(R row, C column) {
-            return entries.stream().filter(e -> e.rowKey().equals(row) && e.columnKey().equals(column))
-                .findFirst().map(Entry::value);
-        }
-
-        public void put(R row, C column, V value) {
-            throw new UnsupportedOperationException("Table2D.ImmutableCopy doesn't allow modification.");
-        }
-
-        public boolean contains(R row, C column) {
-            return entries.stream().anyMatch(e -> e.rowKey().equals(row) && e.columnKey().equals(column));
-        }
-
-        public boolean containsRow(R row) {
-            return this.entries.stream().anyMatch(e -> e.rowKey().equals(row));
-        }
-
-        public boolean containsColumn(C column) {
-            return this.entries.stream().anyMatch(e -> e.columnKey().equals(column));
-        }
-
-        public Set<ITable2D.KeyPair<R, C>> getKeyPairs(V value) {
-            return this.entries.stream().filter(e -> e.value().equals(value)).map(Entry::keyPair)
-                .collect(Collectors.toSet());
-        }
-
-        public Map<R, V> getColumn(C column) {
-            return Map.copyOf(this.entries.stream().filter(entry -> entry.columnKey().equals(column))
-                .collect(Collectors.toMap(Entry::rowKey, Entry::value)));
-        }
-
-        public Map<C, V> getRow(R row) {
-            return Map.copyOf(this.entries.stream().filter(entry -> entry.rowKey().equals(row))
-                .collect(Collectors.toMap(Entry::columnKey, Entry::value)));
-        }
-
-        public void removeValue(V value) {
-            throw new UnsupportedOperationException("Table2D.ImmutableCopy doesn't allow modification.");
-        }
-
-        public Optional<V> remove(R row, C column) {
-            throw new UnsupportedOperationException("Table2D.ImmutableCopy doesn't allow modification.");
-        }
-
-        public List<V> removeRow(R row) {
-            throw new UnsupportedOperationException("Table2D.ImmutableCopy doesn't allow modification.");
-        }
-
-        public List<V> removeColumn(C column) {
-            throw new UnsupportedOperationException("Table2D.ImmutableCopy doesn't allow modification.");
-        }
-
-        public Stream<ITable2D.Entry<R, C, V>> entryStream() {
-            return this.entries.stream();
-        }
-
-        public boolean isEmpty() {
-            return this.entries.isEmpty();
-        }
+    @Override
+    public int size() {
+        return this.tableFromValue.size();
     }
+
 }

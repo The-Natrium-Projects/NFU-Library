@@ -130,4 +130,37 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
         this.serialize = shouldSerialize;
     }
 
+    // Hierarchy safety check modules //
+    // Methods below will be checked each few seconds in the component manager to ensure a valid structure is present.
+
+    /**
+     * Get the map of required subcomponent paths and types. It will be checked after component tree initialization.
+     */
+    public Map<String, EntityComponentType<?, ?>> getRequiredSubcomponents() {
+        return Map.of();
+    }
+
+    /**
+     * Get all legal paths of this component. Keep empty to require no path.
+     */
+    public List<String> getRequiredPaths() {
+        return List.of();
+    }
+
+    public void checkHierarchy() {
+        String subcomponentErrMsg = getRequiredSubcomponents().entrySet().stream()
+            .filter(entry -> this.getSubComponentByPath(entry.getKey(), entry.getValue()).isEmpty())
+            .map(entry -> String.format(Locale.ENGLISH, "\"%s\"(%s); ", entry.getKey(), entry.getValue().getKey().toString()))
+            .reduce("", String::concat);
+        if (!subcomponentErrMsg.isEmpty()) {
+            throw new IllegalStateException(String.format(Locale.ENGLISH, "Component \"%s\"(%s) missing subcomponent(s): %s", this.getPathFromRoot(), this.getType().getKey(), subcomponentErrMsg));
+        }
+
+        List<String> requiredPathsList = getRequiredPaths().stream().map(IEntityComponent::formatPath).distinct().toList();
+        if (!requiredPathsList.contains(this.getPathFromRoot())) {
+            throw new IllegalStateException(String.format(Locale.ENGLISH, "Illegal path \"%s\" for component type %s. Valid paths: %s",
+                this.getPathFromRoot(), this.getType().getKey(), requiredPathsList.stream().reduce("", (s1, s2) -> s1 + ", " + s2)));
+        }
+    }
+
 }

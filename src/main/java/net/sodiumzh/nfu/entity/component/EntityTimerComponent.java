@@ -42,7 +42,7 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
                     if (this.isDefaultTimerComponent())
                         user.onDefaultTimerExpire(entry.getKey(), entry.getValue().isExpired(), null);
                 }
-                MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), entry.getKey(), entry.getValue().isExpired(), null));
+                MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), this, entry.getKey(), entry.getValue().isExpired(), null));
                 if (entry.getValue().isExpired()) expiredKeys.add(entry.getKey());
             }
         }
@@ -54,7 +54,7 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
                     if (this.isDefaultTimerComponent())
                         user.onDefaultTimerExpire(entry.columnKey(), entry.value().isExpired(), entry.rowKey());
                 }
-                MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), entry.columnKey(), entry.value().isExpired(), entry.rowKey()));
+                MinecraftForge.EVENT_BUS.post(new ExpireEvent(this.getEntity(), this, entry.columnKey(), entry.value().isExpired(), entry.rowKey()));
                 if (entry.value().isExpired()) expiredIdSpecificKeys.add(new ITable2D.KeyPair<>(entry.rowKey(), entry.columnKey()));
             }
         });
@@ -81,6 +81,11 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
         expiredActions.clear();
         expiredIdSpecificActions.clear();
     }
+
+    public boolean shouldTick() {
+        return !this.namedTimers.isEmpty() || !this.uuidSpecificNamedTimers.isEmpty() || !this.delayedActionTimers.isEmpty() || !this.uuidSpecificDelayedActionTimers.isEmpty();
+    }
+
 
     // General timers
 
@@ -336,14 +341,16 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
 
     public static class ExpireEvent extends NFUEntityEvent<Entity> {
 
+        private final EntityTimerComponent<? extends Entity> component;
         private final String name;
         private final boolean expiring;
         @Nullable
         private final UUID uuid;
 
-        public ExpireEvent(Entity entity, String name, boolean expiring, @Nullable UUID uuid) {
+        public ExpireEvent(Entity entity, EntityTimerComponent<? extends Entity> component, String name, boolean expiring, @Nullable UUID uuid) {
             super(entity);
             this.name = name;
+            this.component = component;
             this.expiring = expiring;
             this.uuid = uuid;
         }
@@ -362,6 +369,9 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
             return Optional.ofNullable(uuid);
         }
 
+        public EntityTimerComponent<? extends Entity> getComponent() {
+            return component;
+        }
     }
 
 }
