@@ -288,7 +288,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
             int j = i;
             if (res.isEmpty()) break;
             res = res.flatMap(c -> c.getSubComponent(parts.get(j)));
-            rebuiltPath.append("\\").append(parts.get(j));
+            rebuiltPath.append("/").append(parts.get(j));
         }
         // Now "res" should be the direct parent of the component we'll add
         if (res.isEmpty()) {
@@ -326,7 +326,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
         StringBuilder res = new StringBuilder();
         while (ptr.getParent().isPresent()) {
             ptr = ptr.getParent().orElseThrow();
-            res.insert(0, "\\" + ptr.getNameInParent().orElseThrow());
+            res.insert(0, "/" + ptr.getNameInParent().orElseThrow());
         }
         return res.toString();
     }
@@ -342,7 +342,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
         StringBuilder res = new StringBuilder();
         while (ptr.getParent().filter(c -> c != upstreamComponent).isPresent()) {
             ptr = ptr.getParent().orElseThrow();
-            res.insert(0, "\\" + ptr.getNameInParent().orElseThrow());
+            res.insert(0, "/" + ptr.getNameInParent().orElseThrow());
         }
         return ptr.getParent().isPresent() ? Optional.of(res.toString()) : Optional.empty();
     }
