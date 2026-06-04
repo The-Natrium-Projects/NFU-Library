@@ -4,10 +4,7 @@ import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
 
@@ -60,12 +57,19 @@ public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
     }
 
     @ApiStatus.Internal
-    public void collect() {
+    void collect() {
         componentTypes.entrySet().stream().sorted((e1, e2) -> {
             if (e1.getKey().equals(e2.getKey())) return 0;
             else if (e1.getKey().startsWith(e2.getKey())) return -1;
             else if (e2.getKey().startsWith(e1.getKey())) return 1;
             else return 0;
         }).forEach(e -> this.manager.addSubComponentByPath(e.getKey(), e.getValue().createUnsafe(this.getEntity())));
+    }
+
+    @ApiStatus.Internal
+    void checkHierarchy() {
+        this.manager.getDownstreamComponents().stream()
+            .filter(c -> c instanceof EntityComponentBase<? extends Entity>).map(c -> (EntityComponentBase<? extends Entity>)c)
+            .forEach(EntityComponentBase::checkHierarchy);
     }
 }

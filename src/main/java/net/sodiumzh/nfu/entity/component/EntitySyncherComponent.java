@@ -182,7 +182,6 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
 
     public void tick() {
         if (!this.isClientSide()) {
-            // Track synched getters
             this.synchedGetters.forEach((k, g) -> {
                 g.cache = g.getter.apply(this.getEntity());
             });
@@ -196,11 +195,18 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
     }
 
     /**
+     * As ticking here only handles synching, stop ticking when unchanged and prevent packet synching to save resource
+     */
+    public boolean shouldTick() {
+        return !this.changedDataKeys.isEmpty() || !this.synchedGetters.isEmpty();
+    }
+
+    /**
      * Manually sync all data and getters from server to client. Do nothing if invoked on client.
      */
     public void syncAll() {
-        if (this.isClientSide())
-            return;
+        if (this.isClientSide()) return;
+        if (this.synchedData.isEmpty() && this.synchedGetters.isEmpty()) return;
         // Update synched getters
         this.synchedGetters.forEach((k, g) -> {
             g.cache = g.getter.apply(this.getEntity());

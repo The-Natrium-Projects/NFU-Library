@@ -77,4 +77,12 @@ public class EntityComponentAPI {
     public static Set<IEntityComponent<? extends Entity>> getAllComponents(Entity target) {
         return getComponentManager(target).getSelfAndDownstreamComponents();
     }
+
+    /**
+     * Get a component of an entity by path, or create a transient default component as fallback.
+     * <p>Note: the fallback only works as a placeholder, and will not be attached to the entity.
+     */
+    public static <T extends IEntityComponent<? extends Entity>> T getComponentByPathOrFallback(Entity e, String path, EntityComponentType<?, T> type) {
+        return getComponentByPath(e, path, type).orElseGet(() -> type.createUnsafe(e));
+    }
 }
