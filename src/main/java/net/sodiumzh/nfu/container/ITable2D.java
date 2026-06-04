@@ -43,8 +43,12 @@ public interface ITable2D<R, C, V> {
         this.entryStream().forEach(entry -> action.accept(entry.rowKey(), entry.columnKey(), entry.value()));
     }
 
+    public boolean isEmpty();
+
+    public int size();
+
     public static <R, C, V> ITable2D<R, C, V> snapshotOf(ITable2D<R, C, V> source) {
-        return new Table2D.ImmutableSnapshot<>(source);
+        return new ImmutableTable2D<>(source);
     }
 
     public static record KeyPair<R, C>(R row, C column) {

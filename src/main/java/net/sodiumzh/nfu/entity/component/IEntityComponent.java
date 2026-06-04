@@ -53,7 +53,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     default public Class<? extends E> getRequiredEntityClass() {
         return this.getType().entityClass();
     }
-    
+
     /**
      * Gets the local name (string identifier) of this component within its parent, or empty if root.
      * @return local component name (unique in parent)
@@ -370,6 +370,14 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     void setSerialize(boolean shouldSerialize);
 
     /**
+     * Check if this component is in use and should be ticked.
+     * <p>If a component's ticking may cause resource waste when unused, override this method and return the condition of ticking.
+     */
+    default boolean shouldTick() {
+        return true;
+    }
+
+    /**
      * Split a string representation of a path (separated by either '\' or '/') to string array.
      * <p>For example: input "aa\\bb/cc", output {"aa", "bb", "cc"} (redundant '\' and '/' will be removed)</p>
      */
@@ -386,5 +394,4 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
         return Arrays.stream(path.split("[/\\\\]+")).filter(str -> !str.isEmpty())
             .map(str -> "/" + str).reduce("", (s1, s2) -> s1 + s2);
     }
-
 }

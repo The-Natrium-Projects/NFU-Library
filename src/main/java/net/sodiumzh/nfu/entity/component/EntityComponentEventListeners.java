@@ -9,6 +9,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
 import net.sodiumzh.nfu.mixin.event.entity.EntityFinishConstructionEvent;
+import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -30,6 +31,8 @@ public class EntityComponentEventListeners {
             MinecraftForge.EVENT_BUS.post(initEvent);
             initEvent.collect();
             MinecraftForge.EVENT_BUS.post(new EntityComponentFinalizeSetupEvent(event.getEntity(), m));
+            if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK)
+                initEvent.checkHierarchy();
         }, () -> { NFUDebugStatics.errorOnce(EntityComponentEventListeners.class,
             String.format("%s Missing entity component manager", event.getEntity().getName().getString())); });
     }

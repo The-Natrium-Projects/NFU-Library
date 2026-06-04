@@ -9,6 +9,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.capability.CEntityTickingCapability;
 import net.sodiumzh.nfu.container.Tuple2;
+import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.util.NFUMiscStatics;
 import net.sodiumzh.nfu.util.NFUNBTStatics;
@@ -48,8 +49,11 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
      */
     @Override
     public void tick() {
-        // Checking required components may be costly, so do it only each 5s
-        this.getDownstreamComponents().forEach(IEntityComponent::tick);
+        this.getDownstreamComponents().stream().filter(IEntityComponent::shouldTick).forEach(IEntityComponent::tick);
+        if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK && this.getEntity().tickCount % 100 == 0) {
+            this.getDownstreamComponents().stream().filter(c -> c instanceof EntityComponentBase<? extends Entity>)
+                .map(c -> (EntityComponentBase<?>)c).forEach(EntityComponentBase::checkHierarchy);
+        }
     }
 
     @Override
