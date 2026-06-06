@@ -394,4 +394,9 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
         return Arrays.stream(path.split("[/\\\\]+")).filter(str -> !str.isEmpty())
             .map(str -> "/" + str).reduce("", (s1, s2) -> s1 + s2);
     }
+
+    /**
+     * Create saved data. Serialization here can return null safely if nothing should be saved.
+     */
+    @Nullable CompoundTag serializeNBT();
 }

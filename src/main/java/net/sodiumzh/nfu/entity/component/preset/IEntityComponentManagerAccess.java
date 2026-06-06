@@ -1,4 +1,8 @@
-package net.sodiumzh.nfu.entity.component;
+package net.sodiumzh.nfu.entity.component.preset;
+
+import net.minecraft.world.entity.Entity;
+import net.sodiumzh.nfu.entity.component.CEntityComponentManager;
+import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 
 import javax.annotation.Nullable;
 
@@ -12,13 +16,14 @@ import javax.annotation.Nullable;
  * reconstruct their component tree from saved data instead.
  * </p>
  */
-public interface IEntityComponentManagerHolder {
+public interface IEntityComponentManagerAccess {
 
     /**
      * @return The CEntityComponentManager instance for this entity, or null if not (yet) constructed.
      */
-    @Nullable
-    CEntityComponentManager getComponentManager();
+    default CEntityComponentManager getComponentManager() {
+        return EntityComponentAPI.getComponentManager((Entity)this);
+    }
 
     /**
      * Called when the capability is attached and the manager is (about to be) available.

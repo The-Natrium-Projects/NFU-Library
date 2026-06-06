@@ -2,6 +2,9 @@ package net.sodiumzh.nfu.entity.component;
 
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.NFULibrary;
+import net.sodiumzh.nfu.entity.component.preset.EntityDataComponent;
+import net.sodiumzh.nfu.entity.component.preset.EntitySyncherComponent;
+import net.sodiumzh.nfu.entity.component.preset.EntityTimerComponent;
 import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.registry.NFURegistry;
 import net.sodiumzh.nfu.registry.NFURegistryEntryCollection;

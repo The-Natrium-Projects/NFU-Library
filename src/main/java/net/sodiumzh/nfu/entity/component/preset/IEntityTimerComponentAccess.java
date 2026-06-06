@@ -1,6 +1,6 @@
-package net.sodiumzh.nfu.entity.component;
+package net.sodiumzh.nfu.entity.component.preset;
 
-import net.minecraft.world.entity.Entity;
+import net.sodiumzh.nfu.entity.component.preset.EntityTimerComponent;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * A utility interface to handle {@link EntityTimerComponent} expiration events in entity class.
  */
-public interface IEntityTimerComponentUser {
+public interface IEntityTimerComponentAccess {
 
     void onTimerExpire(EntityTimerComponent<?> component, String key, boolean terminating, @Nullable UUID specifiedUUID);
 
