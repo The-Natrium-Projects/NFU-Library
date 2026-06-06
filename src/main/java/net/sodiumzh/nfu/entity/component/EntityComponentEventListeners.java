@@ -8,6 +8,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
+import net.sodiumzh.nfu.entity.component.preset.IEntityComponentManagerAccess;
 import net.sodiumzh.nfu.mixin.event.entity.EntityFinishConstructionEvent;
 import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
@@ -25,7 +26,7 @@ public class EntityComponentEventListeners {
     @SubscribeEvent
     public static void initComponentMgr(EntityFinishConstructionEvent event) {
         event.getEntity().getCapability(EntityComponentStatics.CAP_MANAGER).resolve().ifPresentOrElse(m -> {
-            if (event.getEntity() instanceof IEntityComponentManagerHolder holder)
+            if (event.getEntity() instanceof IEntityComponentManagerAccess holder)
                 holder.initializeComponents(m);
             EntityComponentSetupEvent initEvent = new EntityComponentSetupEvent(event.getEntity(), m);
             MinecraftForge.EVENT_BUS.post(initEvent);

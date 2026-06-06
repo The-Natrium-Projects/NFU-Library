@@ -1,11 +1,10 @@
-package net.sodiumzh.nfu.entity.component;
+package net.sodiumzh.nfu.entity.component.preset;
 
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.sodiumzh.nfu.annotation.NotYetImplemented;
-import org.jetbrains.annotations.ApiStatus;
+import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 
 @NotYetImplemented
 public abstract class EntityParticleHandlerComponent<E extends Entity> extends EntityComponentBase<E> {

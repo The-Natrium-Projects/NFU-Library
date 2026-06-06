@@ -93,7 +93,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
         try {
             CompoundTag nbt = new CompoundTag();
             nbt.putString("type", component.getType().getKey().toString());
-            nbt.put("data", component.serializeNBT());
+            nbt.put("data", Optional.ofNullable(component.serializeNBT()).orElseGet(CompoundTag::new));
             CompoundTag subcomponents = new CompoundTag();
             component.getSubComponents().entrySet().stream()
                 .filter(entry -> entry.getValue().shouldSerialize())

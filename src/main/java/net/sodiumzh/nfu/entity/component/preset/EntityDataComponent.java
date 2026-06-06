@@ -1,10 +1,11 @@
-package net.sodiumzh.nfu.entity.component;
+package net.sodiumzh.nfu.entity.component.preset;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.util.NFUNBTStatics;
 
