@@ -1,4 +1,4 @@
-package net.sodiumzh.nfu.entity.component;
+package net.sodiumzh.nfu.entity.component.preset;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -6,6 +6,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.container.ITable2D;
 import net.sodiumzh.nfu.container.Table2D;
+import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
+import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 
 import javax.annotation.Nullable;
@@ -37,7 +39,7 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
         for (var entry: namedTimers.entrySet()) {
             entry.getValue().tick();
             if (entry.getValue().isExpired() || entry.getValue().isJustFinishedALoop()) {
-                if (this.getEntity() instanceof IEntityTimerComponentUser user) {
+                if (this.getEntity() instanceof IEntityTimerComponentAccess user) {
                     user.onTimerExpire(this, entry.getKey(), entry.getValue().isExpired(), null);
                     if (this.isDefaultTimerComponent())
                         user.onDefaultTimerExpire(entry.getKey(), entry.getValue().isExpired(), null);
@@ -49,7 +51,7 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
         this.uuidSpecificNamedTimers.entryStream().forEach(entry -> {
             entry.value().tick();
             if (entry.value().isExpired() || entry.value().isJustFinishedALoop()) {
-                if (this.getEntity() instanceof IEntityTimerComponentUser user) {
+                if (this.getEntity() instanceof IEntityTimerComponentAccess user) {
                     user.onTimerExpire(this, entry.columnKey(), entry.value().isExpired(), entry.rowKey());
                     if (this.isDefaultTimerComponent())
                         user.onDefaultTimerExpire(entry.columnKey(), entry.value().isExpired(), entry.rowKey());

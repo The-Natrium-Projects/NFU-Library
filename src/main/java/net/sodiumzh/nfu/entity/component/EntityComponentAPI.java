@@ -1,6 +1,9 @@
 package net.sodiumzh.nfu.entity.component;
 
 import net.minecraft.world.entity.Entity;
+import net.sodiumzh.nfu.entity.component.preset.EntityDataComponent;
+import net.sodiumzh.nfu.entity.component.preset.EntitySyncherComponent;
+import net.sodiumzh.nfu.entity.component.preset.EntityTimerComponent;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 
 import java.util.Optional;

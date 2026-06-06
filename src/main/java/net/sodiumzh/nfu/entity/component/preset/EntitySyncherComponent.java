@@ -1,4 +1,4 @@
-package net.sodiumzh.nfu.entity.component;
+package net.sodiumzh.nfu.entity.component.preset;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -6,12 +6,14 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.annotation.DontCallManually;
+import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.exception.WrongSideException;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.object.ServerOnly;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import net.sodiumzh.nfu.util.NFUNetworkStatics;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -83,7 +85,8 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
     /**
      * Invoked only on sync.
      */
-    void setSynchedDataClient(String key, Object value) {
+    @ApiStatus.Internal
+    public void setSynchedDataClient(String key, Object value) {
         if (this.getEntity().level().isClientSide)
             throw new WrongSideException("setSynchedDataClient invoked on server.");
         if (this.hasSynchedData(key, Object.class)) {
@@ -322,7 +325,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
 
         @Override
         public void handle(ClientGamePacketListener pHandler) {
-            EntityComponentClientPacketHandlers.HandleEntitySyncherComponentSync(this, pHandler);
+            EntityComponentPresetClientPacketHandlers.HandleEntitySyncherComponentSync(this, pHandler);
         }
 
         public static record ValueEntry(@Nullable NFUDataSerializer<?> serializer, @Nullable Object value) {
