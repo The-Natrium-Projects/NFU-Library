@@ -21,6 +21,9 @@ public abstract class EntityItemStackMonitorComponent extends EntityComponentBas
 
     public EntityItemStackMonitorComponent(Entity entity) {
         super(entity);
+        this.setup();
+        if (entity instanceof IEntityItemStackMonitorAccess access)
+            access.setupItemStackMonitor(this);
     }
 
     public HashMap<String, Supplier<ItemStack>> getListenedStacks() {
@@ -41,6 +44,8 @@ public abstract class EntityItemStackMonitorComponent extends EntityComponentBas
             if (!newStack.equals(stacksLastTick.get(key), false))
             {
                 this.onChanged(key, stacksLastTick.get(key).copy(), newStack.copy());
+                if (this.getEntity() instanceof IEntityItemStackMonitorAccess access)
+                    access.onItemStackChange(this, key, stacksLastTick.get(key).copy(), newStack.copy());
                 this.stacksLastTick.put(key, newStack);
             }
         }
@@ -56,6 +61,24 @@ public abstract class EntityItemStackMonitorComponent extends EntityComponentBas
     public void deserializeNBT(CompoundTag nbt) {
     }
 
+    public abstract void setup();
+
     public abstract void onChanged(String key, ItemStack oldItemStackCopy, ItemStack newItemStackCopy);
 
+    public static class Default extends EntityItemStackMonitorComponent {
+
+        public Default(Entity entity) {
+            super(entity);
+        }
+
+        @Override
+        public void setup() {
+
+        }
+
+        @Override
+        public void onChanged(String key, ItemStack oldItemStackCopy, ItemStack newItemStackCopy) {
+
+        }
+    }
 }

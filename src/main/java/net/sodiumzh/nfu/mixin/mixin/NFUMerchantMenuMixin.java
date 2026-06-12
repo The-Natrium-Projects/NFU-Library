@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.Merchant;
-import net.sodiumzh.nfu.entity.vanillatrade.CVanillaMerchant;
+import net.sodiumzh.nfu.entity.vanillatrade.IVanillaMerchant;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,7 +33,7 @@ public class NFUMerchantMenuMixin implements NFUMixin<MerchantMenu>
 	private void handleCapability(CallbackInfo callback)
 	{
 		Merchant trader = NFUReflectionStatics.forceGet(caller(), MerchantMenu.class, "f_40027_").cast();		// MerchantMenu#trader
-		if (trader instanceof CVanillaMerchant cap && !cap.isClientSide())
+		if (trader instanceof IVanillaMerchant cap && !cap.isClientSide())
 		{
 			cap.playTradeSound();
 			callback.cancel();

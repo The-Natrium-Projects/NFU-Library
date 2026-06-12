@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * A utility interface to handle {@link EntityTimerComponent} expiration events in entity class.
  */
-public interface IEntityTimerComponentAccess {
+public interface IEntityTimerComponentAccess extends IEntityComponentAccess {
 
     void onTimerExpire(EntityTimerComponent<?> component, String key, boolean terminating, @Nullable UUID specifiedUUID);
 
