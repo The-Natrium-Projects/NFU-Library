@@ -3,7 +3,10 @@ package net.sodiumzh.nfu.eventhandler;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.NFULibrary;
+import net.sodiumzh.nfu.mixin.event.entity.EntityFinalizeLoadingEvent;
+import net.sodiumzh.nfu.mixin.event.entity.EntityFinishConstructionEvent;
 import net.sodiumzh.nfu.mixin.event.entity.ItemEntityHurtEvent;
 import net.sodiumzh.nfu.registry.NFUTags;
 
@@ -22,6 +25,19 @@ public class NFUEntityEventHandlers {
                 event.setCanceled(true);
             }
         }
+    }
+
+    @SubscribeEvent
+    public static void onEntityFinalizeLoading(EntityFinalizeLoadingEvent event) {
+        // Record entity type into forge data, so that we can read the type from an NBT from saveWithoutId
+        // If this data is absent in the loading nbt, it may be wiped after loading, so add it again
+        event.getEntity().getPersistentData().putString("NFU_EntityType", ForgeRegistries.ENTITY_TYPES.getKey(event.getEntity().getType()).toString());
+    }
+
+    @SubscribeEvent
+    public static void onEntityFinalizeConstrction(EntityFinishConstructionEvent event) {
+        // Record entity type into forge data, so that we can read the type from an NBT from saveWithoutId
+        event.getEntity().getPersistentData().putString("NFU_EntityType", ForgeRegistries.ENTITY_TYPES.getKey(event.getEntity().getType()).toString());
     }
 
 

@@ -168,7 +168,7 @@ public class NFUDataSerializers {
     /**
      * @deprecated Use {@code FIELD_3D.getOptionalSerializer()} instead
      */
-    public static final NFUDataSerializer<Optional<Field3D>> OPTIONAL_FIELD_3D =
+    public static final NFUDataSerializer<Optional<Field3D>>   OPTIONAL_FIELD_3D =
         NFUDataSerializer.createOptional(FIELD_3D);
 
     static {
