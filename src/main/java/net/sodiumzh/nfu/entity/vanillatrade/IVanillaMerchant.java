@@ -12,11 +12,11 @@ import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraftforge.common.util.INBTSerializable;
 
 /**
- * The main capability interface as Vanilla Merchant implementation for generic mobs.
- * This capability allows to attach Vanilla Merchant functions to any mobs.
+ * The main interface as Vanilla Merchant implementation for generic mobs.
+ * This capability allows to attach Vanilla Merchant functions outside mob class definition e.g. by component or Forge Caps.
  * <p> 
  */
-public interface CVanillaMerchant extends Merchant, INBTSerializable<CompoundTag>
+public interface IVanillaMerchant extends Merchant, INBTSerializable<CompoundTag>
 {
 	/**
 	 * Corresponding mob.

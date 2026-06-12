@@ -51,6 +51,7 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
             angerList.remove(removal);
             this.onForgive(removal, new MobForgiveResult(removal, true, false));
         }
+        this.tempRemoval.clear();
     }
 
     public final MobAngerRules getAngerRules() {

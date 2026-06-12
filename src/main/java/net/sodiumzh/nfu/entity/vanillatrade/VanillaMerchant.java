@@ -14,13 +14,13 @@ import javax.annotation.Nullable;
 import java.util.Random;
 
 /**
- * <b>Abstract</b> implementation of {@code CVanillaMerchant}. This class doesn't allow to instantiate directly. 
- * To create custom implementation, first create an interface extending {@code CVanillaMerchant}, then use:
+ * <b>Abstract</b> implementation of {@link IVanillaMerchant}.
+ * To create custom implementation, first create an interface extending {@link IVanillaMerchant}, then use:
  * <p>{@code public class YourImplementation extends VanillaMerchant implements YourInterface}
  * <p>to create an instantiatable subclass.
  */
 // TODO Make a component instead
-public abstract class VanillaMerchant implements CVanillaMerchant
+public abstract class VanillaMerchant implements IVanillaMerchant
 {
 	private final Mob mob;
 	@Nullable

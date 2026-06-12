@@ -1,11 +1,13 @@
 package net.sodiumzh.nfu.entity.component.preset;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.event.NFULivingEvent;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +22,8 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
     public EntityAttributeMonitorComponent(LivingEntity entity) {
         super(entity);
         this.setup();
+        if (entity instanceof IEntityAttributeMonitorAccess access)
+            access.setupAttributeMonitor(this);
         MinecraftForge.EVENT_BUS.post(new EntityAttributeMonitorComponent.SetupEvent(this));
     }
 
@@ -62,6 +66,8 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
                 && (oldVal - newVal > 0.0000001 || oldVal - newVal < -0.0000001))
             {
                 this.onAttributeChange(attr, oldVal, newVal);
+                if (this.getEntity() instanceof IEntityAttributeMonitorAccess access)
+                    access.onAttributeChange(this, attr, oldVal, newVal);
                 MinecraftForge.EVENT_BUS.post(new EntityAttributeMonitorComponent.ChangeEvent(this, attr, oldVal, newVal));
             }
             getAllListened().put(attr, newVal);
@@ -131,6 +137,31 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
 
         public double getNewValue() {
             return newValue;
+        }
+    }
+
+    public static class Default extends EntityAttributeMonitorComponent {
+
+        public Default(LivingEntity entity) {
+            super(entity);
+        }
+
+        @Nullable
+        @Override
+        public CompoundTag serializeNBT() {
+            return null;
+        }
+
+        @Override
+        public void deserializeNBT(CompoundTag nbt) {
+        }
+
+        @Override
+        public void setup() {
+        }
+
+        @Override
+        public void onAttributeChange(Attribute attribute, double oldValue, double newValue) {
         }
     }
 }

@@ -395,6 +395,18 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
             .map(str -> "/" + str).reduce("", (s1, s2) -> s1 + s2);
     }
 
+    public static boolean pathEquals(String path1, String path2) {
+        return formatPath(path1).equals(formatPath(path2));
+    }
+
+    public static boolean pathEquals(IEntityComponent<?> component, String pathTest) {
+        return component.pathEquals(pathTest);
+    }
+
+    public default boolean pathEquals(String pathTest) {
+        return pathEquals(this.getPathFromRoot(), pathTest);
+    }
+
     /**
      * Create saved data. Serialization here can return null safely if nothing should be saved.
      */

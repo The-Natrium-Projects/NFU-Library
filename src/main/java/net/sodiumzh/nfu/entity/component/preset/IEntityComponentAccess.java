@@ -3,11 +3,10 @@ package net.sodiumzh.nfu.entity.component.preset;
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.entity.component.CEntityComponentManager;
 import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Utility for objects (Entity, Level, Block Entity) that expose their own component manager and provide initialization logic.
+ * Utility for entity that expose their own component manager and provide initialization logic. Must be implemented only on entity classes.
  * <p>
  * When the capability is attached to such an entity for the first time (i.e. during fresh entity creation, not loading from NBT),
  * the manager initializer will be called automatically. This allows custom default component tree setup.
@@ -16,11 +15,12 @@ import javax.annotation.Nullable;
  * reconstruct their component tree from saved data instead.
  * </p>
  */
-public interface IEntityComponentManagerAccess {
+public interface IEntityComponentAccess {
 
     /**
      * @return The CEntityComponentManager instance for this entity, or null if not (yet) constructed.
      */
+    @ApiStatus.NonExtendable
     default CEntityComponentManager getComponentManager() {
         return EntityComponentAPI.getComponentManager((Entity)this);
     }
@@ -35,6 +35,7 @@ public interface IEntityComponentManagerAccess {
      *
      * @param manager The manager instance about to be registered on the entity.
      */
-    void initializeComponents(CEntityComponentManager manager);
+    @ApiStatus.OverrideOnly
+    default void initializeComponents(CEntityComponentManager manager) {};
 
 }
