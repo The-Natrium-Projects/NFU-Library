@@ -14,6 +14,7 @@ import net.sodiumzh.nfu.container.Tuple3;
 import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
+import org.checkerframework.checker.signature.qual.CanonicalNameOrEmpty;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nullable;
@@ -44,13 +45,13 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
 
     private final Map<String, Timer> generalTimers = new HashMap<>();
     private final ITable2D<UUID, String, Timer> uuidSpecificTimers = new Table2D<>();
-    private final Map<UUID, Tuple2<Runnable, Timer>> delayedActionTimers = new HashMap<>();  // The uuid is an internal identifier, not present in the API
-    private final Map<UUID, Map<UUID, Tuple2<Consumer<UUID>, Timer>>> uuidSpecificDelayedActionTimers = new HashMap<>(); // The entry map key uuid is an internal identifier, not present in API
+    private final Map<UUID, Tuple2<Runnable, Timer>> delayedActionTimers = new HashMap<>();  // Key is the access id, provided on adding timer
+    //private final Map<UUID, Map<UUID, Tuple2<Consumer<UUID>, Timer>>> uuidSpecificDelayedActionTimers = new HashMap<>(); // The entry map key uuid is an internal identifier, not present in API
 
     private final List<String> expiredKeys = new ArrayList<>();  // Temporary list, only works on tick
     private final List<ITable2D.KeyPair<UUID, String>> expiredIdSpecificKeys = new ArrayList<>();
     private final List<UUID> expiredActions = new ArrayList<>();   // Temporary list, only works on tick
-    private final List<Tuple2<UUID, UUID>> expiredIdSpecificActions = new ArrayList<>();    // First UUID is the key UUID; second is internal identifier
+   // private final List<Tuple2<UUID, UUID>> expiredIdSpecificActions = new ArrayList<>();    // First UUID is the key UUID; second is internal identifier
 
     public EntityTimerComponent(T entity) {
         super(entity);
@@ -99,29 +100,29 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
                 if (entry.getValue().getB().terminated) expiredActions.add(entry.getKey()); // Collect internal uuid
             }
         }
-        this.uuidSpecificDelayedActionTimers.entrySet().stream().flatMap(entry -> entry.getValue().entrySet().stream().map(e -> new Tuple3<>(entry.getKey(), e.getKey(), e.getValue())))
+       /* this.uuidSpecificDelayedActionTimers.entrySet().stream().flatMap(entry -> entry.getValue().entrySet().stream().map(e -> new Tuple3<>(entry.getKey(), e.getKey(), e.getValue())))
             .forEach(entry -> {     // A = key uuid; B = internal uuid; C = Tuple2{action, timer}
             entry.getC().getB().tick();
             if (entry.getC().getB().isTerminated() || entry.getC().getB().isJustFinishedALoop()) {
                 entry.getC().getA().accept(entry.getA());
                 if (entry.getC().getB().terminated) expiredIdSpecificActions.add(new Tuple2<>(entry.getA(), entry.getB())); // Collect {keyUUID, internalUUID}
             }
-        });
+        });*/
         expiredKeys.forEach(this.generalTimers::remove);
         expiredIdSpecificKeys.forEach(keys -> this.uuidSpecificTimers.remove(keys.row(), keys.column()));
         expiredActions.forEach(this.delayedActionTimers::remove);
-        expiredIdSpecificActions.forEach(keys -> {
+        /*expiredIdSpecificActions.forEach(keys -> {
             if (this.uuidSpecificDelayedActionTimers.containsKey(keys.getA()))
                 this.uuidSpecificDelayedActionTimers.get(keys.getA()).remove(keys.getB());
-        });
+        });*/
         expiredKeys.clear();
         expiredIdSpecificKeys.clear();
         expiredActions.clear();
-        expiredIdSpecificActions.clear();
+        //expiredIdSpecificActions.clear();
     }
 
     public boolean shouldTick() {
-        return !this.generalTimers.isEmpty() || !this.uuidSpecificTimers.isEmpty() || !this.delayedActionTimers.isEmpty() || !this.uuidSpecificDelayedActionTimers.isEmpty();
+        return !this.generalTimers.isEmpty() || !this.uuidSpecificTimers.isEmpty() || !this.delayedActionTimers.isEmpty()/* || !this.uuidSpecificDelayedActionTimers.isEmpty()*/;
     }
 
     // General timers
@@ -129,7 +130,7 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
     public void addTimer(String name, int ticks, int loopCount, boolean serialize) {
         if (ticks <= 0) throw new IllegalArgumentException("Ticks must be positive");
         if (loopCount <= 0) throw new IllegalArgumentException("Loop count must be positive");
-        if (name.equals("__uuidSpecific")) throw new IllegalArgumentException("\"__uuidSpecific\" is reserved and cannot use as a name.");
+        //if (name.equals("__uuidSpecific")) throw new IllegalArgumentException("\"__uuidSpecific\" is reserved and cannot use as a name.");
         this.generalTimers.put(name, new Timer(ticks, false, loopCount, serialize));
     }
 
@@ -139,7 +140,7 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
 
     public void addInfiniteLoopTimer(String name, int periodTicks, boolean serialize) {
         if (periodTicks <= 0) throw new IllegalArgumentException("Period must be positive");
-        if (name.equals("__uuidSpecific")) throw new IllegalArgumentException("\"__uuidSpecific\" is reserved and cannot use as a name.");
+        //if (name.equals("__uuidSpecific")) throw new IllegalArgumentException("\"__uuidSpecific\" is reserved and cannot use as a name.");
         this.generalTimers.put(name, new Timer(periodTicks, true, 1, serialize));
     }
 
@@ -220,27 +221,48 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
 
     // Delayed actions
 
-    public List<Runnable> getAllDelayedActions() {
-        return this.delayedActionTimers.values().stream().map(Tuple2::getA).toList();
-    }
-
-    public void addDelayedAction(Runnable action, int ticks, int loopCount, boolean infiniteLoop, boolean runImmediately) {
+    /**
+     * Add a delayed-action timer.
+     * @param action Action to invoke.
+     * @param ticks Period in ticks for each loop.
+     * @param loopCount Overall loops before termination.
+     * @param infiniteLoop If true, the timer will keep running and never terminate until manually removed.
+     * @param runImmediately If true, the action will be invoked immediately. Note that this option will not reduce the loop amount, and the action will be invoked for overall n+1 times.
+     * @return A randomly-generated UUID for accessing this timer.
+     */
+    public UUID addDelayedAction(Runnable action, int ticks, int loopCount, boolean infiniteLoop, boolean runImmediately) {
         if (ticks <= 0) throw new IllegalArgumentException("Ticks must be positive");
         if (loopCount <= 0) throw new IllegalArgumentException("Loop count must be positive");
-        UUID internalID = UUID.randomUUID();
-        this.delayedActionTimers.put(internalID, new Tuple2<>(action, new Timer(ticks, infiniteLoop, loopCount, false)));
+        UUID id = UUID.randomUUID();
+        this.delayedActionTimers.put(id, new Tuple2<>(action, new Timer(ticks, infiniteLoop, loopCount, false)));
         if (runImmediately) {
-            this.delayedActionTimers.get(internalID).getB().ticksRemaining = 1;
-            this.delayedActionTimers.get(internalID).getB().loopCountRemaining++;
+            action.run();
         }
+        return id;
     }
 
+    @Deprecated
     public Optional<Timer> getActionTimer(Runnable action) {
         return this.delayedActionTimers.values().stream().filter(entry -> Objects.equals(action, entry.getA())).map(Tuple2::getB).findAny();
     }
 
+    /**
+     * Get the delayed action by ID. The ID is provided from {@code addDelayedAction}.
+     */
+    public Optional<Tuple2<Runnable, Timer>> getDelayedAction(UUID id) {
+        return Optional.ofNullable(this.delayedActionTimers.get(id));
+    }
+
+    @Deprecated
     public boolean hasActionTimer(Runnable action) {
         return this.delayedActionTimers.values().stream().anyMatch(entry -> Objects.equals(action, entry.getA()));
+    }
+
+    /**
+     * Check if the delayed action of ID is present. The ID is provided from {@code addDelayedAction}.
+     */
+    public boolean hasActionTimer(UUID id) {
+        return this.delayedActionTimers.containsKey(id);
     }
 
     public Optional<Timer> removeActionTimer(Runnable action) {
@@ -252,25 +274,34 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
         else return Optional.empty();
     }
 
+    public Optional<Tuple2<Runnable, Timer>> removeActionTimer(UUID id) {
+        return Optional.ofNullable(this.delayedActionTimers.remove(id));
+    }
+   /*
     // UUID-specific actions
 
-    public void addUUIDSpecificDelayedAction(UUID uuid, Consumer<UUID> action, int ticks, int loopCount, boolean infiniteLoop, boolean runImmediately) {
+    public UUID addUUIDSpecificDelayedAction(UUID uuid, Consumer<UUID> action, int ticks, int loopCount, boolean infiniteLoop, boolean runImmediately) {
         if (ticks <= 0) throw new IllegalArgumentException("Ticks must be positive");
         if (loopCount <= 0) throw new IllegalArgumentException("Loop count must be positive");
-        this.uuidSpecificDelayedActionTimers.put(uuid, action, new Timer(ticks, infiniteLoop, loopCount, false));
+        UUID internalId = UUID.randomUUID();
+        this.uuidSpecificDelayedActionTimers.computeIfAbsent(uuid, k -> new HashMap<>())
+                .put(internalId, new Tuple2<>(action, new Timer(ticks, infiniteLoop, loopCount, false)));
         if (runImmediately) {
-            this.uuidSpecificDelayedActionTimers.get(uuid, action).ifPresent(timer -> {
-                timer.ticksRemaining = 1;
-                timer.loopCountRemaining++;
-            });
+            Timer timer = this.uuidSpecificDelayedActionTimers.get(uuid).get(internalId).getB();
+            timer.ticksRemaining = 1;
+            timer.loopCountRemaining++;
         }
 
     }
 
+    @Deprecated
     public Optional<Timer> getUUIDSpecificDelayedActionTimer(UUID uuid, Consumer<UUID> action) {
-        return this.uuidSpecificDelayedActionTimers.get(uuid, action);
+        return Optional.ofNullable(this.uuidSpecificDelayedActionTimers.get(uuid))
+                .flatMap(m -> m.values().stream().filter(v -> Objects.equals(v.getA(), action)).findAny())
+                .map(Tuple2::getB);
     }
 
+    @Deprecated
     public Optional<Timer> removeUUIDSpecificDelayedAction(UUID uuid, Consumer<UUID> action) {
         return this.uuidSpecificDelayedActionTimers.remove(uuid, action);
     }
@@ -286,7 +317,7 @@ public class EntityTimerComponent<T extends Entity> extends EntityComponentBase<
     public List<ITable2D.KeyPair<UUID, Consumer<UUID>>> getAllUUIDSpecificActions() {
         return this.uuidSpecificDelayedActionTimers.entryStream().map(ITable2D.Entry::keyPair).toList();
     }
-
+*/
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
 
