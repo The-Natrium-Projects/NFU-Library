@@ -6,7 +6,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,7 +45,11 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.annotation.DontCallManually;
+import net.sodiumzh.nfu.eventhandler.NFUEntityEventHandlers;
+import net.sodiumzh.nfu.mixin.event.entity.EntityFinalizeLoadingEvent;
+import net.sodiumzh.nfu.mixin.event.entity.EntityFinishConstructionEvent;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinClientLevel;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinEntity;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerLevel;
@@ -995,6 +1001,27 @@ public class NFUEntityStatics
         } else {
             return e.level().clip(new ClipContext(e.getEyePosition(), center, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, e)).getType() == HitResult.Type.MISS;
         }
+    }
+
+    /**
+     * Try accessing entity type from entity save data without constructing the entity.
+     * <p>It will first try accessing vanilla ID field to see if ID is saved into the nbt.
+     * If not (maybe saved via {@link Entity#saveWithoutId}), it then tries persistent data saved by NFU via {@link NFUEntityEventHandlers#onEntityFinalizeLoading} and
+     * {@link NFUEntityEventHandlers#onEntityFinalizeConstrction}.
+     * @return Entity type if found, or {@code null} if it fails to find. Generally it shouldn't be null, but may somehow fail when
+     * porting old data or for other mod's entities, so consider nullity to prevent possible compatibility issues.
+     */
+    @Nullable
+    public static EntityType<?> getEntityTypeFromNBT(CompoundTag nbt) {
+        String id = nbt.contains("id", Tag.TAG_STRING) ? nbt.getString("id") : (
+                nbt.getCompound("ForgeData").contains("NFU_EntityType", Tag.TAG_STRING) ?
+                        nbt.getCompound("ForgeData").getString("NFU_EntityType") : null);
+        if (id == null || id.isEmpty()) return null;
+
+        ResourceLocation key = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation("minecraft", id);
+        if (ForgeRegistries.ENTITY_TYPES.containsKey(key))
+            return ForgeRegistries.ENTITY_TYPES.getValue(key);
+        else return null;
     }
 
 }
