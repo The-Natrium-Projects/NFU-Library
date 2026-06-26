@@ -18,25 +18,27 @@ import java.util.UUID;
  */
 public class RepeatableAttributeModifier
 {
-	protected double value;
-	protected AttributeModifier.Operation operation;
-	protected ArrayList<AttributeModifier> modifiers = new ArrayList<>();
+	protected final double value;
+	protected final String name;
+	protected final AttributeModifier.Operation operation;
+	protected final ArrayList<AttributeModifier> modifiers = new ArrayList<>();
 	/** If the modifier count is larger than this value, it will throw an exception.
 	 * This limitation is to prevent the ArrayList from getting too large because it will auto-expand and generate 
 	 * more {@code AttributeModifier} instances when accessing the index larger than its size.
 	 */
 	protected int maxSize;
-	
-	public RepeatableAttributeModifier(double value, AttributeModifier.Operation operation, int maxRepeatTimes)
+
+	public RepeatableAttributeModifier(double value, String name, AttributeModifier.Operation operation, int maxRepeatTimes)
 	{
 		this.value = value;
+		this.name = name;
 		this.operation = operation;
 		this.maxSize = maxRepeatTimes;
 	}
 	
-	public RepeatableAttributeModifier(double value, AttributeModifier.Operation operation)
+	public RepeatableAttributeModifier(double value, String name, AttributeModifier.Operation operation)
 	{
-		this(value, operation, 100000);
+		this(value, name, operation, 100000);
 	}
 	
 	public AttributeModifier get(int index)
@@ -46,7 +48,7 @@ public class RepeatableAttributeModifier
 		// The first element (index == 0) is zero, so max length should be (max + 1).
 		while (modifiers.size() <= index + 1)
 		{
-			modifiers.add(new AttributeModifier(UUID.randomUUID(), Integer.toString(modifiers.size()), this.value * modifiers.size(), this.operation));
+			modifiers.add(new AttributeModifier(UUID.randomUUID(), this.name + "_" + modifiers.size(), this.value * modifiers.size(), this.operation));
 		}
 		return modifiers.get(index);
 	}

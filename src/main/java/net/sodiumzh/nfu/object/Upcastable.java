@@ -30,5 +30,18 @@ public interface Upcastable<T> {
         }
     }
 
+    /**
+     * Cast self to context-referred class. Provided by {@link Upcastable}.
+     */
+    @ApiStatus.NonExtendable
+    public default <U extends T> U upcast() {
+        try {
+            return (U) this;
+        } catch (ClassCastException e) {
+            throw new IllegalArgumentException(String.format(Locale.ENGLISH,
+                "NFU Upcastable: trying to cast %s to incompatible class.",
+                this.getClass().getSimpleName()), e);
+        }
+    }
 
 }

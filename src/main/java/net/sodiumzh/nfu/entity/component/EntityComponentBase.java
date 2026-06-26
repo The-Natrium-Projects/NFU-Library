@@ -1,11 +1,16 @@
 package net.sodiumzh.nfu.entity.component;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.annotation.DontCallManually;
+import net.sodiumzh.nfu.object.HierarchyPath;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Default base implementation of {@link IEntityComponent} for use in entity-component trees.
@@ -33,10 +38,11 @@ import java.util.*;
 public abstract class EntityComponentBase<E extends Entity> implements IEntityComponent<E> {
 
     @Nullable protected IEntityComponent<?> parent;
-    protected final Map<String, IEntityComponent<? extends Entity>> subComponents = new HashMap<>();
+    protected final BiMap<String, IEntityComponent<? extends Entity>> subComponents = HashBiMap.create();
     protected final E entity;
     protected EntityComponentType<E, ? extends IEntityComponent<E>> type;
     protected boolean serialize = true;
+
 
     public EntityComponentBase(E entity) {
         if (entity == null)
@@ -47,6 +53,31 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     @Override
     public Optional<IEntityComponent<?>> getParent() {
         return Optional.ofNullable(parent);
+    }
+
+
+    public HierarchyPath getPathFromRoot() {
+        StringBuilder literal = new StringBuilder();
+        IEntityComponent<?> current = this;
+        while (true) {
+            IEntityComponent<?> parent = this.getParent().orElse(null);
+            if (parent == null) return HierarchyPath.byLiteral(literal.toString());
+            literal.insert(0, "/" + parent.getSubComponentName(current).orElseThrow());
+            current = parent;
+        }
+    }
+
+    @Override
+    public Optional<HierarchyPath> getPathFrom(IEntityComponent<?> upstreamComponent) {
+        StringBuilder literal = new StringBuilder();
+        IEntityComponent<?> current = this;
+        while (current != upstreamComponent) {
+            IEntityComponent<?> parent = current.getParent().orElse(null);
+            if (parent == null) return Optional.empty();
+            literal.insert(0, "/" + parent.getSubComponentName(current).orElseThrow());
+            current = parent;
+        }
+        return Optional.of(HierarchyPath.byLiteral(literal.toString()));
     }
 
     @Override
@@ -86,13 +117,62 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     }
 
     @Override
+    public void addSubComponentByPath(HierarchyPath path, IEntityComponent<? extends Entity> component, boolean fillNodesIfParentAbsent) {
+        String[] splitPath = path.toStringArray();
+        AtomicReference<IEntityComponent<?>> current = new AtomicReference<>(this);
+        for (int i = 0; i < splitPath.length - 1; ++i) {
+            int i1 = i;
+            current.get().getSubComponent(splitPath[i]).ifPresentOrElse(current::set, () -> {
+                if (fillNodesIfParentAbsent) {
+                    EntityNodeComponent node = EntityComponentTypes.NODE.get().create(this.getEntity());
+                    current.get().addSubComponent(splitPath[i1], node);
+                    current.set(node);
+                } else {
+                    throw new IllegalStateException("Attempting to add component at path " + path.toLiteral()
+                        + ", but missing parent node "
+                        + HierarchyPath.formatLiteral(Arrays.stream(path.toStringArray()).limit(i1 + 1).toArray(String[]::new)) + ".");
+                }
+            });
+        }
+    }
+
+    @Override
     public Map<String, IEntityComponent<? extends Entity>> getSubComponents() {
         return Collections.unmodifiableMap(subComponents);
     }
 
+    @Override
+    public Optional<IEntityComponent<? extends Entity>> getSubComponent(String name) {
+        return Optional.ofNullable(this.subComponents.get(name));
+    }
+
+    @Override
+    public Optional<String> getSubComponentName(@Nonnull IEntityComponent<? extends Entity> subComponent) {
+        return Optional.ofNullable(this.subComponents.inverse().get(subComponent));
+    }
+
+    @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public void collectDownstreamComponentsTo(@Nonnull HashSet<IEntityComponent> outSet) {
+        for (IEntityComponent child : getSubComponents().values()) {
+            outSet.add(child);
+            child.collectDownstreamComponentsTo(outSet);
+        }
+    }
+
+    @Override
+    public Optional<IEntityComponent<? extends Entity>> getSubComponentByPath(HierarchyPath path) {
+        Optional<IEntityComponent<? extends Entity>> res = Optional.of(this);
+        for (String name: path.toStringArray()) {
+            res = res.flatMap(c -> c.getSubComponent(name));
+        }
+        return res;
+    }
+
     /**
-     * Returns true if adding the given component would cause a cycle.
+     * Returns true if adding the given component would cause a cycle. Only for internal cycle dependency check.
      */
+    @ApiStatus.Internal
     protected boolean createsCycle(IEntityComponent<?> candidate) {
         IEntityComponent<?> curr = this;
         while (curr != null) {
@@ -122,6 +202,16 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
         this.type = type;
     }
 
+    @Override
+    public IEntityComponent<?> getRoot() {
+        IEntityComponent<?> current = this;
+        while (true) {
+            IEntityComponent<?> parent = current.getParent().orElse(null);
+            if (parent == null) return current;
+            current = parent;
+        }
+    }
+
     public boolean shouldSerialize() {
         return this.serialize;
     }
@@ -130,20 +220,20 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
         this.serialize = shouldSerialize;
     }
 
-    // Hierarchy safety check modules //
+    // Hierarchy safety check module //
     // Methods below will be checked each few seconds in the component manager to ensure a valid structure is present.
 
     /**
      * Get the map of required subcomponent paths and types. It will be checked after component tree initialization.
      */
-    public Map<String, EntityComponentType<?, ?>> getRequiredSubcomponents() {
+    public Map<HierarchyPath, EntityComponentType<?, ?>> getRequiredSubcomponents() {
         return Map.of();
     }
 
     /**
      * Get all legal paths of this component. Keep empty to require no path.
      */
-    public List<String> getRequiredPaths() {
+    public List<HierarchyPath> getRequiredPaths() {
         return List.of();
     }
 
@@ -156,10 +246,10 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
             throw new IllegalStateException(String.format(Locale.ENGLISH, "Component \"%s\"(%s) missing subcomponent(s): %s", this.getPathFromRoot(), this.getType().getKey(), subcomponentErrMsg));
         }
 
-        List<String> requiredPathsList = getRequiredPaths().stream().map(IEntityComponent::formatPath).distinct().toList();
+        List<HierarchyPath> requiredPathsList = getRequiredPaths().stream().distinct().toList();
         if (!requiredPathsList.contains(this.getPathFromRoot())) {
             throw new IllegalStateException(String.format(Locale.ENGLISH, "Illegal path \"%s\" for component type %s. Valid paths: %s",
-                this.getPathFromRoot(), this.getType().getKey(), requiredPathsList.stream().reduce("", (s1, s2) -> s1 + ", " + s2)));
+                this.getPathFromRoot(), this.getType().getKey(), requiredPathsList.stream().map(HierarchyPath::toLiteral).reduce("", (s1, s2) -> s1 + ", " + s2)));
         }
     }
 

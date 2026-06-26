@@ -2,6 +2,7 @@ package net.sodiumzh.nfu.entity.component;
 
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
+import net.sodiumzh.nfu.object.HierarchyPath;
 
 import java.util.Optional;
 
@@ -18,11 +19,11 @@ public class EntityComponentFinalizeSetupEvent extends NFUEntityEvent<Entity> {
         return this.manager;
     }
 
-    public <T extends IEntityComponent<?>> Optional<T> getComponentByPath(String path, EntityComponentType<?, T> type) {
+    public <T extends IEntityComponent<?>> Optional<T> getComponentByPath(HierarchyPath path, EntityComponentType<?, T> type) {
         return this.getComponentManager().getSubComponentByPath(path, type);
     }
 
-    public Optional<IEntityComponent<?>> getComponentByPath(String path) {
+    public Optional<IEntityComponent<?>> getComponentByPath(HierarchyPath path) {
         return this.getComponentManager().getSubComponentByPath(path);
     }
 

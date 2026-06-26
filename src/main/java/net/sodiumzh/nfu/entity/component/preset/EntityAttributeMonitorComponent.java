@@ -5,6 +5,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
+import net.sodiumzh.nfu.entity.component.EntityComponentEvent;
 import net.sodiumzh.nfu.event.NFULivingEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -86,29 +87,23 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
     @ApiStatus.OverrideOnly
     public abstract void onAttributeChange(Attribute attribute, double oldValue, double newValue);
 
-    public static class SetupEvent extends NFULivingEvent<LivingEntity>
+    public static class SetupEvent extends EntityComponentEvent<LivingEntity, EntityAttributeMonitorComponent>
     {
-        private final EntityAttributeMonitorComponent component;
 
         public SetupEvent(EntityAttributeMonitorComponent component)
         {
-            super(component.getEntity());
-            this.component = component;
+            super(component.getEntity(), component);
         }
 
         public void addListened(Attribute attr)
         {
-            component.addListened(attr);
+            this.getComponent().addListened(attr);
         }
 
-        public EntityAttributeMonitorComponent getComponent() {
-            return component;
-        }
     }
 
-    public static class ChangeEvent extends NFULivingEvent<LivingEntity> {
+    public static class ChangeEvent extends EntityComponentEvent<LivingEntity, EntityAttributeMonitorComponent> {
 
-        private final EntityAttributeMonitorComponent component;
         private final Attribute attribute;
         private final double oldValue;
         private final double newValue;
@@ -116,15 +111,10 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
         public ChangeEvent(EntityAttributeMonitorComponent component, Attribute attribute,
                            double oldValue, double newValue)
         {
-            super(component.getEntity());
-            this.component = component;
+            super(component.getEntity(), component);
             this.attribute = attribute;
             this.oldValue = oldValue;
             this.newValue = newValue;
-        }
-
-        public EntityAttributeMonitorComponent getComponent() {
-            return component;
         }
 
         public Attribute getAttribute() {

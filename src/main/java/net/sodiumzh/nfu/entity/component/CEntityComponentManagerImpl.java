@@ -9,14 +9,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.capability.CEntityTickingCapability;
 import net.sodiumzh.nfu.container.Tuple2;
+import net.sodiumzh.nfu.entity.component.preset.IEntityComponentAccess;
+import net.sodiumzh.nfu.object.HierarchyPath;
+import net.sodiumzh.nfu.object.Validatable;
 import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.registry.NFURegistries;
-import net.sodiumzh.nfu.util.NFUMiscStatics;
-import net.sodiumzh.nfu.util.NFUNBTStatics;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * Default implementation for CEntityComponentManager.
@@ -25,14 +25,74 @@ import java.util.stream.Stream;
  */
 final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> implements CEntityComponentManager {
 
+    private boolean constructionDone = false;
+    private final Validatable<Map<HierarchyPath, IEntityComponent<?>>> preConstructed = new Validatable<>(new HashMap<>());    // Valid only in construction. Invalidated after construction.
+
     CEntityComponentManagerImpl(Entity entity) {
         super(entity);
+        this.construct();
+    }
+
+    private void construct() {
+        // Enter construction phase, collect component construction info by event
+        preConstructed.validate();
+        EntityComponentSetupEvent initEvent = new EntityComponentSetupEvent(this.getEntity(), this);
+        initEvent.sharePreConstructedMapFrom(this.preConstructed.get());  // Share the map reference to event, so that it can be filled during event post
+        MinecraftForge.EVENT_BUS.post(initEvent);
+        // First pre-construct needed components and collect the result
+        preConstructed.get().putAll(initEvent.preConstruct());
+        // Then do actual collection while the pre-constructed components are available
+        initEvent.collect();
+        // End construction, disable transient variables
+        preConstructed.get().clear();
+        preConstructed.invalidate();
+        this.constructionDone = true;
+        // Post-construction hooks
+        if (this.getEntity() instanceof IEntityComponentAccess holder)
+            holder.initializeComponents(this);
+        MinecraftForge.EVENT_BUS.post(new EntityComponentFinalizeSetupEvent(this.getEntity(), this));
+        // Debug check, set this config true if debugging, and false in release to save resource
+        if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK)
+            initEvent.checkHierarchy();
     }
 
     @Override
     public Optional<IEntityComponent<?>> getParent() {
-        // As the root, parent is always null.
         return Optional.empty();
+    }
+
+    // Enable pre-constructed component access
+
+    @Override
+    public Optional<IEntityComponent<? extends Entity>> getSubComponent(String name) {
+        var res = super.getSubComponent(name);
+        if (res.isPresent()) return res;
+        else if (!this.constructionDone) {
+            return Optional.ofNullable(this.preConstructed.get().get(HierarchyPath.byNameArray(name)));
+        }
+        else return Optional.empty();
+    }
+
+    @Override
+    public Map<String, IEntityComponent<? extends Entity>> getSubComponents() {
+        var res = super.getSubComponents();
+        if (!this.constructionDone) {
+            this.preConstructed.get().entrySet().stream()
+                .filter(entry -> entry.getKey().length() == 1 && !res.containsKey(entry.getKey().getAt(0)))
+                .forEach(entry -> res.put(entry.getKey().getAt(0), entry.getValue()));
+        }
+        return res;
+    }
+
+    @Override
+    public Optional<IEntityComponent<? extends Entity>> getSubComponentByPath(HierarchyPath path) {
+        // Half-constructed hierarchy may be half-available as each node ensures upstream to be available, so search normally in any case
+        var res = super.getSubComponentByPath(path);
+        if (res.isPresent()) return res;
+        // If not found in construction phase, try finding pre-constructed components from transient map
+        else if (!this.constructionDone)
+            return Optional.ofNullable(this.preConstructed.get().get(path));
+        else return Optional.empty();
     }
 
     @Override

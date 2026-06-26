@@ -4,6 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.capability.CEntityTickingCapability;
+import net.sodiumzh.nfu.object.HierarchyPath;
 import net.sodiumzh.nfu.registry.NFUEntityComponents;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -83,8 +84,15 @@ public interface CEntityComponentManager extends CEntityTickingCapability<Entity
      * Add a hierarchy node component of given path that doesn't do anything itself.
      */
     @ApiStatus.NonExtendable
-    public default void addNode(String path) {
+    public default void addNode(HierarchyPath path) {
         this.addSubComponentByPath(path, EntityComponentTypes.NODE.get().create(this.getEntity()));
     }
 
+    /**
+     * Add a hierarchy node component of given path that doesn't do anything itself.
+     */
+    @ApiStatus.NonExtendable
+    public default void addNode(String path) {
+        this.addNode(HierarchyPath.byLiteral(path));
+    }
 }
