@@ -3,8 +3,8 @@ package net.sodiumzh.nfu.entity.component;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.util.INBTSerializable;
-import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.annotation.DontOverride;
+import net.sodiumzh.nfu.object.HierarchyPath;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
@@ -67,8 +67,8 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Update when the parent changes e.g. updating the parent reference field. It should only be called in
      * parent-changing actions (e.g. {@code attachTo}, {@code addSubComponent}), and not be called elsewhere.
      */
-    @DontCallManually
-    default void updateParent(@Nullable IEntityComponent<?> oldParent, @Nullable IEntityComponent<?> newParent) {}
+    void updateParent(@Nullable IEntityComponent<?> oldParent, @Nullable IEntityComponent<?> newParent);
+
 
     /**
      * Sets the parent component and name for this component. Should be called by the manager when attaching or rebuilding the tree.
@@ -98,39 +98,30 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     @Nonnull
     E getEntity();
 
-    /**
-     * Adds a subcomponent (child node) to this component. Enforces no cycles.
-     * The subcomponent cannot have an existing parent, or it throws. Detach first.
-     * The name must not be present, or it throws. To replace, call replaceSubComponent instead.
-     */
-    void addSubComponent(@Nonnull String name, @Nonnull IEntityComponent<? extends Entity> component);
+    // PATH-BASED OPERATIONS
 
     /**
-     * Replace the existing subcomponent as the new one. Returns the old one (absent = return null).
-     * @return The old component.
+     * Get the full path from the root of component tree this component belongs to.
      */
-    @Nullable
-    @DontOverride
-    default IEntityComponent<? extends Entity> replaceSubComponent(@Nonnull String name, @Nullable IEntityComponent<? extends Entity> newComponent) {
-        IEntityComponent<? extends Entity> res = this.removeSubComponent(name);
-        if (newComponent == null) return res;
-        this.addSubComponent(name, newComponent);
-        return res;
+    HierarchyPath getPathFromRoot();
+
+    /**
+     * Get the relative path from a given upstream component.
+     * @return relative path from the upstream component to {@code this}. Empty string (i.e. {@code Optional.of(ComponentPath.empty())})
+     * if input == this. {@link Optional#empty()} if the input is not an upstream component.
+     */
+    Optional<HierarchyPath> getPathFrom(IEntityComponent<?> upstreamComponent);
+
+    /**
+     * Get the relative path from {@code this} to a given downstream component.
+     * @return relative path from {@code this} to the downstream component. Empty string (i.e. {@code Optional.of(ComponentPath.empty())})
+     * if input == this. {@link Optional#empty()} if the input is not a downstream component.
+     */
+    default Optional<HierarchyPath> getPathTo(IEntityComponent<? extends Entity> downstreamComponent) {
+        return downstreamComponent.getPathFrom(this);
     }
 
-    /**
-     * Removes a subcomponent (child node) from this component by its name.
-     * @param name The name of the component to remove.
-     * @return the removed component, or null if not removed.
-     */
-    @Nullable
-    IEntityComponent<? extends Entity> removeSubComponent(String name);
-
-    @DontOverride
-    default void removeSubComponent(IEntityComponent<? extends Entity> component) {
-        this.getSubComponents().entrySet().stream().filter(e -> e.getValue() == component)
-            .toList().forEach(e -> this.removeSubComponent(e.getKey()));
-    }
+    // SUB-COMPONENT GETTERS
 
     /**
      * Gets an unmodifiable map of all direct subcomponents keyed by their local name.
@@ -139,41 +130,25 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
 
     /**
      * Gets a direct subcomponent by name.
-     * @param name The local name of the subcomponent; may be null.
+     * @param name The local name of the subcomponent; may be empty.
      * @return The subcomponent or empty if not found.
      */
-    @DontOverride
-    default Optional<IEntityComponent<? extends Entity>> getSubComponent(String name) {
-        return Optional.ofNullable(this.getSubComponents().get(name));
-    }
+    Optional<IEntityComponent<? extends Entity>> getSubComponent(String name);
 
     /**
      * Gets a direct subcomponent by name.
-     * @param name The local name of the subcomponent; may be null.
+     * @param name The local name of the subcomponent; may be empty.
      * @return The subcomponent. Empty if not found or type mismatch.
      */
     @SuppressWarnings("unchecked")
     default <C extends IEntityComponent<? extends Entity>> Optional<C> getSubComponent(String name, EntityComponentType<? extends Entity, C> type) {
-        return this.getSubComponent(name).filter(c -> c.getType().equals(type)).map(c -> (C)c);
+        return this.getSubComponent(name).filter(c -> type.equals(c.getType())).map(c -> (C)c);
     }
 
     /**
      * Get the name if the input component is a direct sub-component of this component. Empty if it's not.
      */
-    @DontOverride
-    default Optional<String> getSubComponentName(@Nonnull IEntityComponent<? extends Entity> subComponent) {
-        return this.getSubComponents().entrySet().stream().filter(e -> e.getValue() == subComponent).findAny().map(Map.Entry::getKey);
-    }
-
-    /**
-     * Remove all sub-components.
-     * <p>Note: this action will only detach each sub-tree derived from each sub-component.
-     * The sub-tree structures will not be broken.
-     */
-    @DontOverride
-    default void clearSubComponents() {
-        this.getSubComponents().keySet().stream().toList().forEach(this::removeSubComponent);
-    }
+    Optional<String> getSubComponentName(@Nonnull IEntityComponent<? extends Entity> subComponent);
 
     /**
      * Returns a set of all downstream (subtree) components into a given set: all direct and indirect (recursive) subcomponents.
@@ -182,15 +157,8 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * @param outSet Set to put components in. It will NOT be cleared before addition to allow recursion without
      *               creating multiple sets.
      */
-    @DontOverride
-    @ApiStatus.Internal
-    @ApiStatus.NonExtendable
-    default void collectDownstreamComponentsTo(@Nonnull HashSet<IEntityComponent> outSet) {
-        for (IEntityComponent child : getSubComponents().values()) {
-            outSet.add(child);
-            child.collectDownstreamComponentsTo(outSet);
-        }
-    }
+    @ApiStatus.OverrideOnly
+    void collectDownstreamComponentsTo(@Nonnull HashSet<IEntityComponent> outSet);
 
     /**
      * Returns a set of all downstream (subtree) components: all direct and indirect (recursive) subcomponents.
@@ -216,6 +184,95 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     }
 
     /**
+     * Get a component from this component's downstream tree with its path.
+     * @param path Sub-component path. Example: {@code "/some/sub/component"} means:
+     *             {@code this.getSubComponent("some").flatMap(c -> c.getSubComponent("sub").
+     *             flatMap(c -> c.getSubComponent("component"))}.
+     * @return The component, or empty if the component is missing.
+     */
+    Optional<IEntityComponent<? extends Entity>> getSubComponentByPath(HierarchyPath path);
+
+    /**
+     * Get a component from this component's downstream tree with its path and type.
+     * @param path Sub-component path. Example: {@code "/some/sub/component"} means:
+     *             {@code this.getSubComponent("some").flatMap(c -> c.getSubComponent("sub").
+     *             flatMap(c -> c.getSubComponent("component"))}.
+     * @return The component, or empty if the component is missing / type mismatching.
+     */
+    @SuppressWarnings("unchecked")
+    default <C extends IEntityComponent<? extends Entity>> Optional<C> getSubComponentByPath(HierarchyPath path, EntityComponentType<? extends Entity, C> type) {
+        return this.getSubComponentByPath(path).filter(c -> c.getType().equals(type)).map(c -> (C)c);
+    }
+
+    /**
+     * Get a mapping of all components with its
+     */
+    default <T extends IEntityComponent<? extends Entity>> Map<HierarchyPath, T> getSubComponentsByType(EntityComponentType<?, T> type) {
+        return this.getSubComponents().values().stream().filter(c -> c.getType().equals(type))
+            .collect(Collectors.toMap(IEntityComponent::getPathFromRoot, c -> (T)c));
+    }
+
+    // SUB-COMPONENT SETTERS
+
+    /**
+     * Adds a subcomponent (child node) to this component. Enforces no cycles.
+     * The subcomponent cannot have an existing parent, or it throws. Detach first.
+     * The name must not be present, or it throws. To replace, call replaceSubComponent instead.
+     */
+    void addSubComponent(@Nonnull String name, @Nonnull IEntityComponent<? extends Entity> component);
+
+    /**
+     * Add an indirect sub-component by its relevant path from this component.
+     * @param fillNodesIfParentAbsent If true, if an upstream component of the given path is absent, it will fill with node component ({@link EntityNodeComponent}).
+     *                                Otherwise it throws in this case. Set this true only when you're sure its upstream nodes must be nodes.
+     */
+    void addSubComponentByPath(HierarchyPath path, IEntityComponent<? extends Entity> component, boolean fillNodesIfParentAbsent);
+
+
+    default void addSubComponentByPath(HierarchyPath path, IEntityComponent<? extends Entity> component) {
+        this.addSubComponentByPath(path, component, false);
+    }
+
+    /**
+     * Removes a subcomponent (child node) from this component by its name.
+     * @param name The name of the component to remove.
+     * @return the removed component, or null if not removed.
+     */
+    @Nullable
+    IEntityComponent<? extends Entity> removeSubComponent(String name);
+
+    @DontOverride
+    default void removeSubComponent(IEntityComponent<? extends Entity> component) {
+        this.getSubComponents().entrySet().stream().filter(e -> e.getValue() == component)
+            .toList().forEach(e -> this.removeSubComponent(e.getKey()));
+    }
+
+    /**
+     * Remove all sub-components.
+     * <p>Note: this action will only detach each sub-tree derived from each sub-component.
+     * The sub-tree structures will not be broken.
+     */
+    @DontOverride
+    default void clearSubComponents() {
+        this.getSubComponents().keySet().stream().toList().forEach(this::removeSubComponent);
+    }
+
+    /**
+     * Replace the existing subcomponent as the new one. Returns the old one (absent = return null).
+     * @return The old component.
+     */
+    @Nullable
+    @DontOverride
+    default IEntityComponent<? extends Entity> replaceSubComponent(@Nonnull String name, @Nullable IEntityComponent<? extends Entity> newComponent) {
+        IEntityComponent<? extends Entity> res = this.removeSubComponent(name);
+        if (newComponent == null) return res;
+        this.addSubComponent(name, newComponent);
+        return res;
+    }
+
+    // MISC
+
+    /**
      * Called by the component manager when the entity is ticked.
      */
     void tick();
@@ -233,82 +290,9 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     void setType(EntityComponentType<E, ? extends IEntityComponent<E>> type);
 
     /**
-     * Get a component from this component's downstream tree with its path.
-     * @param path Sub-component path. Example: {@code "/some/sub/component"} means:
-     *             {@code this.getSubComponent("some").flatMap(c -> c.getSubComponent("sub").
-     *             flatMap(c -> c.getSubComponent("component"))}.
-     * @return The component, or empty if the component is missing.
-     */
-    default Optional<IEntityComponent<? extends Entity>> getSubComponentByPath(String path) {
-        List<String> parts = Arrays.stream(path.split("[/\\\\]+"))
-            .filter(str -> !str.isEmpty()).toList();
-        Optional<IEntityComponent<? extends Entity>> res = Optional.of(this);
-        for (String name: parts) {
-            res = res.flatMap(c -> c.getSubComponent(name));
-        }
-        return res;
-    }
-
-    /**
-     * Get a component from this component's downstream tree with its path and type.
-     * @param path Sub-component path. Example: {@code "/some/sub/component"} means:
-     *             {@code this.getSubComponent("some").flatMap(c -> c.getSubComponent("sub").
-     *             flatMap(c -> c.getSubComponent("component"))}.
-     * @return The component, or empty if the component is missing / type mismatching.
-     */
-    @SuppressWarnings("unchecked")
-    default <C extends IEntityComponent<? extends Entity>> Optional<C> getSubComponentByPath(String path, EntityComponentType<? extends Entity, C> type) {
-        List<String> parts = Arrays.stream(path.split("[/\\\\]+"))
-            .filter(str -> !str.isEmpty()).toList();
-        Optional<IEntityComponent<? extends Entity>> res = Optional.of(this);
-        for (String name: parts) {
-            res = res.flatMap(c -> c.getSubComponent(name));
-        }
-        return res.filter(c -> c.getType().equals(type)).map(c -> (C)c);
-    }
-
-    /**
-     * Get a mapping of all components with its
-     */
-    default <T extends IEntityComponent<? extends Entity>> Map<String, T> getSubComponentsByType(EntityComponentType<?, T> type) {
-        return this.getSubComponents().values().stream().filter(c -> c.getType().equals(type))
-            .collect(Collectors.toMap(IEntityComponent::getPathFromRoot, c -> (T)c));
-    }
-
-    /**
-     * Add an indirect sub-component by its relevant path from this component.
-     * @throws IllegalStateException When the direct parent of the path to add is absent.
-     */
-    default void addSubComponentByPath(String path, IEntityComponent<? extends Entity> component) {
-        List<String> parts = Arrays.stream(path.split("[/\\\\]+"))
-            .filter(str -> !str.isEmpty()).toList();
-        Optional<IEntityComponent<? extends Entity>> res = Optional.of(this);
-        StringBuilder rebuiltPath = new StringBuilder();
-        for (int i = 0; i < parts.size() - 1; ++i) {
-            int j = i;
-            if (res.isEmpty()) break;
-            res = res.flatMap(c -> c.getSubComponent(parts.get(j)));
-            rebuiltPath.append("/").append(parts.get(j));
-        }
-        // Now "res" should be the direct parent of the component we'll add
-        if (res.isEmpty()) {
-            throw new IllegalStateException("Failed to add sub-component \"" + path
-             + "\" because \"" + rebuiltPath + "\" is absent.");
-        } else {
-            res.orElseThrow().addSubComponent(parts.get(parts.size() - 1), component);
-        }
-    }
-
-    /**
      * Get the root of the component tree this component belongs to.
      */
-    default IEntityComponent<?> getRoot() {
-        IEntityComponent<?> ptr = this;
-        while (ptr.getParent().isPresent()) {
-            ptr = ptr.getParent().orElseThrow();
-        }
-        return ptr;
-    }
+    IEntityComponent<?> getRoot();
 
     /**
      * Get the manager (root) if this component belongs to a component tree rooted by a component manager.
@@ -316,44 +300,6 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      */
     default Optional<CEntityComponentManager> getComponentManager() {
         return (this.getRoot() instanceof CEntityComponentManager mgr) ? Optional.of(mgr) : Optional.empty();
-    }
-
-    /**
-     * Get the full path from the root of component tree this component belongs to.
-     */
-    default String getPathFromRoot() {
-        IEntityComponent<?> ptr = this;
-        StringBuilder res = new StringBuilder();
-        while (ptr.getParent().isPresent()) {
-            ptr = ptr.getParent().orElseThrow();
-            res.insert(0, "/" + ptr.getNameInParent().orElseThrow());
-        }
-        return res.toString();
-    }
-
-    /**
-     * Get the relative path from a given upstream component.
-     * @return relative path from the upstream component to {@code this}. Empty string (i.e. {@code Optional.of("")})
-     * if input == this. {@link Optional#empty()} if the input is not an upstream component.
-     */
-    default Optional<String> getPathFrom(IEntityComponent<?> upstreamComponent) {
-        IEntityComponent<?> ptr = this;
-        if (upstreamComponent == this) return Optional.of("");
-        StringBuilder res = new StringBuilder();
-        while (ptr.getParent().filter(c -> c != upstreamComponent).isPresent()) {
-            ptr = ptr.getParent().orElseThrow();
-            res.insert(0, "/" + ptr.getNameInParent().orElseThrow());
-        }
-        return ptr.getParent().isPresent() ? Optional.of(res.toString()) : Optional.empty();
-    }
-
-    /**
-     * Get the relative path from {@code this} to a given downstream component.
-     * @return relative path from {@code this} to the downstream component. Empty string (i.e. {@code Optional.of("")})
-     * if input == this. {@link Optional#empty()} if the input is not a downstream component.
-     */
-    default Optional<String> getPathTo(IEntityComponent<? extends Entity> downstreamComponent) {
-        return downstreamComponent.getPathFrom(this);
     }
 
     @DontOverride
@@ -378,37 +324,16 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     }
 
     /**
-     * Split a string representation of a path (separated by either '\' or '/') to string array.
-     * <p>For example: input "aa\\bb/cc", output {"aa", "bb", "cc"} (redundant '\' and '/' will be removed)</p>
-     */
-    public static String[] splitPath(String path) {
-        return Arrays.stream(path.split("[/\\\\]+")).filter(str -> !str.isEmpty()).toArray(String[]::new);
-    }
-
-    /**
-     * Convert a valid string representation to standard format (like "/aa/bb/cc").
-     * <p>For example: input "/\aa/bb\ccc", output "/aa/bb/ccc"</p>
-     * <p>Used for comparing the hierarchy of two unformatted paths.
-     */
-    public static String formatPath(String path) {
-        return Arrays.stream(path.split("[/\\\\]+")).filter(str -> !str.isEmpty())
-            .map(str -> "/" + str).reduce("", (s1, s2) -> s1 + s2);
-    }
-
-    public static boolean pathEquals(String path1, String path2) {
-        return formatPath(path1).equals(formatPath(path2));
-    }
-
-    public static boolean pathEquals(IEntityComponent<?> component, String pathTest) {
-        return component.pathEquals(pathTest);
-    }
-
-    public default boolean pathEquals(String pathTest) {
-        return pathEquals(this.getPathFromRoot(), pathTest);
-    }
-
-    /**
      * Create saved data. Serialization here can return null safely if nothing should be saved.
      */
     @Nullable CompoundTag serializeNBT();
+
+    /**
+     * Quick check if this component's path in the component manager equals the given path.
+     * <p>This operation is quicker than {@code getPathFromRoot}
+     */
+    default boolean pathInManagerEquals(HierarchyPath path) {
+        return EntityComponentAPI.getComponentByPath(this.getEntity(), path).filter(c -> c.equals(this)).isPresent();
+    }
+
 }

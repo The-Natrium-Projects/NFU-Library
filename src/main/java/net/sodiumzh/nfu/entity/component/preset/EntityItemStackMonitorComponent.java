@@ -4,7 +4,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
+import net.sodiumzh.nfu.entity.component.EntityComponentEvent;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -24,6 +26,7 @@ public abstract class EntityItemStackMonitorComponent extends EntityComponentBas
         this.setup();
         if (entity instanceof IEntityItemStackMonitorAccess access)
             access.setupItemStackMonitor(this);
+        MinecraftForge.EVENT_BUS.post(new SetupEvent(this));
     }
 
     public HashMap<String, Supplier<ItemStack>> getListenedStacks() {
@@ -43,11 +46,13 @@ public abstract class EntityItemStackMonitorComponent extends EntityComponentBas
             ItemStack newStack = Optional.ofNullable(listened.get(key)).map(Supplier::get).orElse(ItemStack.EMPTY);
             if (!newStack.equals(stacksLastTick.get(key), false))
             {
-                this.onChanged(key, stacksLastTick.get(key).copy(), newStack.copy());
+                ItemStack oldStack = Optional.ofNullable(stacksLastTick.get(key)).orElse(ItemStack.EMPTY);
+                this.onChanged(key, oldStack.copy(), newStack.copy());
                 if (this.getEntity() instanceof IEntityItemStackMonitorAccess access)
-                    access.onItemStackChange(this, key, stacksLastTick.get(key).copy(), newStack.copy());
-                this.stacksLastTick.put(key, newStack);
+                    access.onItemStackChange(this, key, oldStack.copy(), newStack.copy());
+                MinecraftForge.EVENT_BUS.post(new ChangeEvent(this, key, oldStack, newStack));
             }
+            this.stacksLastTick.put(key, newStack);
         }
     }
 
@@ -79,6 +84,43 @@ public abstract class EntityItemStackMonitorComponent extends EntityComponentBas
         @Override
         public void onChanged(String key, ItemStack oldItemStackCopy, ItemStack newItemStackCopy) {
 
+        }
+    }
+
+    public static class SetupEvent extends EntityComponentEvent<Entity, EntityItemStackMonitorComponent> {
+
+        public SetupEvent(EntityItemStackMonitorComponent component) {
+            super(component);
+        }
+
+        public void addListened(String key, Supplier<ItemStack> getter) {
+            this.getComponent().addListened(key, getter);
+        }
+    }
+
+    public static class ChangeEvent extends EntityComponentEvent<Entity, EntityItemStackMonitorComponent> {
+
+        private final String key;
+        private final ItemStack oldStack;
+        private final ItemStack newStack;
+
+        public ChangeEvent(EntityItemStackMonitorComponent component, String key, ItemStack old, ItemStack newStack) {
+            super(component);
+            this.key = key;
+            this.oldStack = old;
+            this.newStack = newStack;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public ItemStack getOldStack() {
+            return oldStack;
+        }
+
+        public ItemStack getNewStack() {
+            return newStack;
         }
     }
 }

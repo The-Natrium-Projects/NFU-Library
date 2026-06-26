@@ -288,7 +288,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
             CURRENT_PACKET_ID.set(CURRENT_PACKET_ID.get() + 1);
             this.syncher = syncher;
             this.entityID = syncher.getEntity().getId();
-            this.componentPath = syncher.getPathFromRoot();
+            this.componentPath = syncher.getPathFromRoot().toLiteral();
             for (String key: syncher.changedDataKeys) {
                 this.data.put(key, new ValueEntry(syncher.synchedData.get(key).serializer, syncher.synchedData.get(key).value));
             }

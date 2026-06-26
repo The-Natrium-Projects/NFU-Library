@@ -7,6 +7,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
+import net.sodiumzh.nfu.object.HierarchyPath;
 
 @OnlyIn(Dist.CLIENT)
 public class EntityComponentPresetClientPacketHandlers {
@@ -17,7 +18,7 @@ public class EntityComponentPresetClientPacketHandlers {
         Entity e = level.getEntity(packet.entityID);
         if (e == null) return;
         EntitySyncherComponent<? extends Entity> syncher = EntityComponentAPI.getComponentManager(e)
-            .getSubComponentByPath(packet.componentPath)
+            .getSubComponentByPath(HierarchyPath.byLiteral(packet.componentPath))
             .map(c -> c instanceof EntitySyncherComponent<?> esc ? esc : null).orElse(null);
         if (syncher == null) return;
         if (syncher.lastReceivedPacketId > packet.packetId) return; // This means the packet is out-of-date

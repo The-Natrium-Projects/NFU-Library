@@ -2,6 +2,7 @@ package net.sodiumzh.nfu.entity.component;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -10,6 +11,7 @@ import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
 import net.sodiumzh.nfu.entity.component.preset.IEntityComponentAccess;
 import net.sodiumzh.nfu.mixin.event.entity.EntityFinishConstructionEvent;
+import net.sodiumzh.nfu.object.HierarchyPath;
 import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 
@@ -40,8 +42,10 @@ public class EntityComponentEventListeners {
 
     @SubscribeEvent
     public static void createDefaultComponents(EntityComponentSetupEvent event) {
-        event.addComponent("/data", EntityComponentTypes.DATA.get());
-        event.addComponent("/timer", EntityComponentTypes.TIMER.get());
-        event.addComponent("/syncher", EntityComponentTypes.SYNCHER.get());
+        event.addComponent(HierarchyPath.byNameArray("data"), EntityComponentTypes.DATA.get());
+        event.addComponent(HierarchyPath.byNameArray("timer"), EntityComponentTypes.TIMER.get());
+        event.addComponent(HierarchyPath.byNameArray("syncher"), EntityComponentTypes.SYNCHER.get());
+        if (event.getEntity() instanceof LivingEntity)
+            event.addComponent(HierarchyPath.byNameArray("attribute_monitor"), EntityComponentTypes.ATTRIBUTE_MONITOR.get());
     }
 }
