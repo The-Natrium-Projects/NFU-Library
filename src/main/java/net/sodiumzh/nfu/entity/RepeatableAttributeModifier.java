@@ -1,5 +1,7 @@
 package net.sodiumzh.nfu.entity;
 
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -19,7 +21,7 @@ import java.util.UUID;
 public class RepeatableAttributeModifier
 {
 	protected final double value;
-	protected final String name;
+	protected final ResourceLocation name;
 	protected final AttributeModifier.Operation operation;
 	protected final ArrayList<AttributeModifier> modifiers = new ArrayList<>();
 	/** If the modifier count is larger than this value, it will throw an exception.
@@ -28,7 +30,7 @@ public class RepeatableAttributeModifier
 	 */
 	protected int maxSize;
 
-	public RepeatableAttributeModifier(double value, String name, AttributeModifier.Operation operation, int maxRepeatTimes)
+	public RepeatableAttributeModifier(double value, ResourceLocation name, AttributeModifier.Operation operation, int maxRepeatTimes)
 	{
 		this.value = value;
 		this.name = name;
@@ -36,7 +38,7 @@ public class RepeatableAttributeModifier
 		this.maxSize = maxRepeatTimes;
 	}
 	
-	public RepeatableAttributeModifier(double value, String name, AttributeModifier.Operation operation)
+	public RepeatableAttributeModifier(double value, ResourceLocation name, AttributeModifier.Operation operation)
 	{
 		this(value, name, operation, 100000);
 	}
@@ -48,7 +50,7 @@ public class RepeatableAttributeModifier
 		// The first element (index == 0) is zero, so max length should be (max + 1).
 		while (modifiers.size() <= index + 1)
 		{
-			modifiers.add(new AttributeModifier(UUID.randomUUID(), this.name + "_" + modifiers.size(), this.value * modifiers.size(), this.operation));
+			modifiers.add(new AttributeModifier(UUID.randomUUID(), this.name.toString() + "_" + modifiers.size(), this.value * modifiers.size(), this.operation));
 		}
 		return modifiers.get(index);
 	}

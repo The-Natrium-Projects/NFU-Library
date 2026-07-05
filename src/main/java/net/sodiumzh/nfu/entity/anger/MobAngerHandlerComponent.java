@@ -11,6 +11,7 @@ import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.entity.component.EntityComponentType;
 import net.sodiumzh.nfu.registry.NFUEntityComponents;
 import org.apache.commons.lang3.mutable.MutableObject;
+import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
@@ -167,12 +168,14 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
 
     @Override
     public CompoundTag serializeNBT() {
-        return this.saveAngerList();
+        CompoundTag nbt = new CompoundTag();
+        nbt.put("angerList", this.saveAngerList());
+        return nbt;
     }
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        this.loadAngerList(nbt);
+        this.loadAngerList(nbt.getCompound("angerList"));
     }
 
     public static List<MobAngerHandlerComponent> getAllAngerHandlers(Entity e) {

@@ -1,8 +1,12 @@
 package net.sodiumzh.nfu.entity.component;
 
+import com.mojang.blaze3d.shaders.Effect;
 import net.minecraft.world.entity.Entity;
+import net.minecraftforge.fml.util.thread.EffectiveSide;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
+import net.sodiumzh.nfu.exception.WrongSideException;
+import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.object.HierarchyPath;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -11,7 +15,7 @@ import java.util.*;
 public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
 
     private final CEntityComponentManager manager;
-    private final Map<HierarchyPath, Tuple2<EntityComponentType<? extends Entity, ?>, PreConstructPriority>> componentTypesAndPriorities = new HashMap<>();
+    private final Map<HierarchyPath, ComponentConstructionInfo> componentTypesAndPriorities = new HashMap<>();
     // Transient map, shared from CEntityComponentManagerImpl. Updating this map will update the component manager at the same time
     private Map<HierarchyPath, IEntityComponent<?>> preConstructed;
 
@@ -29,29 +33,40 @@ public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
      * {@link CEntityComponentManager#getSubComponentsByType} and {@link CEntityComponentManager#getSubComponentByPath} are reliable.
      * @param preConstructPriority Some components may need to be constructed in advance as other components depend on them on construction.
      *                             If a component needs to be pre-constructed, use this parameter to define which component should be constructed earlier.
-     *                             Leave it {@code NONE} to disable pre-construction (default, omit-able).
+     *                             Leave it {@code NONE} to disable pre-construction (default, omit-able). If you need pre-construction, use priority NORMAL
+     *                             unless you have a specific reason for another.
+     * @param side Specify which side this component should be added. If there isn't another component added in another side, a node will be added to keep
+     *             the hierarchy. If the
      */
-    public void addComponent(HierarchyPath path, EntityComponentType<? extends Entity, ?> type, PreConstructPriority preConstructPriority) {
-        Tuple2<EntityComponentType<? extends Entity, ?>, PreConstructPriority> entry = null;
+    public void addComponent(HierarchyPath path, EntityComponentType<? extends Entity, ?> type, PreConstructPriority preConstructPriority, AvailableSide side) {
+        ComponentConstructionInfo info = null;
+        // Check valid side setting
+        if (side == AvailableSide.SERVER && type.availableSide() == AvailableSide.CLIENT)
+            throw new WrongSideException(String.format("Adding client-only component %s on server.", type.getKey().toString()));
+        if (side == AvailableSide.CLIENT && type.availableSide() == AvailableSide.SERVER)
+            throw new WrongSideException(String.format("Adding server-only component %s on client.", type.getKey().toString()));
+        AvailableSide actualSide = type.availableSide() == AvailableSide.BOTH ? side : type.availableSide();
+        EntityComponentType<? extends Entity, ?> actualType = actualSide.isCorrectSide(this.manager.getEntity()) ? type : EntityComponentTypes.NODE.get();
+
         // Duplication handling
         if (componentTypesAndPriorities.containsKey(path)) {
             // Node doesn't overwrite anything, ignore
-            if (type.equals(EntityComponentTypes.NODE.get())) {}
+            if (actualType.equals(EntityComponentTypes.NODE.get())) {}
             // Other components overwrite node
-            else if (componentTypesAndPriorities.get(path).getA().equals(EntityComponentTypes.NODE.get()))
-                entry = new Tuple2<>(type, preConstructPriority);
+            else if (componentTypesAndPriorities.get(path).type().equals(EntityComponentTypes.NODE.get()))
+                info = new ComponentConstructionInfo(actualType, preConstructPriority);
             // Occupied with same type, no conflict, ignore
-            else if (type.equals(componentTypesAndPriorities.get(path).getA())) {}
+            else if (actualType.equals(componentTypesAndPriorities.get(path).type())) {}
             // Of different types, and both not node, conflict, throw
             else throw new IllegalArgumentException("Duplicate key " + path);
         }
-        else entry = new Tuple2<>(type, preConstructPriority);
+        else info = new ComponentConstructionInfo(actualType, preConstructPriority);
 
-        if (entry == null) return;
+        if (info == null) return;
         if (preConstructPriority.shouldConstructImmediately()) {
             this.preConstructed.put(path, type.createUnsafe(this.getEntity()));  // preConstructed directly mirrors CEntityComponentManagerImpl#preConstructed
         }
-        this.componentTypesAndPriorities.put(path, entry);
+        this.componentTypesAndPriorities.put(path, info);
     }
 
     /**
@@ -63,7 +78,56 @@ public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
      * {@link CEntityComponentManager#getSubComponentsByType} and {@link CEntityComponentManager#getSubComponentByPath} are reliable.
      * @param preConstructPriority Some components may need to be constructed in advance as other components depend on them on construction.
      *                             If a component needs to be pre-constructed, use this parameter to define which component should be constructed earlier.
-     *                             Leave it {@code NONE} to disable pre-construction (default, omit-able).
+     *                             Leave it {@code NONE} to disable pre-construction (default, omit-able). If you need pre-construction, use priority NORMAL
+     *                             unless you have a specific reason for another.
+     * @param side Specify which side this component should be added. If there isn't another component added in another side, a node will be added to keep
+     *             the hierarchy.
+     */
+    public void addComponent(String path, EntityComponentType<? extends Entity, ?> type, PreConstructPriority preConstructPriority, AvailableSide side) {
+        this.addComponent(HierarchyPath.byLiteral(path), type, preConstructPriority, side);
+    }
+
+    /**
+     * Add a component to both sides.
+     * <p>Note: this method doesn't add component immediately. Component info will be added, and components will be added altogether
+     * after the event.
+     * <p>Note: If a component's constructor involves references to other components, then the latter must be pre-constructed, and its pre-construction priority
+     * must be higher than the former. During construction, only {@link CEntityComponentManager#getSubComponent}, {@link CEntityComponentManager#getSubComponents},
+     * {@link CEntityComponentManager#getSubComponentsByType} and {@link CEntityComponentManager#getSubComponentByPath} are reliable.
+     * @param preConstructPriority Some components may need to be constructed in advance as other components depend on them on construction.
+     *                             If a component needs to be pre-constructed, use this parameter to define which component should be constructed earlier.
+     *                             Leave it {@code NONE} to disable pre-construction (default, omit-able). If you need pre-construction, use priority NORMAL
+     *                             unless you have a specific reason for another.
+     */
+    public void addComponent(HierarchyPath path, EntityComponentType<? extends Entity, ?> type, PreConstructPriority preConstructPriority) {
+        this.addComponent(path, type, preConstructPriority, AvailableSide.BOTH);
+    }
+
+    /**
+     * Add a component without pre-construction.
+     * <p>Note: this method doesn't add component immediately. Component info will be added, and components will be added altogether
+     * after the event.
+     * <p>Note: If a component's constructor involves references to other components, then the latter must be pre-constructed, and its pre-construction priority
+     * must be higher than the former. During construction, only {@link CEntityComponentManager#getSubComponent}, {@link CEntityComponentManager#getSubComponents},
+     * {@link CEntityComponentManager#getSubComponentsByType} and {@link CEntityComponentManager#getSubComponentByPath} are reliable.
+     * @param side Specify which side this component should be added. If there isn't another component added in another side, a node will be added to keep
+     *             the hierarchy.
+     */
+    public void addComponent(HierarchyPath path, EntityComponentType<? extends Entity, ?> type, AvailableSide side) {
+        this.addComponent(path, type, PreConstructPriority.NONE, side);
+    }
+
+    /**
+     * Add a component to both sides.
+     * <p>Note: this method doesn't add component immediately. Component info will be added, and components will be added altogether
+     * after the event.
+     * <p>Note: If a component's constructor involves references to other components, then the latter must be pre-constructed, and its pre-construction priority
+     * must be higher than the former. During construction, only {@link CEntityComponentManager#getSubComponent}, {@link CEntityComponentManager#getSubComponents},
+     * {@link CEntityComponentManager#getSubComponentsByType} and {@link CEntityComponentManager#getSubComponentByPath} are reliable.
+     * @param preConstructPriority Some components may need to be constructed in advance as other components depend on them on construction.
+     *                             If a component needs to be pre-constructed, use this parameter to define which component should be constructed earlier.
+     *                             Leave it {@code NONE} to disable pre-construction (default, omit-able). If you need pre-construction, use priority NORMAL
+     *                              unless you have a specific reason for another.
      */
     public void addComponent(String path, EntityComponentType<? extends Entity, ?> type, PreConstructPriority preConstructPriority) {
         this.addComponent(HierarchyPath.byLiteral(path), type, preConstructPriority);
@@ -76,8 +140,34 @@ public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
      * <p>Note: If a component's constructor involves references to other components, then the latter must be pre-constructed, and its pre-construction priority
      * must be higher than the former. During construction, only {@link CEntityComponentManager#getSubComponent}, {@link CEntityComponentManager#getSubComponents},
      * {@link CEntityComponentManager#getSubComponentsByType} and {@link CEntityComponentManager#getSubComponentByPath} are reliable.
+     * @param side Specify which side this component should be added. If there isn't another component added in another side, a node will be added to keep
+     *             the hierarchy.
+     */
+    public void addComponent(String path, EntityComponentType<? extends Entity, ?> type, AvailableSide side) {
+        this.addComponent(HierarchyPath.byLiteral(path), type, PreConstructPriority.NONE, side);
+    }
+
+    /**
+     * Add a component to both sides without pre-construction.
+     * <p>Note: this method doesn't add component immediately. Component info will be added, and components will be added altogether
+     * after the event.
+     * <p>Note: If a component's constructor involves references to other components, then the latter must be pre-constructed, and its pre-construction priority
+     * must be higher than the former. During construction, only {@link CEntityComponentManager#getSubComponent}, {@link CEntityComponentManager#getSubComponents},
+     * {@link CEntityComponentManager#getSubComponentsByType} and {@link CEntityComponentManager#getSubComponentByPath} are reliable.
      */
     public void addComponent(HierarchyPath path, EntityComponentType<? extends Entity, ?> type) {
+        this.addComponent(path, type, PreConstructPriority.NONE);
+    }
+
+    /**
+     * Add a component to both sides without pre-construction.
+     * <p>Note: this method doesn't add component immediately. Component info will be added, and components will be added altogether
+     * after the event.
+     * <p>Note: If a component's constructor involves references to other components, then the latter must be pre-constructed, and its pre-construction priority
+     * must be higher than the former. During construction, only {@link CEntityComponentManager#getSubComponent}, {@link CEntityComponentManager#getSubComponents},
+     * {@link CEntityComponentManager#getSubComponentsByType} and {@link CEntityComponentManager#getSubComponentByPath} are reliable.
+     */
+    public void addComponent(String path, EntityComponentType<? extends Entity, ?> type) {
         this.addComponent(path, type, PreConstructPriority.NONE);
     }
 
@@ -94,12 +184,22 @@ public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
      * at {@code "/a/b/c"}, and add nodes at {@code "/a"} and {@code "/a/b"}. If an upstream node is already
      * occupied, it will be ignored.
      */
-    public void addComponentAndUpstreamNodes(HierarchyPath path, EntityComponentType<? extends Entity, ?> type) {
+    public void addComponentAndUpstreamNodes(HierarchyPath path, EntityComponentType<? extends Entity, ?> type, PreConstructPriority priority, AvailableSide side) {
         String[] split = path.toStringArray();
         for (int i = 0; i < split.length - 1; ++i) {
             this.addNode(HierarchyPath.byNameArray(Arrays.copyOf(split, i + 1)));
         }
-        this.addComponent(path, type);
+        this.addComponent(path, type, priority, side);
+    }
+
+    /**
+     * Add a component at given path, and fill its upstream paths with nodes if absent. To both sides without pre-construction.
+     * <p>Example: {@code addComponentAndNodes("/a/b/c", type)} will add a component of given type
+     * at {@code "/a/b/c"}, and add nodes at {@code "/a"} and {@code "/a/b"}. If an upstream node is already
+     * occupied, it will be ignored.
+     */
+    public void addComponentAndUpstreamNodes(HierarchyPath path, EntityComponentType<? extends Entity, ?> type) {
+        this.addComponentAndUpstreamNodes(path, type, PreConstructPriority.NONE, AvailableSide.BOTH);
     }
 
     /**
@@ -116,15 +216,11 @@ public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
     @ApiStatus.Internal
     Map<HierarchyPath, IEntityComponent<?>> preConstruct() {
         componentTypesAndPriorities.entrySet().stream()
-            .filter(entry -> entry.getValue().getB().shouldConstructInPreConstructionPhase())
-            .sorted((e1, e2) -> {
-                int priorityDiff = e1.getValue().getB().id() - e2.getValue().getB().id();
-                if (priorityDiff != 0) return priorityDiff;
-                else if (e1.getKey().equals(e2.getKey())) throw new RuntimeException();
-                else if (e1.getKey().isUpstreamOf(e2.getKey())) return -1;
-                else if (e1.getKey().isDownstreamOf(e2.getKey())) return 1;
-                else return 0;
-            }).forEach(entry -> this.preConstructed.put(entry.getKey(), entry.getValue().getA().createUnsafe(this.getEntity())));
+            .filter(entry -> entry.getValue().priority().shouldConstructInPreConstructionPhase())
+            // Practically path depth is impossible to get 1e+8; this is for comparison priority
+            // Compare path length to ensure "upstream before downstream", as downstream is always longer than upstream
+            .sorted(Comparator.comparingInt(entry -> entry.getValue().priority().id() * 100000000 + entry.getKey().length()))
+            .forEach(entry -> this.preConstructed.put(entry.getKey(), entry.getValue().type().createUnsafe(this.getEntity())));
         return preConstructed;
     }
 
@@ -133,16 +229,14 @@ public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
      */
     @ApiStatus.Internal
     void collect() {
-        componentTypesAndPriorities.entrySet().stream().sorted((e1, e2) -> {
-            if (e1.getKey().equals(e2.getKey())) return 0;
-            else if (e1.getKey().isUpstreamOf(e2.getKey())) return -1;
-            else if (e1.getKey().isDownstreamOf(e2.getKey())) return 1;
-            else return 0;
-        }).forEach(e -> {
-            IEntityComponent<?> component = preConstructed.get(e.getKey());
-            if (component == null) component = e.getValue().getA().createUnsafe(this.getEntity());
-            this.manager.addSubComponentByPath(e.getKey(), component);
-        });
+        componentTypesAndPriorities.entrySet().stream()
+            // Compare path length to ensure "upstream before downstream", as downstream is always longer than upstream
+            .sorted(Comparator.comparingInt(entry -> entry.getKey().length()))
+            .forEach(e -> {
+                IEntityComponent<?> component = preConstructed.get(e.getKey());
+                if (component == null) component = e.getValue().type().createUnsafe(this.getEntity());
+                this.manager.addSubComponentByPath(e.getKey(), component);
+            });
     }
 
     @ApiStatus.Internal
@@ -193,4 +287,7 @@ public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
             return this == NONE;
         }
     }
+
+    private static record ComponentConstructionInfo(EntityComponentType<? extends Entity, ?> type, PreConstructPriority priority){};
+
 }

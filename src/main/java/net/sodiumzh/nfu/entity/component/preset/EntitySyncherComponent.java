@@ -1,15 +1,22 @@
 package net.sodiumzh.nfu.entity.component.preset;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ServerGamePacketListener;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.fml.LogicalSide;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.exception.WrongSideException;
+import net.sodiumzh.nfu.level.HitResultInfo;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
+import net.sodiumzh.nfu.network.NFUDataSerializers;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
+import net.sodiumzh.nfu.object.ClientOnly;
 import net.sodiumzh.nfu.object.ServerOnly;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import net.sodiumzh.nfu.util.NFUNetworkStatics;
@@ -35,17 +42,17 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
 
     /**
      * Create a synched data. Synched data must be created before other any operations.
-     * @param <T>Data class. Exactly same to the data class in {@code dataSerialzier}.
+     * @param <T>Data class. Exactly same to the data class in {@code dataSerializer}.
      * @param key Data key as string.
-     * @param dataSerialzier Data serializer applied.
+     * @param dataSerializer Data serializer applied.
      * @param initValue Default value if not set.
      */
-    public <T> void createSynchedData(String key, NFUDataSerializer<T> dataSerialzier, T initValue, boolean shouldSave) {
-        synchedData.put(key, new SynchedData(this, dataSerialzier.getObjectClass(), dataSerialzier, initValue, shouldSave));
+    public <T> void createSynchedData(String key, NFUDataSerializer<T> dataSerializer, T initValue, boolean shouldSave) {
+        synchedData.put(key, new SynchedData(this, dataSerializer.getObjectClass(), dataSerializer, initValue, shouldSave));
     }
 
     public <T> boolean hasSynchedData(String key, Class<T> dataType) {
-        return synchedData.containsKey(key) && synchedData.get(key).type.isAssignableFrom(dataType);
+        return synchedData.containsKey(key) && dataType.isAssignableFrom(synchedData.get(key).type);
     }
 
     public <T> Optional<T> getSynchedData(String key, Class<T> dataClass) {
@@ -87,7 +94,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
      */
     @ApiStatus.Internal
     public void setSynchedDataClient(String key, Object value) {
-        if (this.getEntity().level().isClientSide)
+        if (!this.getEntity().level().isClientSide)
             throw new WrongSideException("setSynchedDataClient invoked on server.");
         if (this.hasSynchedData(key, Object.class)) {
             this.synchedData.get(key).value = value;
@@ -99,13 +106,41 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
      * They are not saved into data.
      * <p>When a synched getter is accessed on the client, it will read the cache value synched from server (if no synching happened,
      * it's the default value).
+     * <p>Note: client-to-server synched getter is <b>ONLY FOR PLAYER</b>. Using on other entities will cause an exception.
+     * @param key String key identifier.
+     * @param serializer Serializer for synching.
+     * @param defaultValue Default fallback value before receiving synching.
+     * @param direction Synching direction. Mostly it's server-to-client. Client-to-server synching is ONLY FOR PLAYERS.
+     * @param accessorOnMainSide The accessor method on the main side. It will be invoked on the main side's each synching operation and update
+     *                           the other side's cached value.
      */
-    public <T> void createSynchedGetter(String key, NFUDataSerializer<T> serializer, @Nullable T defaultValue, Function<E, T> accessorOnServer) {
-        synchedGetters.put(key, new SynchedGetter(this, serializer.getObjectClass(), serializer, accessorOnServer, defaultValue));
+    public <T> void createSynchedGetter(String key, NFUDataSerializer<T> serializer, @Nullable T defaultValue, SynchedGetter.Direction direction,
+                                        Function<E, T> accessorOnMainSide) {
+        if (direction.equals(SynchedGetter.Direction.CLIENT_TO_SERVER) && !(this.getEntity() instanceof Player)) {
+            throw new UnsupportedOperationException("Client-to-server synched getter can only used on players.");
+        }
+        synchedGetters.put(key, new SynchedGetter(this, serializer.getObjectClass(), serializer, accessorOnMainSide, defaultValue, direction));
+    }
+
+    /**
+     * Define a server-to-client synched getter. Synched getters get from a {@link Supplier} every tick from server and store it on client.
+     * They are not saved into data.
+     * <p>When a synched getter is accessed on the client, it will read the cache value synched from server (if no synching happened,
+     * it's the default value).
+     * <p>Note: client-to-server synched getter is <b>ONLY FOR PLAYER</b>. Using on other entities will cause an exception.
+     * @param key String key identifier.
+     * @param serializer Serializer for synching.
+     * @param defaultValue Default fallback value before receiving synching.
+     * @param accessorOnServer The accessor method on the main side. It will be invoked on the main side's each synching operation and update
+     *                           the other side's cached value.
+     */
+    public <T> void createSynchedGetter(String key, NFUDataSerializer<T> serializer, @Nullable T defaultValue,
+                                        Function<E, T> accessorOnServer) {
+        synchedGetters.put(key, new SynchedGetter(this, serializer.getObjectClass(), serializer, accessorOnServer, defaultValue, SynchedGetter.Direction.SERVER_TO_CLIENT));
     }
 
     public boolean hasSynchedGetter(String key, Class<?> type) {
-        return this.synchedGetters.containsKey(key) && this.synchedGetters.get(key).type.isAssignableFrom(type);
+        return this.synchedGetters.containsKey(key) && type.isAssignableFrom(this.synchedGetters.get(key).type);
     }
 
     /**
@@ -120,10 +155,11 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
             NFUDebugStatics.errorOnce(EntitySyncherComponent.class, this.getPathFromRoot() + " accessing missing getter \"" + key + "\"");
             return Optional.empty();
         }
-        if (this.getEntity().level().isClientSide)
-            return Optional.ofNullable((T)this.synchedGetters.get(key).cache);
-        else
+        if (this.synchedGetters.get(key).direction.isMainSide(this.isClientSide()))
             return Optional.ofNullable((T)this.synchedGetters.get(key).getter.apply(this.getEntity()));
+        else
+            return Optional.ofNullable((T)this.synchedGetters.get(key).cache);
+
     }
 
     /**
@@ -143,14 +179,14 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
      * Safe to call on server as the cache on server will not be read.
      */
     @DontCallManually
-    public void setSynchedGetterClient(String key, @Nullable Object o) {
-        if (!this.getEntity().level().isClientSide)
-            throw new WrongSideException("setSynchedGetterClient invoked on server.");
+    @ApiStatus.Internal
+    public void setSynchedGetterCachedValueOnSynchedSide(String key, @Nullable Object o) {
         if (!this.hasSynchedGetter(key, Object.class))
             NFUDebugStatics.errorOnce("Access of an undefined or class-mismatching synched getter '" + key + "'");
-        else {
+        else if (this.synchedGetters.get(key).direction.isMainSide(this.isClientSide()))
+            throw new WrongSideException("This operation is synched-side-only, but invoked on the main side.");
+        else
             this.synchedGetters.get(key).setCachedValueUnchecked(o);
-        }
     }
 
     public int getSyncInterval() {
@@ -184,14 +220,17 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
     }
 
     public void tick() {
+        // Sync
         if (!this.isClientSide()) {
-            this.synchedGetters.forEach((k, g) -> {
-                g.cache = g.getter.apply(this.getEntity());
-            });
-            // Sync
             if ((this.getEntity().tickCount % this.syncInterval) == 0) {
                 ClientboundEntitySyncherComponentSyncPacket packet = new ClientboundEntitySyncherComponentSyncPacket(this);
                 NFUNetworkStatics.sendToAllPlayers(this.getEntity().level(), NFUNetworkChannels.CHANNEL, packet);
+                this.changedDataKeys.clear();
+            }
+        } else if (this.getEntity() instanceof Player player) {
+            if ((this.getEntity().tickCount % this.syncInterval) == 0) {
+                ServerboundPlayerEntitySyncherComponentSyncPacket packet = new ServerboundPlayerEntitySyncherComponentSyncPacket(this);
+                NFUNetworkStatics.sendToServer(player, NFUNetworkChannels.CHANNEL, packet);
                 this.changedDataKeys.clear();
             }
         }
@@ -201,7 +240,13 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
      * As ticking here only handles synching, stop ticking when unchanged and prevent packet synching to save resource
      */
     public boolean shouldTick() {
-        return !this.changedDataKeys.isEmpty() || !this.synchedGetters.isEmpty();
+        if (this.isClientSide()) {
+            return this.getEntity() instanceof Player   // Only player has client2server synched getters. Data is always server2client.
+                && this.synchedGetters.values().stream().noneMatch(getter -> getter.direction == SynchedGetter.Direction.CLIENT_TO_SERVER);
+        }
+        else {
+            return !this.changedDataKeys.isEmpty() && this.synchedGetters.values().stream().noneMatch(getter -> getter.direction == SynchedGetter.Direction.SERVER_TO_CLIENT);
+        }
     }
 
     /**
@@ -250,14 +295,16 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         public final Function<Entity, ?> getter;
         public final NFUDataSerializer<?> serializer;
         public @Nullable Object cache;  // Accessed on client. Tracked on server tick to find if it's changed
+        public final Direction direction;
 
         protected <E extends Entity, T> SynchedGetter(EntitySyncherComponent<E> owner, Class<T> type, NFUDataSerializer<? extends T> serializer,
-                                Function<E, ? extends T> getter, @Nullable T defaultValue) {
+                                Function<E, ? extends T> getter, @Nullable T defaultValue, Direction direction) {
             this.owner = owner;
             this.type = type;
             this.getter = (e -> getter.apply((E)e));
             this.serializer = serializer;
             this.cache = defaultValue;
+            this.direction = direction;
         }
 
         public @Nullable Object get() {
@@ -270,6 +317,26 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
             this.cache = value;
         }
 
+        public static enum Direction {
+            SERVER_TO_CLIENT, CLIENT_TO_SERVER;
+
+            public boolean isMainSide(boolean trueMeansClient) {
+                return this == (trueMeansClient ? CLIENT_TO_SERVER : SERVER_TO_CLIENT);
+            }
+
+            public boolean isSynchedSide(boolean trueMeansClient) {
+                return !isMainSide(trueMeansClient);
+            }
+
+            public boolean isMainSide(LogicalSide side) {
+                return isMainSide(side.isClient());
+            }
+
+            public boolean isSynchedSide(LogicalSide side) {
+                return !isMainSide(side);
+            }
+        }
+
     }
 
     public static class ClientboundEntitySyncherComponentSyncPacket implements Packet<ClientGamePacketListener> {
@@ -279,37 +346,43 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         @Nullable   // Non-null on server, null on client
         public final EntitySyncherComponent<? extends Entity> syncher;
         public final int entityID;
+        public final UUID entityUUID;
         public final String componentPath;
-        public final Map<String, ValueEntry> data = new HashMap<>();
-        public final Map<String, ValueEntry> getters = new HashMap<>();
+        public final Map<String, SyncValueEntry> data = new HashMap<>();
+        public final Map<String, SyncValueEntry> getters = new HashMap<>();
 
         public ClientboundEntitySyncherComponentSyncPacket(EntitySyncherComponent<? extends Entity> syncher) {
             this.packetId = CURRENT_PACKET_ID.get();
             CURRENT_PACKET_ID.set(CURRENT_PACKET_ID.get() + 1);
             this.syncher = syncher;
             this.entityID = syncher.getEntity().getId();
+            this.entityUUID = syncher.getEntity().getUUID();
             this.componentPath = syncher.getPathFromRoot().toLiteral();
             for (String key: syncher.changedDataKeys) {
-                this.data.put(key, new ValueEntry(syncher.synchedData.get(key).serializer, syncher.synchedData.get(key).value));
+                this.data.put(key, new SyncValueEntry(syncher.synchedData.get(key).serializer, syncher.synchedData.get(key).value));
             }
-            for (String key: syncher.synchedGetters.keySet()) {
-                this.getters.put(key, new ValueEntry(syncher.synchedGetters.get(key).serializer, syncher.synchedGetters.get(key).cache));
-            }
+            syncher.synchedGetters.entrySet().stream()
+                .filter(entry -> entry.getValue().direction.equals(SynchedGetter.Direction.SERVER_TO_CLIENT))
+                .forEach(entry -> {
+                    this.getters.put(entry.getKey(), new SyncValueEntry(entry.getValue().serializer, entry.getValue().getter.apply(syncher.getEntity())));
+                });
         }
 
         public ClientboundEntitySyncherComponentSyncPacket(FriendlyByteBuf buf) {
             this.packetId = buf.readLong();
             this.syncher = null;
             this.entityID = buf.readInt();
+            this.entityUUID = buf.readUUID();
             this.componentPath = buf.readUtf();
-            this.data.putAll(buf.readMap(FriendlyByteBuf::readUtf, ValueEntry::read));
-            this.getters.putAll(buf.readMap(FriendlyByteBuf::readUtf, ValueEntry::read));
+            this.data.putAll(buf.readMap(FriendlyByteBuf::readUtf, SyncValueEntry::read));
+            this.getters.putAll(buf.readMap(FriendlyByteBuf::readUtf, SyncValueEntry::read));
         }
 
         @Override
         public void write(FriendlyByteBuf buf) {
             buf.writeLong(this.packetId);
             buf.writeInt(this.entityID);
+            buf.writeUUID(this.entityUUID);
             buf.writeUtf(componentPath);
             buf.writeMap(data, FriendlyByteBuf::writeUtf, (b, v) -> v.write(b));
             buf.writeMap(getters, FriendlyByteBuf::writeUtf, (b, v) -> v.write(b));
@@ -327,27 +400,95 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         public void handle(ClientGamePacketListener pHandler) {
             EntityComponentPresetClientPacketHandlers.HandleEntitySyncherComponentSync(this, pHandler);
         }
-
-        public static record ValueEntry(@Nullable NFUDataSerializer<?> serializer, @Nullable Object value) {
-
-            public void write(FriendlyByteBuf buf) {
-                buf.writeBoolean(value != null);
-                if (value != null) {
-                    buf.writeResourceLocation(serializer.getKey());
-                    ((NFUDataSerializer<Object>)serializer).write(buf, value);
-                }
-            }
-
-            public static ValueEntry read(FriendlyByteBuf buf) {
-                if (buf.readBoolean()) {
-                    NFUDataSerializer<?> s = NFUDataSerializer.fromId(buf.readResourceLocation());
-                    Object v = s.read(buf);
-                    return new ValueEntry(s, v);
-                }
-                else return new ValueEntry(null, null);
-            }
-
-        };
     }
+
+    public static class ServerboundPlayerEntitySyncherComponentSyncPacket implements Packet<ServerGamePacketListener> {
+
+        private static final ClientOnly<Long> CURRENT_PACKET_ID = new ClientOnly<>(0L);
+        public final long packetId;
+        public final UUID entityUUID;
+        @Nullable   // Non-null on server, null on client
+        public final EntitySyncherComponent<? extends Entity> syncher;
+        public final String componentPath;
+        public final Map<String, SyncValueEntry> getters = new HashMap<>();
+
+        public ServerboundPlayerEntitySyncherComponentSyncPacket(EntitySyncherComponent<? extends Entity> syncher) {
+            this.packetId = CURRENT_PACKET_ID.get();
+            CURRENT_PACKET_ID.set(CURRENT_PACKET_ID.get() + 1);
+            this.syncher = syncher;
+            this.entityUUID = syncher.getEntity().getUUID();
+            this.componentPath = syncher.getPathFromRoot().toLiteral();
+            syncher.synchedGetters.entrySet().stream()
+                .filter(entry -> entry.getValue().direction.equals(SynchedGetter.Direction.CLIENT_TO_SERVER))
+                .forEach(entry -> {
+                    this.getters.put(entry.getKey(), new SyncValueEntry(entry.getValue().serializer, entry.getValue().getter.apply(syncher.getEntity())));
+                });
+        }
+
+        public ServerboundPlayerEntitySyncherComponentSyncPacket(FriendlyByteBuf buf) {
+            this.packetId = buf.readLong();
+            this.syncher = null;
+            this.entityUUID = buf.readUUID();
+            this.componentPath = buf.readUtf();
+            this.getters.putAll(buf.readMap(FriendlyByteBuf::readUtf, SyncValueEntry::read));
+        }
+
+        @Override
+        public void write(FriendlyByteBuf pBuffer) {
+            pBuffer.writeLong(this.packetId);
+            pBuffer.writeUUID(this.entityUUID);
+            pBuffer.writeUtf(componentPath);
+            pBuffer.writeMap(getters, FriendlyByteBuf::writeUtf, (b, v) -> v.write(b));
+        }
+
+        @Override
+        public void handle(ServerGamePacketListener pHandler) {
+            EntityComponentPresetServerPacketHandlers.HandleEntitySyncherComponentSync(this, pHandler);
+        }
+
+        public Map<String, Optional<Object>> getterValues() {
+            return getters.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> Optional.ofNullable(e.getValue().value())));
+        }
+    }
+
+
+
+    public static record SyncValueEntry(@Nullable NFUDataSerializer<?> serializer, @Nullable Object value) {
+
+        public void write(FriendlyByteBuf buf) {
+            buf.writeBoolean(value != null);
+            if (value != null) {
+                buf.writeResourceLocation(serializer.getKey());
+                ((NFUDataSerializer<Object>)serializer).write(buf, value);
+            }
+        }
+
+        public static SyncValueEntry read(FriendlyByteBuf buf) {
+            if (buf.readBoolean()) {
+                NFUDataSerializer<?> s = NFUDataSerializer.fromId(buf.readResourceLocation());
+                Object v = s.read(buf);
+                return new SyncValueEntry(s, v);
+            }
+            else return new SyncValueEntry(null, null);
+        }
+    };
+
+    public static class Default extends EntitySyncherComponent<Entity> {
+
+        public Default(Entity entity) {
+            super(entity);
+            if (entity instanceof Player) {
+                // For NFULevelStatics#getMouseFocus
+                this.createSynchedGetter("mouseFocus", NFUDataSerializers.HIT_RESULT_INFO, null,
+                    SynchedGetter.Direction.CLIENT_TO_SERVER,
+                    e -> Optional.ofNullable(Minecraft.getInstance().hitResult)
+                        .map(HitResultInfo::byHitResult)
+                        .orElseGet(() -> HitResultInfo.miss(e.position())));
+            }
+        }
+
+    }
+
+
 
 }

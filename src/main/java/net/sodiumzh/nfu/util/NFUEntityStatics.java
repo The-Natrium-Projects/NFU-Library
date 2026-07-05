@@ -810,8 +810,8 @@ public class NFUEntityStatics
 	{
 		if (level instanceof ServerLevel sl)
 			return sl.getEntity(uuid);
-		if (level.getPlayerByUUID(uuid) != null)
-			return level.getPlayerByUUID(uuid);
+		Player player = level.getPlayerByUUID(uuid);
+		if (player != null) return player;
 		@SuppressWarnings("unchecked")
 		Iterable<Entity> entities = NFUReflectionStatics.forceInvokeRetVal(level, Level.class, "m_142425_").castTo(LevelEntityGetter.class).getAll();	// Level#getEntities
 		for (Entity e: entities)

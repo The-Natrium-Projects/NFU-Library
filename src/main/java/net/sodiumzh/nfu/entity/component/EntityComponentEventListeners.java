@@ -26,21 +26,6 @@ public class EntityComponentEventListeners {
     }
 
     @SubscribeEvent
-    public static void initComponentMgr(EntityFinishConstructionEvent event) {
-        event.getEntity().getCapability(EntityComponentStatics.CAP_MANAGER).resolve().ifPresentOrElse(m -> {
-            if (event.getEntity() instanceof IEntityComponentAccess holder)
-                holder.initializeComponents(m);
-            EntityComponentSetupEvent initEvent = new EntityComponentSetupEvent(event.getEntity(), m);
-            MinecraftForge.EVENT_BUS.post(initEvent);
-            initEvent.collect();
-            MinecraftForge.EVENT_BUS.post(new EntityComponentFinalizeSetupEvent(event.getEntity(), m));
-            if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK)
-                initEvent.checkHierarchy();
-        }, () -> { NFUDebugStatics.errorOnce(EntityComponentEventListeners.class,
-            String.format("%s Missing entity component manager", event.getEntity().getName().getString())); });
-    }
-
-    @SubscribeEvent
     public static void createDefaultComponents(EntityComponentSetupEvent event) {
         event.addComponent(HierarchyPath.byNameArray("data"), EntityComponentTypes.DATA.get());
         event.addComponent(HierarchyPath.byNameArray("timer"), EntityComponentTypes.TIMER.get());

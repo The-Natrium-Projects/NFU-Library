@@ -16,6 +16,11 @@ public final class EntityNodeComponent extends EntityComponentBase<Entity> {
     }
 
     @Override
+    public boolean shouldTick() {
+        return false;
+    }
+
+    @Override
     public void tick() {
     }
 

@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.sodiumzh.nfu.annotation.DontOverride;
+import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.object.HierarchyPath;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -158,7 +159,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      *               creating multiple sets.
      */
     @ApiStatus.OverrideOnly
-    void collectDownstreamComponentsTo(@Nonnull HashSet<IEntityComponent> outSet);
+    void collectDownstreamComponentsTo(@Nonnull Set<IEntityComponent> outSet);
 
     /**
      * Returns a set of all downstream (subtree) components: all direct and indirect (recursive) subcomponents.
@@ -182,6 +183,12 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
         res.add(this);
         return res.stream().map(c -> (IEntityComponent<? extends Entity>)c).collect(Collectors.toSet());
     }
+
+    /**
+     * Get a map of all downstream components (not including self) keyed by paths from this.
+     * <p>Generally it's slower than {@code getDownstreamComponents}. Use {@code getDownstreamComponents} if keys are not necessary.
+     */
+    Map<HierarchyPath, IEntityComponent<?>> getAllPathsAndDownstreamComponents();
 
     /**
      * Get a component from this component's downstream tree with its path.
@@ -316,6 +323,14 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     void setSerialize(boolean shouldSerialize);
 
     /**
+     * If true, it will be rebuilt if the component itself is absent but the serialization data contains it.
+     * Used for dynamically added/removed components of which the presence itself needs to be recorded on serialization.
+     * <p>Warning: Ensure its parent is present when using this feature. It doesn't ensure the path is available for
+     * rebuilding, and an exception will be produced if it's parent is missing.
+     */
+    boolean shouldRebuildOnDeserialization();
+
+    /**
      * Check if this component is in use and should be ticked.
      * <p>If a component's ticking may cause resource waste when unused, override this method and return the condition of ticking.
      */
@@ -330,10 +345,30 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
 
     /**
      * Quick check if this component's path in the component manager equals the given path.
-     * <p>This operation is quicker than {@code getPathFromRoot}
+     * <p>This operation is quicker than {@code getPathFromRoot}.
      */
     default boolean pathInManagerEquals(HierarchyPath path) {
         return EntityComponentAPI.getComponentByPath(this.getEntity(), path).filter(c -> c.equals(this)).isPresent();
     }
+
+    /**
+     * Get the path depth of this from root. For example, "/a/b/c" depth is 3.
+     * <p>You can also use this to check if there's any cyclic hierarchy dependency. If the depth is unreasonably high (>65535),
+     * it indicates there's a cycle and an exception will be thrown.
+     */
+    @ApiStatus.NonExtendable
+    default int pathDepth() {
+        IEntityComponent<?> current = this;
+        int i = 0;
+        while (true) {
+            current = current.getParent().orElse(null);
+            if (current == null) return i;
+            i++;
+            if (i > 65535) {
+                throw new IllegalStateException("Path is too deep (>65535). Cyclic hierarchy?");
+            }
+        }
+    }
+
 
 }
