@@ -95,4 +95,5 @@ public interface CEntityComponentManager extends CEntityTickingCapability<Entity
     public default void addNode(String path) {
         this.addNode(HierarchyPath.byLiteral(path));
     }
+
 }

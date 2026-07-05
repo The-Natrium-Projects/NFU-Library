@@ -7,6 +7,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.entity.component.EntityComponentEvent;
 import net.sodiumzh.nfu.event.NFULivingEvent;
+import net.sodiumzh.nfu.network.AvailableSide;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 

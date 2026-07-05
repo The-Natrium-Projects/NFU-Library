@@ -8,6 +8,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.event.NFULivingEvent;
+import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.util.NFUItemStatics;
 import net.sodiumzh.nfu.util.NFUParticleStatics;
 

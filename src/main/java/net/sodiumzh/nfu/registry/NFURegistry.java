@@ -9,6 +9,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import net.sodiumzh.nfu.annotation.NotYetImplemented;
 import net.sodiumzh.nfu.exception.DuplicateRegistryEntryException;
+import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.object.DirectedGraphNode;
 import net.sodiumzh.nfu.object.LimitedMutable;
@@ -484,10 +485,6 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
          * <p>Note: this option is relatively risky. Ensure that all entries are possible to be loaded before access.
          */
         FIRST_ACCESS;
-    }
-
-    public static enum AvailableSide {
-        SERVER, CLIENT, BOTH
     }
 
     public static List<NFURegistry<?>> sortByLoadingOrder(Collection<NFURegistry<?>> raw) {

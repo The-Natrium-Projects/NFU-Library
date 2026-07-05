@@ -15,6 +15,7 @@ import net.sodiumzh.nfu.function.RegistrablePredicate;
 import net.sodiumzh.nfu.item.bauble.IBaubleRegistryEntry;
 import net.sodiumzh.nfu.math.IFieldPattern3D;
 import net.sodiumzh.nfu.math.IInequalityPattern3D;
+import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 
 import java.util.function.Function;
@@ -37,7 +38,7 @@ public class NFURegistries {
      */
     public static final NFURegistry<MobApplicableItemTable> MOB_APPLICABLE_ITEM_TABLES =
             new NFURegistry<MobApplicableItemTable>(new ResourceLocation(NFULibrary.MOD_ID, "mob_applicable_item_tables"))
-                    .setSide(NFURegistry.AvailableSide.SERVER)
+                    .setSide(AvailableSide.SERVER)
                     .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP);
 
     /**
@@ -57,12 +58,12 @@ public class NFURegistries {
     public static final NFURegistry<VanillaTradeListing> VANILLA_TRADE_LISTINGS =
         new NFURegistry<VanillaTradeListing>(new ResourceLocation(NFULibrary.MOD_ID, "vanilla_trade_listings"))
                 .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP)
-                .setSide(NFURegistry.AvailableSide.SERVER);
+                .setSide(AvailableSide.SERVER);
 
     public static final NFURegistry<VanillaTradeListingCollection<?>> VANILLA_TRADE_LISTING_COLLECTIONS =
             new NFURegistry<VanillaTradeListingCollection<?>>(new ResourceLocation(NFULibrary.MOD_ID, "vanilla_trade_listing_collections"))
                 .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP)
-                .setSide(NFURegistry.AvailableSide.SERVER)
+                .setSide(AvailableSide.SERVER)
                 .setLoadAfter(VANILLA_TRADE_LISTINGS);
 
     /**
@@ -71,17 +72,17 @@ public class NFURegistries {
     public static final NFURegistry<VanillaTradeRegistry> VANILLA_TRADE_REGISTRIES =
             new NFURegistry<VanillaTradeRegistry>(new ResourceLocation(NFULibrary.MOD_ID, "vanilla_trade_registries"))
                     .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP)
-                    .setSide(NFURegistry.AvailableSide.SERVER)
+                    .setSide(AvailableSide.SERVER)
                     .setLoadAfter(VANILLA_TRADE_LISTINGS, VANILLA_TRADE_LISTING_COLLECTIONS);
 
     public static final NFURegistry<MobAngerReason> MOB_ANGER_REASONS =
         new NFURegistry<MobAngerReason>(new ResourceLocation(NFULibrary.MOD_ID, "mob_anger_reasons"))
-            .setSide(NFURegistry.AvailableSide.SERVER);
+            .setSide(AvailableSide.SERVER);
 
     public static final NFURegistry<MobAngerRules> MOB_ANGER_RULES =
         new NFURegistry<MobAngerRules>(new ResourceLocation(NFULibrary.MOD_ID, "mob_anger_rules"))
             .setLoadAfter(MOB_ANGER_REASONS)
-            .setSide(NFURegistry.AvailableSide.SERVER)
+            .setSide(AvailableSide.SERVER)
             .setLoadTiming(NFURegistry.LoadTiming.COMMON_SETUP);
 
     public static final NFURegistry<EntityAttributeProvider> ENTITY_ATTRIBUTE_PROVIDERS =

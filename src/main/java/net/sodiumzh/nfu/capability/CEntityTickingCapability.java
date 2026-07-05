@@ -3,6 +3,7 @@ package net.sodiumzh.nfu.capability;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.capabilities.AutoRegisterCapability;
 import net.minecraftforge.common.capabilities.Capability;
+import net.sodiumzh.nfu.network.AvailableSide;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,9 +43,9 @@ public interface CEntityTickingCapability<T extends Entity>
      * Get on which side(s) it should tick. Server by default.
      * <p>Be careful to use {@code BOTH}, as it will tick independently on each side, and will not sync by default.</p>
      */
-    public default TickingSide getTickingSide()
+    public default AvailableSide getTickingSide()
     {
-        return TickingSide.SERVER;
+        return AvailableSide.SERVER;
     }
     /**
      * Register a capability as ticking, so that it can be auto ticked.
@@ -54,16 +55,4 @@ public interface CEntityTickingCapability<T extends Entity>
         ALL_CAPS.add(cap);
     }
 
-    public static enum TickingSide {
-        SERVER,
-        CLIENT,
-        BOTH;
-
-        public boolean isCorrectSide(boolean isClientSide)
-        {
-            if (isClientSide)
-                return this == CLIENT || this == BOTH;
-            else return this == SERVER || this == BOTH;
-        }
-    }
 }
