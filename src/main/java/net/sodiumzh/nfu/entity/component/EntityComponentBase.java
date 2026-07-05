@@ -4,7 +4,10 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.annotation.DontCallManually;
+import net.sodiumzh.nfu.exception.WrongSideException;
+import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.object.HierarchyPath;
+import net.sodiumzh.nfu.util.NFUContainerStatics;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
@@ -42,7 +45,7 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     protected final E entity;
     protected EntityComponentType<E, ? extends IEntityComponent<E>> type;
     protected boolean serialize = true;
-
+    protected boolean rebuildOnDeserialization = false;
 
     public EntityComponentBase(E entity) {
         if (entity == null)
@@ -60,7 +63,7 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
         StringBuilder literal = new StringBuilder();
         IEntityComponent<?> current = this;
         while (true) {
-            IEntityComponent<?> parent = this.getParent().orElse(null);
+            IEntityComponent<?> parent = current.getParent().orElse(null);
             if (parent == null) return HierarchyPath.byLiteral(literal.toString());
             literal.insert(0, "/" + parent.getSubComponentName(current).orElseThrow());
             current = parent;
@@ -99,11 +102,10 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
             throw new IllegalArgumentException("Component already has a parent. Detach first.");
         if (subComponents.containsKey(name))
             throw new IllegalArgumentException("Duplicate subcomponent name. Use replaceSubComponent instead.");
-        if (createsCycle(component))
-            throw new IllegalStateException("Cycle detected: adding would produce a cyclic tree.");
         subComponents.put(name, component);
         // Important: update parent for the child and call updateParent
         component.updateParent(null, this);
+        component.pathDepth();  // This checks cyclic hierarchy dependency
     }
 
     @Nullable
@@ -118,14 +120,16 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
 
     @Override
     public void addSubComponentByPath(HierarchyPath path, IEntityComponent<? extends Entity> component, boolean fillNodesIfParentAbsent) {
-        String[] splitPath = path.toStringArray();
+        HierarchyPath parentOfAdded = path.getParent();
+        if (parentOfAdded == null) throw new IllegalArgumentException("Path is empty");
+
         AtomicReference<IEntityComponent<?>> current = new AtomicReference<>(this);
-        for (int i = 0; i < splitPath.length - 1; ++i) {
+        for (int i = 0; i < parentOfAdded.length(); ++i) {
             int i1 = i;
-            current.get().getSubComponent(splitPath[i]).ifPresentOrElse(current::set, () -> {
+            current.get().getSubComponent(parentOfAdded.getAt(i)).ifPresentOrElse(current::set, () -> {
                 if (fillNodesIfParentAbsent) {
                     EntityNodeComponent node = EntityComponentTypes.NODE.get().create(this.getEntity());
-                    current.get().addSubComponent(splitPath[i1], node);
+                    current.get().addSubComponent(parentOfAdded.getAt(i1), node);
                     current.set(node);
                 } else {
                     throw new IllegalStateException("Attempting to add component at path " + path.toLiteral()
@@ -134,6 +138,8 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
                 }
             });
         }
+        // Now current is its direct parent
+        current.get().addSubComponent(path.getAt(path.length() - 1), component);
     }
 
     @Override
@@ -153,11 +159,24 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public void collectDownstreamComponentsTo(@Nonnull HashSet<IEntityComponent> outSet) {
+    public void collectDownstreamComponentsTo(@Nonnull Set<IEntityComponent> outSet) {
         for (IEntityComponent child : getSubComponents().values()) {
             outSet.add(child);
             child.collectDownstreamComponentsTo(outSet);
         }
+    }
+
+    @Override
+    public Map<HierarchyPath, IEntityComponent<?>> getAllPathsAndDownstreamComponents() {
+        Map<HierarchyPath, IEntityComponent<?>> res = new HashMap<>();
+        this.getSubComponents().forEach((k, v) -> {
+            res.put(HierarchyPath.byNameArray(k), v);
+            String[] thisKey = new String[]{k};
+            v.getAllPathsAndDownstreamComponents().forEach((k1, v1) -> {
+                res.put(HierarchyPath.byNameArray(NFUContainerStatics.concatArray(thisKey, k1.toStringArray(), String[]::new)), v1);
+            });
+        });
+        return res;
     }
 
     @Override
@@ -212,12 +231,22 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
         }
     }
 
+    @Override
     public boolean shouldSerialize() {
         return this.serialize;
     }
 
     public void setSerialize(boolean shouldSerialize) {
         this.serialize = shouldSerialize;
+    }
+
+    @Override
+    public boolean shouldRebuildOnDeserialization() {
+        return rebuildOnDeserialization;
+    }
+
+    public void setRebuildOnDeserialization(boolean value) {
+        this.rebuildOnDeserialization = value;
     }
 
     // Hierarchy safety check module //
@@ -238,6 +267,7 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     }
 
     public void checkHierarchy() {
+        this.pathDepth();   // This includes a depth check. Too deep path (>65535) shows cyclic hierarchy.
         String subcomponentErrMsg = getRequiredSubcomponents().entrySet().stream()
             .filter(entry -> this.getSubComponentByPath(entry.getKey(), entry.getValue()).isEmpty())
             .map(entry -> String.format(Locale.ENGLISH, "\"%s\"(%s); ", entry.getKey(), entry.getValue().getKey().toString()))

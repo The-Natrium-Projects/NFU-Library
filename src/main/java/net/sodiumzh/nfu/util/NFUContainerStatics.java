@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -668,5 +669,33 @@ public class NFUContainerStatics
 			if (!Objects.equals(a.get(i), b.get(i))) return false;
 		}
 		return true;
+	}
+
+	public static boolean setEquals(Set<?> a, Set<?> b) {
+		if (a.size() != b.size()) return false;
+		for (Object elem: a) {
+			if (!b.contains(elem)) return false;
+		}
+		return true;
+	}
+
+	public static int[] reverseArray(int[] original) {
+		int[] res = new int[original.length];
+		for (int i = 0; i < original.length; ++i) {
+			res[i] = original[original.length - 1 - i];
+		}
+		return res;
+	}
+
+	public static <T> T[] reverseArray(T[] original, IntFunction<T[]> arrayGenerator) {
+		T[] res = arrayGenerator.apply(original.length);
+		for (int i = 0; i < original.length; ++i) {
+			res[i] = original[original.length - 1 - i];
+		}
+		return res;
+	}
+
+	public static <T> T[] concatArray(T[] a, T[] b, IntFunction<T[]> arrayGenerator) {
+		return Stream.concat(Arrays.stream(a), Arrays.stream(b)).toArray(arrayGenerator);
 	}
 }

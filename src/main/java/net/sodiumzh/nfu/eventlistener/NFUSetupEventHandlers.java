@@ -71,7 +71,7 @@ public class NFUSetupEventHandlers {
                     && !entry.getValue().getObjectClass().equals(Optional.class)
                     && !entry.getKey().getPath().endsWith("_list")
                     && !entry.getKey().getPath().startsWith("optional_"))
-                .forEach(entry -> {
+                .toList().forEach(entry -> {
                     reg.registerIfAbsent(new ResourceLocation(entry.getKey().getNamespace(), entry.getKey().getPath() + "_list"),
                         () -> NFUDataSerializer.createList(entry.getValue()));
                     reg.registerIfAbsent(new ResourceLocation(entry.getKey().getNamespace(), "optional_" + entry.getKey().getPath()),

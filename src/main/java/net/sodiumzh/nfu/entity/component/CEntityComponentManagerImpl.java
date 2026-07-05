@@ -10,13 +10,16 @@ import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.capability.CEntityTickingCapability;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.entity.component.preset.IEntityComponentAccess;
+import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.object.HierarchyPath;
 import net.sodiumzh.nfu.object.Validatable;
 import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.registry.NFURegistries;
+import net.sodiumzh.nfu.util.NFUNBTStatics;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation for CEntityComponentManager.
@@ -40,7 +43,8 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
         initEvent.sharePreConstructedMapFrom(this.preConstructed.get());  // Share the map reference to event, so that it can be filled during event post
         MinecraftForge.EVENT_BUS.post(initEvent);
         // First pre-construct needed components and collect the result
-        preConstructed.get().putAll(initEvent.preConstruct());
+        initEvent.sharePreConstructedMapFrom(this.preConstructed.get());
+        initEvent.preConstruct();
         // Then do actual collection while the pre-constructed components are available
         initEvent.collect();
         // End construction, disable transient variables
@@ -109,7 +113,8 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
      */
     @Override
     public void tick() {
-        this.getDownstreamComponents().stream().filter(IEntityComponent::shouldTick).forEach(IEntityComponent::tick);
+        this.getDownstreamComponents().stream().map(e -> Tuple2.of(e.pathDepth(), e))
+            .sorted(Comparator.comparingInt(Tuple2::getA)).forEach(e -> e.getB().tick());
         if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK && this.getEntity().tickCount % 100 == 0) {
             this.getDownstreamComponents().stream().filter(c -> c instanceof EntityComponentBase<? extends Entity>)
                 .map(c -> (EntityComponentBase<?>)c).forEach(EntityComponentBase::checkHierarchy);
@@ -125,8 +130,21 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
         MinecraftForge.EVENT_BUS.post(new EntityComponentManagerSerializeEvent.Before(this.getEntity(), nbt));
-        this.getSubComponents().entrySet().stream().filter(entry -> entry.getValue().shouldSerialize())
-            .forEach(entry -> nbt.put(entry.getKey(), serializeComponent(entry.getKey(), entry.getValue())));
+        this.getAllPathsAndDownstreamComponents().entrySet().stream()
+            .filter(entry -> entry.getValue().shouldSerialize())
+            .sorted(Comparator.comparingInt(entry -> entry.getKey().length()))
+            .forEach(entry -> {
+                CompoundTag nbt1 = new CompoundTag();
+                nbt1.putString("type", entry.getValue().getType().getKey().toString());
+                nbt1.putBoolean("rebuild", entry.getValue().shouldRebuildOnDeserialization());
+                nbt1.put("data", Optional.ofNullable(entry.getValue().serializeNBT()).orElse(new CompoundTag()));
+                nbt.put(entry.getKey().toLiteral(), nbt1);
+            });
+
+
+
+        /*this.getSubComponents().entrySet().stream().filter(entry -> entry.getValue().shouldSerialize())
+            .forEach(entry -> nbt.put(entry.getKey(), serializeComponent(entry.getKey(), entry.getValue())));*/
         MinecraftForge.EVENT_BUS.post(new EntityComponentManagerSerializeEvent.After(this.getEntity(), nbt));
         return nbt;
     }
@@ -134,8 +152,27 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     @Override
     public void deserializeNBT(CompoundTag nbt) {
         MinecraftForge.EVENT_BUS.post(new EntityComponentManagerDeserializeEvent.Before(this.getEntity(), nbt));
-        nbt.getAllKeys().stream().map(nbt::getCompound).filter(t -> !t.isEmpty())
-            .map(t -> new Tuple2<>(t.getString("name"), deserializeOrRebuildComponent(this.getEntity(), this.getSubComponent(t.getString("name")).orElse(null), t)))
+        NFUNBTStatics.entrySet(nbt).stream()
+            .map(entry -> new AbstractMap.SimpleEntry<>(HierarchyPath.byLiteral(entry.getKey()), (CompoundTag)(entry.getValue())))  // Implicitly assert tag type
+            .sorted(Comparator.comparingInt(entry -> entry.getKey().length()))
+            .forEach(entry -> {
+                IEntityComponent<?> component = this.getSubComponentByPath(entry.getKey()).orElse(null);
+                if (component == null && entry.getValue().getBoolean("rebuild")) {
+                    var type = NFURegistries.ENTITY_COMPONENT_TYPES.getOptionalValue(new ResourceLocation(entry.getValue().getString("type"))).orElse(null);
+                    if (type != null) { // Missing type means invalid entry, ignore
+                        component = type.createUnsafe(this.getEntity());
+                        this.addSubComponentByPath(entry.getKey(), component);
+                    }
+                }
+                if (component != null) {
+                    component.deserializeNBT(entry.getValue().getCompound("data"));
+                }
+            });
+
+        /*nbt.getAllKeys().stream()
+            .map(k -> new Tuple2<>(k, nbt.getCompound(k)))
+            .filter(t -> !t.getB().isEmpty())
+            .map(t -> new Tuple2<>(t.getA(), deserializeOrRebuildComponent(this.getEntity(), this.getSubComponent(t.getA()).orElse(null), t.getB())))
             .forEach(tp -> {
                 // If the component is absent, add it
                 if (this.getSubComponent(tp.getA()).isEmpty())
@@ -145,7 +182,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
                     throw new IllegalStateException("Component type conflict: deserializing subcomponent /" + tp.getA() + " of type " + tp.getB().getType().getKey() +
                         " but it's occupied by a component of another type " + this.getSubComponent(tp.getA()).map(c -> c.getType().getKey()).orElseThrow());
                 // Otherwise deserialization has been handled in the map() body above, and needs no more action
-            });
+            });*/
         MinecraftForge.EVENT_BUS.post(new EntityComponentManagerDeserializeEvent.After(this.getEntity(), nbt));
     }
 
@@ -198,40 +235,6 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
             res.setSerialize(true); // Components loaded from NBT should be always serialized
             // Deserialize this component
             res.deserializeNBT(nbt.getCompound("data"));
-            // Recursively deserialize sub-components
-            Tag subcomponentTagRaw = nbt.get("subcomponents");
-            if (subcomponentTagRaw instanceof CompoundTag subcomponentTag) {
-                subcomponentTag.getAllKeys().stream().filter(k -> !subcomponentTag.getCompound(k).isEmpty())
-                    .map(k -> new AbstractMap.SimpleEntry<>(k, deserializeOrRebuildComponent(e, res.getSubComponent(k).orElse(null), subcomponentTag.getCompound(k))))
-                    .forEach(entry -> {
-                        // If the component is absent, add it
-                        if (res.getSubComponent(entry.getKey()).isEmpty())
-                            res.addSubComponent(entry.getKey(), entry.getValue());
-                            // this means occupied by a component of wrong type, and shouldn't happen
-                        else if (res.getSubComponent(entry.getKey(), entry.getValue().getType()).isEmpty())
-                            throw new IllegalStateException("Component type conflict: deserializing subcomponent /" + entry.getKey() + " of type " + entry.getValue().getType().getKey() +
-                                " but it's occupied by a component of another type " + res.getSubComponent(entry.getKey()).map(c -> c.getType().getKey()).orElseThrow());
-                        // Otherwise deserialization has been handled in the map() body above, and needs no more action
-                    });
-            }
-            // Legacy format, TODO remove in 0.x.34
-            if (subcomponentTagRaw instanceof ListTag subcomponentTag) {
-                subcomponentTag.stream().filter(tag -> tag instanceof CompoundTag)
-                    .map(tag -> (CompoundTag) tag)
-                    .filter(tag -> tag.contains("name", Tag.TAG_STRING))    // Missing name = skip
-                    // Load subcomponents, deserialize or rebuild if absent
-                    .map(t -> new Tuple2<>(t.getString("name"), deserializeOrRebuildComponent(e, res.getSubComponent(t.getString("name")).orElse(null), t)))
-                    .forEach(tp -> {
-                        // If the component is absent, add it
-                        if (res.getSubComponent(tp.getA()).isEmpty())
-                            res.addSubComponent(tp.getA(), tp.getB());
-                            // this means occupied by a component of wrong type, and shouldn't happen
-                        else if (res.getSubComponent(tp.getA(), tp.getB().getType()).isEmpty())
-                            throw new IllegalStateException("Component type conflict: deserializing subcomponent /" + tp.getA() + " of type " + tp.getB().getType().getKey() +
-                                " but it's occupied by a component of another type " + res.getSubComponent(tp.getA()).map(c -> c.getType().getKey()).orElseThrow());
-                        // Otherwise deserialization has been handled in the map() body above, and needs no more action
-                    });
-            }
 
             return res;
         } catch (RuntimeException ex) {
@@ -241,8 +244,8 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     }
 
     @Override
-    public CEntityTickingCapability.TickingSide getTickingSide() {
-        return CEntityTickingCapability.TickingSide.BOTH;
+    public AvailableSide getTickingSide() {
+        return AvailableSide.BOTH;
     }
 
     private static record RequiredComponentInfo(

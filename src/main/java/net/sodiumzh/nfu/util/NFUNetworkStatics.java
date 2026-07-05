@@ -84,7 +84,6 @@ public class NFUNetworkStatics
 	/**
 	 * Register a default game packet sent from client player to server.
 	 */
-	@Deprecated
 	public static <T extends Packet<ServerGamePacketListener>> void registerDefaultServerGamePacket(
 		int id, SimpleChannel channel, Class<T> packetClass, Function<FriendlyByteBuf, T> reader)
 	{

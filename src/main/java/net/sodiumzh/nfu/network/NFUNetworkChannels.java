@@ -24,6 +24,8 @@ public class NFUNetworkChannels {
         NFUNetworkStatics.registerDefaultClientGamePacket(nextID(), CHANNEL, ClientboundEntityMotionUpdatePacket.class, ClientboundEntityMotionUpdatePacket::new);
         NFUNetworkStatics.registerDefaultClientGamePacket(nextID(), CHANNEL, EntitySyncherComponent.ClientboundEntitySyncherComponentSyncPacket.class,
             EntitySyncherComponent.ClientboundEntitySyncherComponentSyncPacket::new);
+        NFUNetworkStatics.registerDefaultServerGamePacket(nextID(), CHANNEL, EntitySyncherComponent.ServerboundPlayerEntitySyncherComponentSyncPacket.class,
+            EntitySyncherComponent.ServerboundPlayerEntitySyncherComponentSyncPacket::new);
     }
 
     @SubscribeEvent

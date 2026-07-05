@@ -58,10 +58,12 @@ public class EntityDataComponent<E extends Entity> extends EntityComponentBase<E
      */
     @SuppressWarnings("unchecked")
     public <T> Optional<T> getVariable(String key, Class<T> asClass) {
-        if (variableTable.containsKey(key) && variableTable.get(key) != null
-            && asClass.isAssignableFrom(variableTable.get(key).getClass()))
+        if (variableTable.containsKey(key)
+            && variableTable.get(key) != null
+            && variableTable.get(key).value() != null
+            && asClass.isAssignableFrom(variableTable.get(key).value().getClass()))
         {
-            return Optional.of((T) (variableTable.get(key)));
+            return Optional.of((T) (variableTable.get(key).value()));
         }
         else return Optional.empty();
     }
@@ -88,9 +90,6 @@ public class EntityDataComponent<E extends Entity> extends EntityComponentBase<E
      * Use NBT (available only on server) to write serialized data.</p>
      */
     public void putTransientVariable(String key, @Nullable Object value) {
-        if (key.equals("nbt")) {
-            throw new IllegalArgumentException("Illegal key \"nbt\": reserved for NBT serialization.");
-        }
         if (variableTable.get(key) != null && variableTable.get(key).isPermanent()) {
             throw new IllegalStateException("Entity data component \"" + this.getPathFromRoot() + "\" illegal variable operation: "
                 + "attempting to put a transient variable to key \"" + key + "\", but the key is used as permanent.");
@@ -99,9 +98,6 @@ public class EntityDataComponent<E extends Entity> extends EntityComponentBase<E
     }
 
     public void putPermanentVariable(String key, @Nullable Object value, @Nonnull NFUDataSerializer<?> serializer) {
-        if (key.equals("nbt")) {
-            throw new IllegalArgumentException("Illegal key \"nbt\": reserved for NBT serialization.");
-        }
         if (variableTable.get(key) != null) {
             if (!variableTable.get(key).isPermanent()) {
                 throw new IllegalStateException("Entity data component \"" + this.getPathFromRoot() + "\" illegal variable operation: "
@@ -123,9 +119,6 @@ public class EntityDataComponent<E extends Entity> extends EntityComponentBase<E
     }
 
     public void putPermanentVariable(String key, @Nullable Object value) {
-        if (key.equals("nbt")) {
-            throw new IllegalArgumentException("Illegal key \"nbt\": reserved for NBT serialization.");
-        }
         if (!variableTable.containsKey(key)) {
             throw new IllegalStateException("Entity data component \"" + this.getPathFromRoot() + "\" illegal variable operation: "
                 + "attempting to put a permanent variable to key \"" + key + "\" without specifying the serializer, but the serializer is absent. Call serializer-specific version at least once.");
@@ -139,9 +132,6 @@ public class EntityDataComponent<E extends Entity> extends EntityComponentBase<E
      * <p>Note: The return value of the supplier can be nullable.
      */
     public <T> Optional<T> getOrPutTransient(String key, Class<T> type, Supplier<? extends T> supplier) {
-        if (key.equals("nbt")) {
-            throw new IllegalArgumentException("Illegal key \"nbt\": reserved for NBT serialization.");
-        }
         if (!this.isPresent(key)) {
             @Nullable T v = supplier.get();
             this.putTransientVariable(key, v);
@@ -156,9 +146,6 @@ public class EntityDataComponent<E extends Entity> extends EntityComponentBase<E
      * <p>Note: The return value of the supplier can be nullable.
      */
     public <T> Optional<T> getOrPutPermanent(String key, Class<T> type, @Nonnull NFUDataSerializer<?> serializer, Supplier<? extends T> supplier) {
-        if (key.equals("nbt")) {
-            throw new IllegalArgumentException("Illegal key \"nbt\": reserved for NBT serialization.");
-        }
         if (!this.isPresent(key)) {
             @Nullable T v = supplier.get();
             this.putPermanentVariable(key, v, serializer);
@@ -178,6 +165,7 @@ public class EntityDataComponent<E extends Entity> extends EntityComponentBase<E
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
         nbt.put("nbt", this.nbt.copy());
+        CompoundTag variables = new CompoundTag();
         this.variableTable.entrySet().stream().filter(entry -> entry.getValue().isPermanent())
             .forEach(entry -> {
                 CompoundTag entryNBT = new CompoundTag();
@@ -185,14 +173,17 @@ public class EntityDataComponent<E extends Entity> extends EntityComponentBase<E
                 entryNBT.putString("serializer", entry.getValue().serializer().getKey().toString());
                 if (entry.getValue().value() != null)
                     entryNBT.put("value", entry.getValue().serializer().toTag(entry.getValue().value()));
+                variables.put(entry.getKey(), entryNBT);
             });
+        nbt.put("variables", variables);
         return nbt;
     }
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
         this.nbt = nbt.getCompound("nbt").copy();
-        NFUNBTStatics.forEach(nbt, (k, v) -> {
+        CompoundTag variables = nbt.getCompound("variables");
+        NFUNBTStatics.forEach(variables, (k, v) -> {
             if (v instanceof CompoundTag entryNBT) {
                 boolean isPresent = entryNBT.getBoolean("isPresent");
                 NFUDataSerializer<?> serializer = NFUDataSerializer.getFromRegistry(new ResourceLocation(entryNBT.getString("serializer")));

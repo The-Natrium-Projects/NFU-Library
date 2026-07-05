@@ -25,7 +25,7 @@ public interface IFieldPattern3D extends UnaryOperator<Vec3> {
     }
 
     public static NFURegistry<IFieldPattern3D> REGISTRY =
-        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "field_patterns_3d"));
+        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "field_pattern_3d"));
 
     public static NFURegistry.Accessor<IFieldPattern3D> ZERO =
         REGISTRY.register(new ResourceLocation(NFULibrary.MOD_ID, "zero"), () -> (v -> Vec3.ZERO));

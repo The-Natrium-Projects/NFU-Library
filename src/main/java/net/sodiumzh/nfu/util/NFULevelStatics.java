@@ -3,6 +3,7 @@ package net.sodiumzh.nfu.util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Explosion;
@@ -17,6 +18,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.sodiumzh.nfu.container.Tuple2;
+import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
+import net.sodiumzh.nfu.level.HitResultInfo;
+import net.sodiumzh.nfu.network.NFUDataSerializers;
+import org.apache.commons.lang3.mutable.MutableObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -466,5 +471,14 @@ public class NFULevelStatics
 		if (filter != null)
 			stream = stream.filter(pos -> filter.test(level.getBlockState(pos)));
 		return stream.map(pos -> new Tuple2<>(new BlockPos(pos.getX(), pos.getY(), pos.getZ()), level.getBlockState(pos)));
+	}
+
+	/**
+	 * Get the mouse pointing focus as hit result at server side.
+	 * Synched via {@link net.sodiumzh.nfu.entity.component.preset.EntitySyncherComponent.Default}.
+	 */
+	public static HitResult getMouseFocus(Player player) {
+		return EntityComponentAPI.getDefaultSyncher(player).getSynchedGetter("mouseFocus", HitResultInfo.class)
+			.orElseGet(() -> HitResultInfo.miss(player.position())).toHitResult(player.level());
 	}
 }

@@ -3,9 +3,9 @@ package net.sodiumzh.nfu.object;
 import net.sodiumzh.nfu.annotation.NotYetImplemented;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @NotYetImplemented
@@ -163,4 +163,6 @@ public final class HierarchyPath {
     public static String formatLiteral(String rawLiteral) {
         return formatLiteral(splitLiteral(rawLiteral));
     }
+
+
 }
