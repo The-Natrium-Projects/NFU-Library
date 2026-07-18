@@ -5,6 +5,10 @@ package net.sodiumzh.nfu.exception;
  */
 public class ReflectionFailedException extends RuntimeException {
 
+    public ReflectionFailedException() {
+        super();
+    }
+
     public ReflectionFailedException(String string) {
         super(string);
     }

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A component that monitors the owner living entity's attributes and notifies on change.
@@ -26,7 +27,6 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
         this.setup();
         if (entity instanceof IEntityAttributeMonitorAccess access)
             access.setupAttributeMonitor(this);
-        MinecraftForge.EVENT_BUS.post(new EntityAttributeMonitorComponent.SetupEvent(this));
     }
 
     /**
@@ -41,11 +41,12 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
     /** Add an attribute to the listen list.
      * It still works if the attribute isn't available yet (e.g. on capability attachment).
      */
-    @SuppressWarnings("deprecation")
     public EntityAttributeMonitorComponent addListened(Attribute attribute)
     {
         // Use NaN to label an attribute position before entity attributes creation
-        double val = getEntity().getAttributeValue(attribute);
+        double val = Optional.ofNullable(this.getEntity().getAttributes())
+            .map(am -> am.getValue(attribute))
+            .orElse(Double.NaN);
         this.listened.put(attribute, val);
         return this;
     }
@@ -54,7 +55,7 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
     @Override
     public void tick()
     {
-        for (Attribute attr: getAllListened().keySet())
+        for (Attribute attr: getAllListened().keySet().stream().toList())
         {
             double oldVal = getAllListened().get(attr);
             double newVal;
@@ -63,9 +64,8 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
             else newVal	= getEntity().getAttributeValue(attr);
             // NaN indicates the value is not available yet, so don't post event but still update value
             // After attribute is created the value will update to non-NaN
-            if (!Double.isNaN(oldVal)
-                && !Double.isNaN(newVal)
-                && (oldVal - newVal > 0.0000001 || oldVal - newVal < -0.0000001))
+            if ((Double.isNaN(oldVal) ^ Double.isNaN(newVal))
+                || (!Double.isNaN(oldVal) && !Double.isNaN(newVal) & Math.abs(oldVal - newVal) > 1e-12d))
             {
                 this.onAttributeChange(attr, oldVal, newVal);
                 if (this.getEntity() instanceof IEntityAttributeMonitorAccess access)
@@ -87,21 +87,6 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
      */
     @ApiStatus.OverrideOnly
     public abstract void onAttributeChange(Attribute attribute, double oldValue, double newValue);
-
-    public static class SetupEvent extends EntityComponentEvent<LivingEntity, EntityAttributeMonitorComponent>
-    {
-
-        public SetupEvent(EntityAttributeMonitorComponent component)
-        {
-            super(component.getEntity(), component);
-        }
-
-        public void addListened(Attribute attr)
-        {
-            this.getComponent().addListened(attr);
-        }
-
-    }
 
     public static class ChangeEvent extends EntityComponentEvent<LivingEntity, EntityAttributeMonitorComponent> {
 
@@ -128,6 +113,10 @@ public abstract class EntityAttributeMonitorComponent extends EntityComponentBas
 
         public double getNewValue() {
             return newValue;
+        }
+
+        public boolean involvesNaN() {
+            return Double.isNaN(oldValue) || Double.isNaN(newValue);
         }
     }
 

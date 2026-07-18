@@ -26,13 +26,4 @@ public class NFUEntityComponents {
         new EntityComponentType<>(Mob.class, MobAngerHandlerComponent.class, AvailableSide.SERVER,
             mob -> new MobAngerHandlerComponent(mob, MobAngerRules.ATTACKER.get())));
 
-    @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE, modid = NFULibrary.MOD_ID)
-    public static class Attachment {
-
-        @SubscribeEvent
-        public static void onInitComponents(EntityComponentSetupEvent event) {
-            if (event.getEntity() instanceof Mob mob)
-                event.addComponent(HierarchyPath.byNameArray("default_anger_handler"), NFUEntityComponents.DEFAULT_ANGER_HANDLER.get());
-        }
-    }
 }

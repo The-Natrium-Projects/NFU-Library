@@ -24,7 +24,7 @@ import java.util.*;
 public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
 
     private MobAngerRules rules;
-    private final Map<UUID, MutableObject<Integer>> angerList = new HashMap<>();
+    protected final Map<UUID, Integer> angerList = new HashMap<>();
     // Just for preventing tick() from repeatedly creating sets
     private final Set<UUID> tempRemoval = new HashSet<>();
     private float damageThreshold = 1e-3f;
@@ -40,18 +40,15 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
 
     @Override
     public void tick() {
-        for (UUID key : angerList.keySet()) {
-            int current = angerList.get(key).getValue();
-            if (current == 0) {
-                this.tempRemoval.add(key);
-            } else if (current > 0) {
-                angerList.get(key).setValue(current - 1);
-            }
-        }
-        for (UUID removal : tempRemoval) {
-            angerList.remove(removal);
-            this.onForgive(removal, new MobForgiveResult(removal, true, false));
-        }
+        angerList.entrySet().stream().toList().forEach(entry -> {
+            if (entry.getValue() <= 0)
+                this.tempRemoval.add(entry.getKey());
+            else angerList.put(entry.getKey(), entry.getValue() - 1);
+        });
+        this.tempRemoval.forEach(k -> {
+            angerList.remove(k);
+            this.onForgive(k, new MobForgiveResult(k, true, false));
+        });
         this.tempRemoval.clear();
     }
 
@@ -113,17 +110,17 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
     private boolean setAngryInternal(LivingEntity target, int forgivingTicks) {
         if (forgivingTicks == 0) return false;
         if (!angerList.containsKey(target.getUUID())) {
-            angerList.put(target.getUUID(), new MutableObject<>(forgivingTicks));
+            angerList.put(target.getUUID(), forgivingTicks);
             return true;
-        } else if (forgivingTicks < 0 || forgivingTicks > angerList.get(target.getUUID()).getValue()) {
-            angerList.get(target.getUUID()).setValue(forgivingTicks);
+        } else if (forgivingTicks < 0 || forgivingTicks > angerList.get(target.getUUID())) {
+            angerList.put(target.getUUID(), forgivingTicks);
             return true;
         }
         return false;
     }
 
     public final int getRemainingForgivingTicks(LivingEntity target) {
-        return isAngryAt(target) ? angerList.get(target.getUUID()).getValue() : 0;
+        return isAngryAt(target) ? angerList.get(target.getUUID()) : 0;
     }
 
     public final MobForgiveResult forgive(LivingEntity target) {
@@ -146,7 +143,7 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
     public CompoundTag saveAngerList() {
         CompoundTag nbt = new CompoundTag();
         for (var e : angerList.entrySet()) {
-            nbt.put(e.getKey().toString(), IntTag.valueOf(e.getValue().getValue()));
+            nbt.put(e.getKey().toString(), IntTag.valueOf(e.getValue()));
         }
         return nbt;
     }
@@ -154,7 +151,7 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
     public void loadAngerList(CompoundTag nbt) {
         angerList.clear();
         for (var key : nbt.getAllKeys()) {
-            angerList.put(UUID.fromString(key), new MutableObject<>(nbt.getInt(key)));
+            angerList.put(UUID.fromString(key), nbt.getInt(key));
         }
     }
 

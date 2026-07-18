@@ -3,13 +3,13 @@ package net.sodiumzh.nfu.exception;
 /**
  * Thrown if some registration is required for some operation but the registration is missing.
  */
-public class MissingRegistryException extends RuntimeException {
+public class MissingRegistryEntryException extends RuntimeException {
 
-    public MissingRegistryException(String desc) {
+    public MissingRegistryEntryException(String desc) {
         super(desc);
     }
 
-    public MissingRegistryException(String desc, Exception reason) {
+    public MissingRegistryEntryException(String desc, Exception reason) {
         super(desc, reason);
     }
 

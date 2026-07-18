@@ -5,6 +5,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.entity.component.preset.*;
 import net.sodiumzh.nfu.network.AvailableSide;
+import net.sodiumzh.nfu.object.HierarchyPath;
 import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.registry.NFURegistry;
 import net.sodiumzh.nfu.registry.NFURegistryEntryCollection;
@@ -39,4 +40,18 @@ public class EntityComponentTypes {
     public static final NFURegistry.Accessor<EntityComponentType<LivingEntity, HealingHandlerComponent>>
         HEALING_HANDLER = COLLECTION.register("healing_handler", () ->
         new EntityComponentType<>(LivingEntity.class, HealingHandlerComponent.class, AvailableSide.SERVER, HealingHandlerComponent::new));
+
+    public static final HierarchyPath PATH_DEFAULT_DATA = HierarchyPath.byNameArray("data");
+    public static final HierarchyPath PATH_DEFAULT_SYNCHER = HierarchyPath.byNameArray("syncher");
+    public static final HierarchyPath PATH_DEFAULT_TIMER = HierarchyPath.byNameArray("timer");
+    public static final HierarchyPath PATH_ATTRIBUTE_MONITOR = HierarchyPath.byNameArray("attribute_monitor");
+
+    public static final SubComponentAccessor<Entity, EntityDataComponent<Entity>> ACCESSOR_DEFAULT_DATA =
+        new SubComponentAccessor<>(PATH_DEFAULT_DATA, DATA);
+    public static final SubComponentAccessor<Entity, EntityTimerComponent<Entity>> ACCESSOR_DEFAULT_TIMER =
+        new SubComponentAccessor<>(PATH_DEFAULT_TIMER, TIMER);
+    public static final SubComponentAccessor<Entity, EntitySyncherComponent<Entity>> ACCESSOR_DEFAULT_SYNCHER =
+        new SubComponentAccessor<>(PATH_DEFAULT_SYNCHER, SYNCHER);
+    public static final SubComponentAccessor<LivingEntity, EntityAttributeMonitorComponent> ACCESSOR_ATTRIBUTE_MONITOR =
+        new SubComponentAccessor<>(PATH_ATTRIBUTE_MONITOR, ATTRIBUTE_MONITOR);
 }

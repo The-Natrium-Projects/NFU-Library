@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -54,30 +55,20 @@ public interface CEntityComponentManager extends CEntityTickingCapability<Entity
      * Indents and branches are formatted for clarity.
      */
     default void printComponentTree() {
-        // Root node (this) itself may not have a "name", so we print its children at top level.
-        Map<String, IEntityComponent<? extends Entity>> rootChildren = this.getSubComponents();
-        int sz = rootChildren.size();
-        int i = 0;
-        for (Map.Entry<String, IEntityComponent<? extends Entity>> entry : rootChildren.entrySet()) {
-            ++i;
-            printComponentTreeRec(entry.getKey(), entry.getValue(), "", i == sz);
-        }
+        this.getSubComponents().entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .flatMap(entry -> getComponentTreeOf(entry.getValue()).stream())
+            .forEach(System.out::print);
     }
 
     // Recursive helper prints node and all descendants with proper ASCII structure
-    private static void printComponentTreeRec(String name, IEntityComponent<? extends Entity> node, String indent, boolean last) {
-        ResourceLocation typeKey = node.getType().getKey();
-        System.out.println(indent + (last ? "└─" : "├─") + name + ": " + typeKey);
-        Map<String, IEntityComponent<? extends Entity>> children = node.getSubComponents().entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> (IEntityComponent<? extends Entity>) (e.getValue())));
-        int sz = children.size();
-        int idx = 0;
-        for (Map.Entry<String, IEntityComponent<? extends Entity>> entry : children.entrySet()) {
-            ++idx;
-            // For all but the last node at the current level, we want "│ " in indentation; for last, "  "
-            String newIndent = indent + (last ? "  " : "│ ");
-            printComponentTreeRec(entry.getKey(), entry.getValue(), newIndent, idx == sz);
+    private static List<String> getComponentTreeOf(IEntityComponent<? extends Entity> component) {
+        List<String> res = new ArrayList<>(20);
+        res.add(component.getNameInParent() + " (" + component.getType().getKey().toString() + ")");
+        for (IEntityComponent<?> sub: component.getSubComponents().values()) {
+            res.addAll(getComponentTreeOf(sub).stream().map(str -> "  " + str).toList());
         }
+        return res;
     }
 
     /**
