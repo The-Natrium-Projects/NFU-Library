@@ -29,8 +29,7 @@ public class MobAngerRules {
     public static final NFURegistry.Accessor<MobAngerRules> ATTACKER = RULES.register("attacker",
             () -> new MobAngerRules()
                     .forReason(MobAngerReason.ATTACKED.get())
-                    .forReason(MobAngerReason.HIT.get())
-                    .end());
+                    .forReason(MobAngerReason.HIT.get()));
 
     /**
      * This mob will be angry with whom attacked it only with actual damage (defined in {@link CMobAngerHandler#getDamageThreshold()}),
@@ -38,31 +37,28 @@ public class MobAngerRules {
      */
     public static final NFURegistry.Accessor<MobAngerRules> ATTACKER_DAMAGED = RULES.register("attacked_damaged",
             () -> new MobAngerRules()
-                    .forReason(MobAngerReason.ATTACKED.get())
-                    .end());
+                    .forReason(MobAngerReason.ATTACKED.get()));
 
     /**
-     * This mob will be angry with whom attacked it even without damage (defined in {@link CMobAngerHandler#getDamageThreshold()}),
-     * and whom it attacked (even without damage), with forgiving time 5 min.
+     * This mob will be angry with whom attacked it with or without damage (defined in {@link CMobAngerHandler#getDamageThreshold()}),
+     * and whom it attacked (with or without damage), with forgiving time 5 min.
      */
     public static final NFURegistry.Accessor<MobAngerRules> ATTACKER_AND_ATTACKING = RULES.register("attacker_and_attacking",
             () -> new MobAngerRules()
                     .forReason(MobAngerReason.ATTACKED.get())
                     .forReason(MobAngerReason.HIT.get())
                     .forReason(MobAngerReason.ATTACKING.get())
-                    .forReason(MobAngerReason.HITTING.get())
-                    .end());
+                    .forReason(MobAngerReason.HITTING.get()));
 
     /**
      * This mob will be angry with whom attacked it with damage (defined in {@link CMobAngerHandler#getDamageThreshold()}),
-     * and whom it attacked (even without damage), with forgiving time 5 min.
+     * and whom it attacked (with or without damage), with forgiving time 5 min.
      */
     public static final NFURegistry.Accessor<MobAngerRules> ATTACKER_DAMAGED_AND_ATTACKING = RULES.register("attacker_and_attacking",
             () -> new MobAngerRules()
                     .forReason(MobAngerReason.ATTACKED.get())
                     .forReason(MobAngerReason.ATTACKING.get())
-                    .forReason(MobAngerReason.HITTING.get())
-                    .end());
+                    .forReason(MobAngerReason.HITTING.get()));
 
     /**
      * This mob will be angry with whatever it is attacking, with forgiving time 5 min.
@@ -73,11 +69,9 @@ public class MobAngerRules {
                     .forReason(MobAngerReason.HIT.get())
                     .forReason(MobAngerReason.ATTACKING.get())
                     .forReason(MobAngerReason.HITTING.get())
-                    .forReason(MobAngerReason.TARGETING.get())
-                    .end());
+                    .forReason(MobAngerReason.TARGETING.get()));
 
     private final Map<MobAngerReason, TriFunction<MobAngerReason, Mob, LivingEntity, Integer>> table = new HashMap<>();
-    private boolean ended = false;
 
     /**
      * Declare that the mob will get angry for the given reason.
@@ -87,7 +81,6 @@ public class MobAngerRules {
      */
     public MobAngerRules forReason(MobAngerReason reason, TriFunction<MobAngerReason, Mob, LivingEntity, Integer> forgivingTicksGetter)
     {
-        if (ended) throw illegalModification();
         table.put(reason, forgivingTicksGetter);
         return this;
     }
@@ -100,7 +93,6 @@ public class MobAngerRules {
      */
     public MobAngerRules forReason(MobAngerReason reason, int forgivingTicks)
     {
-        if (ended) throw illegalModification();
         table.put(reason, (r, m, l) -> forgivingTicks);
         return this;
     }
@@ -113,21 +105,6 @@ public class MobAngerRules {
     public MobAngerRules forReason(MobAngerReason reason)
     {
         return forReason(reason, DEFAULT_FORGIVING_TICKS);
-    }
-
-    private IllegalStateException illegalModification()
-    {
-        return new IllegalStateException("MobAngerRules#forReason: Illegal operation as construction has ended. Consider listening to MobAngerRulesEvent for external modification.");
-    }
-
-    /**
-     * Label this rules as construction ended. This operation posts {@link MobAngerRulesEvent} for external modification,
-     * and blocks in-place {@code forReason} calls after this, in order to prevent accident modification of the registry entries.
-     */
-    public MobAngerRules end() {
-        MinecraftForge.EVENT_BUS.post(new MobAngerRulesEvent(this));
-        this.ended = true;
-        return this;
     }
 
     /**

@@ -104,6 +104,10 @@ public class EntityComponentAPI {
         return getComponentByPath(e, HierarchyPath.byLiteral(path), type);
     }
 
+    public static <T extends IEntityComponent<? extends Entity>> Optional<T> getComponentByPath(Entity e, SubComponentAccessor<? extends Entity, T> accessor) {
+        return getComponentManager(e).getSubComponentByPath(accessor);
+    }
+
     public static Set<IEntityComponent<? extends Entity>> getAllComponents(Entity target) {
         return getComponentManager(target).getSelfAndDownstreamComponents();
     }
@@ -114,6 +118,14 @@ public class EntityComponentAPI {
      */
     public static <T extends IEntityComponent<? extends Entity>> T getComponentByPathOrFallback(Entity e, HierarchyPath path, EntityComponentType<?, T> type) {
         return getComponentByPath(e, path, type).orElseGet(() -> type.createUnsafe(e));
+    }
+
+    /**
+     * Get a component of an entity by accessor, or create a transient default component as fallback.
+     * <p>Note: the fallback only works as a placeholder, and will not be attached to the entity.
+     */
+    public static <T extends IEntityComponent<? extends Entity>> T getComponentByPathOrFallback(Entity e, SubComponentAccessor<? extends Entity, T> accessor) {
+        return getComponentByPathOrFallback(e, accessor.getPath(), accessor.getType());
     }
 
     /**

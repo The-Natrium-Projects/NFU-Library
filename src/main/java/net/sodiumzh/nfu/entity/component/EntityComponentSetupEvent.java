@@ -239,12 +239,6 @@ public class EntityComponentSetupEvent extends NFUEntityEvent<Entity> {
             });
     }
 
-    @ApiStatus.Internal
-    void checkHierarchy() {
-        this.manager.getDownstreamComponents().stream()
-            .filter(c -> c instanceof EntityComponentBase<? extends Entity>).map(c -> (EntityComponentBase<? extends Entity>)c)
-            .forEach(EntityComponentBase::checkHierarchy);
-    }
 
     public static enum PreConstructPriority {
         /**

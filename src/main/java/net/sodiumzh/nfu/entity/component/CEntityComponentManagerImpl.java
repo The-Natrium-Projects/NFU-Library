@@ -28,6 +28,8 @@ import java.util.stream.Collectors;
  */
 final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> implements CEntityComponentManager {
 
+    private static ThreadLocal<Long> CONSTRUCT_COUNT = ThreadLocal.withInitial(() -> 0L);
+
     private boolean constructionDone = false;
     private final Validatable<Map<HierarchyPath, IEntityComponent<?>>> preConstructed = new Validatable<>(new HashMap<>());    // Valid only in construction. Invalidated after construction.
 
@@ -37,6 +39,21 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     }
 
     private void construct() {
+        // Running construction in EntityComponentAPI#getComponentManager will cause infinite recursion.
+        // Backtrace check each 100 times to catch infinite recursion
+        // This check is disabled in runtime as it could be costly
+        long count = CONSTRUCT_COUNT.get() + 1;
+        CONSTRUCT_COUNT.set(count);
+        if (count % 100 == 0) {
+            boolean infRec = StackWalker.getInstance().walk(stream -> stream.limit(100)
+                .anyMatch(stackFrame -> stackFrame.getClassName().equals(EntityComponentAPI.class.getName())
+                    && stackFrame.getMethodName().equals("getComponentManager")));
+            if (infRec) {
+                throw new IllegalCallerException("Illegal call EntityComponentAPI#getComponentManager in component manager construction phase. "
+                    + "Note that EntityComponentSetupEvent and EntityComponentFinalizeSetupEvent are posted during construction and should not call EntityComponentAPI#getComponentManager. "
+                    + "Use event.getComponentManager() to access the manager in the event listeners instead.");
+            }
+        }
         // Enter construction phase, collect component construction info by event
         preConstructed.validate();
         EntityComponentSetupEvent initEvent = new EntityComponentSetupEvent(this.getEntity(), this);
@@ -56,8 +73,9 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
             holder.initializeComponents(this);
         MinecraftForge.EVENT_BUS.post(new EntityComponentFinalizeSetupEvent(this.getEntity(), this));
         // Debug check, set this config true if debugging, and false in release to save resource
-        if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK)
-            initEvent.checkHierarchy();
+        if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK) {
+            this.checkHierarchyOfAllComponents();
+        }
     }
 
     @Override
@@ -73,8 +91,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
         if (res.isPresent()) return res;
         else if (!this.constructionDone) {
             return Optional.ofNullable(this.preConstructed.get().get(HierarchyPath.byNameArray(name)));
-        }
-        else return Optional.empty();
+        } else return Optional.empty();
     }
 
     @Override
@@ -93,7 +110,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
         // Half-constructed hierarchy may be half-available as each node ensures upstream to be available, so search normally in any case
         var res = super.getSubComponentByPath(path);
         if (res.isPresent()) return res;
-        // If not found in construction phase, try finding pre-constructed components from transient map
+            // If not found in construction phase, try finding pre-constructed components from transient map
         else if (!this.constructionDone)
             return Optional.ofNullable(this.preConstructed.get().get(path));
         else return Optional.empty();
@@ -113,13 +130,30 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
      */
     @Override
     public void tick() {
-        this.getDownstreamComponents().stream().map(e -> Tuple2.of(e.pathDepth(), e))
-            .sorted(Comparator.comparingInt(Tuple2::getA)).forEach(e -> e.getB().tick());
-        if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK && this.getEntity().tickCount % 100 == 0) {
-            this.getDownstreamComponents().stream().filter(c -> c instanceof EntityComponentBase<? extends Entity>)
-                .map(c -> (EntityComponentBase<?>)c).forEach(EntityComponentBase::checkHierarchy);
+        this.getDownstreamComponents().stream()
+            .filter(IEntityComponent::shouldTick)
+            .map(e -> Tuple2.of(e.pathDepth(), e))
+            .sorted(Comparator.comparingInt(Tuple2::getA))
+            .forEach(e -> e.getB().tick());
+        // Check hierarchy if configured each 10s
+        if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK && this.getEntity().tickCount % 200 == 0) {
+            this.checkHierarchyOfAllComponents();
         }
     }
+
+    private void checkHierarchyOfAllComponents() {
+        this.getAllPathsAndDownstreamComponents().entrySet().stream()
+            .peek(entry -> {
+                if (entry.getKey().length() >= 64)
+                    throw new IllegalStateException("Too deep path (>=64). Cyclic hierarchy path? Path: " + entry.getKey().toString());
+            })
+            .filter(e -> e.getValue() instanceof EntityComponentBase<? extends Entity>)
+            // Deeper first here, so that we can catch
+            .sorted(Comparator.comparingInt((Map.Entry<HierarchyPath, IEntityComponent<?>> e) -> e.getKey().length()))
+            .map(entry -> (EntityComponentBase<?>) (entry.getValue()))
+            .forEach(EntityComponentBase::checkHierarchy);
+    }
+
 
     @Override
     public EntityComponentType<Entity, CEntityComponentManager> getType() {
@@ -153,7 +187,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     public void deserializeNBT(CompoundTag nbt) {
         MinecraftForge.EVENT_BUS.post(new EntityComponentManagerDeserializeEvent.Before(this.getEntity(), nbt));
         NFUNBTStatics.entrySet(nbt).stream()
-            .map(entry -> new AbstractMap.SimpleEntry<>(HierarchyPath.byLiteral(entry.getKey()), (CompoundTag)(entry.getValue())))  // Implicitly assert tag type
+            .map(entry -> new AbstractMap.SimpleEntry<>(HierarchyPath.byLiteral(entry.getKey()), (CompoundTag) (entry.getValue())))  // Implicitly assert tag type
             .sorted(Comparator.comparingInt(entry -> entry.getKey().length()))
             .forEach(entry -> {
                 IEntityComponent<?> component = this.getSubComponentByPath(entry.getKey()).orElse(null);
@@ -231,7 +265,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
                 throw new IllegalStateException("Component type conflict: deserializing " + type.getKey() + " + to path " +
                     component.getPathFromRoot() + ", but the path is occupied by a component of " + component.getType().getKey());
             }
-            T res = component == null ? (T)type.createUnsafe(this.getEntity()) : component;
+            T res = component == null ? (T) type.createUnsafe(this.getEntity()) : component;
             res.setSerialize(true); // Components loaded from NBT should be always serialized
             // Deserialize this component
             res.deserializeNBT(nbt.getCompound("data"));
@@ -248,7 +282,4 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
         return AvailableSide.BOTH;
     }
 
-    private static record RequiredComponentInfo(
-        IEntityComponent<? extends Entity> requiredBy,
-        String relPath,
-        EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type){}}
+}

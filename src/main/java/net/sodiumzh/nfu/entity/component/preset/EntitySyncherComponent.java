@@ -220,7 +220,6 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
     }
 
     public void tick() {
-        // Sync
         if (!this.isClientSide()) {
             if ((this.getEntity().tickCount % this.syncInterval) == 0) {
                 ClientboundEntitySyncherComponentSyncPacket packet = new ClientboundEntitySyncherComponentSyncPacket(this);
@@ -233,19 +232,6 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
                 NFUNetworkStatics.sendToServer(player, NFUNetworkChannels.CHANNEL, packet);
                 this.changedDataKeys.clear();
             }
-        }
-    }
-
-    /**
-     * As ticking here only handles synching, stop ticking when unchanged and prevent packet synching to save resource
-     */
-    public boolean shouldTick() {
-        if (this.isClientSide()) {
-            return this.getEntity() instanceof Player   // Only player has client2server synched getters. Data is always server2client.
-                && this.synchedGetters.values().stream().noneMatch(getter -> getter.direction == SynchedGetter.Direction.CLIENT_TO_SERVER);
-        }
-        else {
-            return !this.changedDataKeys.isEmpty() && this.synchedGetters.values().stream().noneMatch(getter -> getter.direction == SynchedGetter.Direction.SERVER_TO_CLIENT);
         }
     }
 

@@ -26,7 +26,6 @@ public abstract class EntityItemStackMonitorComponent extends EntityComponentBas
         this.setup();
         if (entity instanceof IEntityItemStackMonitorAccess access)
             access.setupItemStackMonitor(this);
-        MinecraftForge.EVENT_BUS.post(new SetupEvent(this));
     }
 
     public HashMap<String, Supplier<ItemStack>> getListenedStacks() {
@@ -84,17 +83,6 @@ public abstract class EntityItemStackMonitorComponent extends EntityComponentBas
         @Override
         public void onChanged(String key, ItemStack oldItemStackCopy, ItemStack newItemStackCopy) {
 
-        }
-    }
-
-    public static class SetupEvent extends EntityComponentEvent<Entity, EntityItemStackMonitorComponent> {
-
-        public SetupEvent(EntityItemStackMonitorComponent component) {
-            super(component);
-        }
-
-        public void addListened(String key, Supplier<ItemStack> getter) {
-            this.getComponent().addListened(key, getter);
         }
     }
 
