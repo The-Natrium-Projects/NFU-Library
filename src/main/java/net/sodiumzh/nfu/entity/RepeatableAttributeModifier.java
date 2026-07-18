@@ -8,6 +8,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -20,7 +21,7 @@ import java.util.UUID;
  */
 public class RepeatableAttributeModifier
 {
-	protected final double value;
+	protected double value;
 	protected final ResourceLocation name;
 	protected final AttributeModifier.Operation operation;
 	protected final ArrayList<AttributeModifier> modifiers = new ArrayList<>();
@@ -59,8 +60,13 @@ public class RepeatableAttributeModifier
 	{
 		AttributeInstance inst = target.getAttribute(attribute);
 		// Check if it's already applying the same modifier. This could prevent iteration on tick.
-		if (inst.hasModifier(this.get(times)))
-		{
+		if (inst.hasModifier(this.get(times))) {
+			// If value is updated, still refresh the attribute
+			UUID modifierID = this.get(times).getId();
+			if (Math.abs(inst.getModifier(modifierID).getAmount() - this.get(times).getAmount()) > 1e-12) {
+				inst.removeModifier(modifierID);
+				inst.addTransientModifier(this.get(times));
+			}
 			return;
 		}
 		for (var modifier: modifiers)
@@ -87,5 +93,19 @@ public class RepeatableAttributeModifier
 		this.get(size);
 		return this;
 	}
-	
+
+	/**
+	 * Reset the amount. Note that entities that already applied the attributes must run {@code apply} again to update the values.
+	 */
+	public void resetAmount(double value) {
+		List<AttributeModifier> newModifiers = this.modifiers.stream()
+			.map(am -> new AttributeModifier(am.getId(), am.getName(), value, am.getOperation()))
+			.toList();
+		for (int i = 0; i < this.modifiers.size(); ++i) {
+			this.modifiers.set(i, newModifiers.get(i));
+		}
+		this.value = value;
+	}
+
+
 }

@@ -212,6 +212,16 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     }
 
     /**
+     * Get a component from this component's downstream tree with its path and type. It mirrors {@link IEntityComponent#getSubComponentByPath(HierarchyPath, EntityComponentType)}
+     * using accessor to simplify access.
+     */
+    @ApiStatus.NonExtendable
+    default <C extends IEntityComponent<? extends Entity>> Optional<C> getSubComponentByPath(SubComponentAccessor<?, C> accessor) {
+        return this.getSubComponentByPath(accessor.getPath(), accessor.getType());
+    }
+
+
+    /**
      * Get a mapping of all components with its
      */
     default <T extends IEntityComponent<? extends Entity>> Map<HierarchyPath, T> getSubComponentsByType(EntityComponentType<?, T> type) {
@@ -234,7 +244,6 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      *                                Otherwise it throws in this case. Set this true only when you're sure its upstream nodes must be nodes.
      */
     void addSubComponentByPath(HierarchyPath path, IEntityComponent<? extends Entity> component, boolean fillNodesIfParentAbsent);
-
 
     default void addSubComponentByPath(HierarchyPath path, IEntityComponent<? extends Entity> component) {
         this.addSubComponentByPath(path, component, false);
@@ -347,8 +356,15 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Quick check if this component's path in the component manager equals the given path.
      * <p>This operation is quicker than {@code getPathFromRoot}.
      */
+    @NotAvailableInManagerConstruction
     default boolean pathInManagerEquals(HierarchyPath path) {
         return EntityComponentAPI.getComponentByPath(this.getEntity(), path).filter(c -> c.equals(this)).isPresent();
+    }
+
+    @NotAvailableInManagerConstruction
+    @ApiStatus.NonExtendable
+    default public boolean is(EntityComponentType<?, ?> type) {
+        return this.getType().equals(type);
     }
 
     /**
@@ -364,8 +380,8 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
             current = current.getParent().orElse(null);
             if (current == null) return i;
             i++;
-            if (i > 65535) {
-                throw new IllegalStateException("Path is too deep (>65535). Cyclic hierarchy?");
+            if (i >= 64) {
+                throw new IllegalStateException("Path is too deep (>=64). Cyclic hierarchy?");
             }
         }
     }

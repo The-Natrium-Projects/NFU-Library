@@ -4,16 +4,26 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.CapabilityDispatcher;
+import net.minecraftforge.common.capabilities.CapabilityProvider;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
+import net.sodiumzh.nfu.entity.component.preset.EntityDataComponent;
 import net.sodiumzh.nfu.entity.component.preset.IEntityComponentAccess;
+import net.sodiumzh.nfu.exception.ReflectionFailedException;
 import net.sodiumzh.nfu.mixin.event.entity.EntityFinishConstructionEvent;
 import net.sodiumzh.nfu.object.HierarchyPath;
+import net.sodiumzh.nfu.reflection.CachedFieldSearchers;
 import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
+import net.sodiumzh.nfu.util.NFUReflectionStatics;
+
+import java.lang.reflect.Field;
+import java.util.Optional;
 
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class EntityComponentEventListeners {
@@ -27,10 +37,11 @@ public class EntityComponentEventListeners {
 
     @SubscribeEvent
     public static void createDefaultComponents(EntityComponentSetupEvent event) {
-        event.addComponent(HierarchyPath.byNameArray("data"), EntityComponentTypes.DATA.get());
-        event.addComponent(HierarchyPath.byNameArray("timer"), EntityComponentTypes.TIMER.get());
-        event.addComponent(HierarchyPath.byNameArray("syncher"), EntityComponentTypes.SYNCHER.get());
+        event.addComponent(EntityComponentTypes.PATH_DEFAULT_DATA, EntityComponentTypes.DATA.get());
+        event.addComponent(EntityComponentTypes.PATH_DEFAULT_TIMER, EntityComponentTypes.TIMER.get());
+        event.addComponent(EntityComponentTypes.PATH_DEFAULT_SYNCHER, EntityComponentTypes.SYNCHER.get());
         if (event.getEntity() instanceof LivingEntity)
-            event.addComponent(HierarchyPath.byNameArray("attribute_monitor"), EntityComponentTypes.ATTRIBUTE_MONITOR.get());
+            event.addComponent(EntityComponentTypes.PATH_ATTRIBUTE_MONITOR, EntityComponentTypes.ATTRIBUTE_MONITOR.get());
     }
+
 }

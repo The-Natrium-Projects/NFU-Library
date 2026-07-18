@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * A utility for frequent reflective access of a field. It caches whether the field exists and
  * the {@link Field} instance for each accessing class, and prevents frequent unsafe {@link Class#getDeclaredField} operations.
  */
+@Deprecated
 public class CachedFieldAccessor {
 
     private final Map<Class<?>, Optional<Field>> map = new ConcurrentHashMap<>();

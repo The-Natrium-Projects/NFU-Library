@@ -4,8 +4,6 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import net.minecraft.world.entity.Entity;
 import net.sodiumzh.nfu.annotation.DontCallManually;
-import net.sodiumzh.nfu.exception.WrongSideException;
-import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.object.HierarchyPath;
 import net.sodiumzh.nfu.util.NFUContainerStatics;
 import org.jetbrains.annotations.ApiStatus;
@@ -260,14 +258,16 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     }
 
     /**
-     * Get all legal paths of this component. Keep empty to require no path.
+     * If this component requires a specific path from root, return the list of all allowed paths.
+     * Return null or empty list for no path requirement.
      */
-    public List<HierarchyPath> getRequiredPaths() {
-        return List.of();
+    @Nullable
+    public List<HierarchyPath> getAllowedPaths() {
+        return null;
     }
 
     public void checkHierarchy() {
-        this.pathDepth();   // This includes a depth check. Too deep path (>65535) shows cyclic hierarchy.
+        // Check if required subcomponents are present
         String subcomponentErrMsg = getRequiredSubcomponents().entrySet().stream()
             .filter(entry -> this.getSubComponentByPath(entry.getKey(), entry.getValue()).isEmpty())
             .map(entry -> String.format(Locale.ENGLISH, "\"%s\"(%s); ", entry.getKey(), entry.getValue().getKey().toString()))
@@ -275,11 +275,11 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
         if (!subcomponentErrMsg.isEmpty()) {
             throw new IllegalStateException(String.format(Locale.ENGLISH, "Component \"%s\"(%s) missing subcomponent(s): %s", this.getPathFromRoot(), this.getType().getKey(), subcomponentErrMsg));
         }
-
-        List<HierarchyPath> requiredPathsList = getRequiredPaths().stream().distinct().toList();
-        if (!requiredPathsList.contains(this.getPathFromRoot())) {
-            throw new IllegalStateException(String.format(Locale.ENGLISH, "Illegal path \"%s\" for component type %s. Valid paths: %s",
-                this.getPathFromRoot(), this.getType().getKey(), requiredPathsList.stream().map(HierarchyPath::toLiteral).reduce("", (s1, s2) -> s1 + ", " + s2)));
+        // Check if own path from root is legal
+        List<HierarchyPath> allowedPaths = getAllowedPaths();
+        if (allowedPaths != null && !allowedPaths.isEmpty() && !allowedPaths.contains(this.getPathFromRoot())) {
+            throw new IllegalStateException(String.format(Locale.ENGLISH, "Illegal path \"%s\" for component type %s. Allowed paths: %s",
+                this.getPathFromRoot(), this.getType().getKey(), allowedPaths.stream().map(HierarchyPath::toLiteral).reduce("", (s1, s2) -> s1 + ", " + s2)));
         }
     }
 
