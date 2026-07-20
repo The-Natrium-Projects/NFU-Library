@@ -60,7 +60,6 @@ public class BaubleSlotAccessor
 	/**
 	 * Get a copy of current ItemStacks. The output map is immutable.
 	 * <p>Note: output ItemStacks are copies. Modifying them won't do anything to actual ItemStacks.
-	 * @return
 	 */
 	public Map<String, ItemStack> getItemStacks()
 	{
