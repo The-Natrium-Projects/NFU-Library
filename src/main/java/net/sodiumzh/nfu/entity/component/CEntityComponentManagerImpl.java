@@ -2,12 +2,9 @@ package net.sodiumzh.nfu.entity.component;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.MinecraftForge;
-import net.sodiumzh.nfu.capability.CEntityTickingCapability;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.entity.component.preset.IEntityComponentAccess;
 import net.sodiumzh.nfu.network.AvailableSide;
@@ -19,7 +16,6 @@ import net.sodiumzh.nfu.util.NFUNBTStatics;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation for CEntityComponentManager.
@@ -131,6 +127,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     @Override
     public void tick() {
         this.getDownstreamComponents().stream()
+            .filter(c -> c.tickingSide().isCorrectSide(this.getEntity()))
             .filter(IEntityComponent::shouldTick)
             .map(e -> Tuple2.of(e.pathDepth(), e))
             .sorted(Comparator.comparingInt(Tuple2::getA))
@@ -286,7 +283,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     }
 
     @Override
-    public AvailableSide getTickingSide() {
+    public AvailableSide tickingSide() {
         return AvailableSide.BOTH;
     }
 

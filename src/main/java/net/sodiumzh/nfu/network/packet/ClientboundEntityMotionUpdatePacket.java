@@ -4,9 +4,11 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.phys.Vec3;
-import net.sodiumzh.nfu.network.NFUClientboundPacketHandlers;
 import net.sodiumzh.nfu.network.NFUDataSerializers;
 
+/**
+ * Sent on entity motion change on 
+ */
 public class ClientboundEntityMotionUpdatePacket implements Packet<ClientGamePacketListener> {
 
     private final int id;

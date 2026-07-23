@@ -61,6 +61,7 @@ import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerLevel;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerPlayer;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;
+import net.sodiumzh.nfu.network.packet.ClientboundLivingSyncEquipmentPacket;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -1027,6 +1028,18 @@ public class NFUEntityStatics
         if (ForgeRegistries.ENTITY_TYPES.containsKey(key))
             return ForgeRegistries.ENTITY_TYPES.getValue(key);
         else return null;
+    }
+
+    /**
+     * Manually sync a living entity's equipment slots from server to client.
+     * <p>This sync operation generally doesn't need to be done manually. Called for fixing issues that server inventory
+     * is not correctly synced to client appearance.
+     */
+    public static void syncLivingEquipment(LivingEntity l) {
+        if (!l.level().isClientSide()) {
+            ClientboundLivingSyncEquipmentPacket packet = new ClientboundLivingSyncEquipmentPacket(l);
+            NFUNetworkStatics.sendToAllPlayers(l.level(), NFUNetworkChannels.CHANNEL, packet);
+        }
     }
 
 }

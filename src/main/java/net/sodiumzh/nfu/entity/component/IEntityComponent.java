@@ -353,6 +353,12 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     }
 
     /**
+     * Defines on which side this component should tick.
+     * <p>On ticking, this check is performed before {@link IEntityComponent#shouldTick()} check.
+     */
+    default AvailableSide tickingSide() {return AvailableSide.BOTH;}
+
+    /**
      * Create saved data. Serialization here can return null safely if nothing should be saved.
      */
     @Nullable CompoundTag serializeNBT();
@@ -390,6 +396,5 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
             }
         }
     }
-
 
 }
