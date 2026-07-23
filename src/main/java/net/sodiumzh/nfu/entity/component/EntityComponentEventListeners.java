@@ -8,6 +8,7 @@ import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
@@ -42,6 +43,11 @@ public class EntityComponentEventListeners {
         event.addComponent(EntityComponentTypes.PATH_DEFAULT_SYNCHER, EntityComponentTypes.SYNCHER.get());
         if (event.getEntity() instanceof LivingEntity)
             event.addComponent(EntityComponentTypes.PATH_ATTRIBUTE_MONITOR, EntityComponentTypes.ATTRIBUTE_MONITOR.get());
+    }
+
+    @SubscribeEvent
+    public static void onJoinLevel(EntityJoinLevelEvent event) {
+        event.getEntity().getCapability(EntityComponentStatics.CAP_MANAGER).ifPresent(IEntityComponent::joinLevel);
     }
 
 }
