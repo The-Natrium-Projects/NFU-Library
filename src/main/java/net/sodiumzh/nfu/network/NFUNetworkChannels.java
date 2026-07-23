@@ -7,6 +7,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.entity.component.preset.EntitySyncherComponent;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;
+import net.sodiumzh.nfu.network.packet.ClientboundLivingSyncEquipmentPacket;
 import net.sodiumzh.nfu.util.NFUNetworkStatics;
 
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -22,6 +23,7 @@ public class NFUNetworkChannels {
     public static void registerMessage() {
         CHANNEL = NFUNetworkStatics.newChannel(NFULibrary.MOD_ID, "nfu_channel", VERSION);
         NFUNetworkStatics.registerDefaultClientGamePacket(nextID(), CHANNEL, ClientboundEntityMotionUpdatePacket.class, ClientboundEntityMotionUpdatePacket::new);
+        NFUNetworkStatics.registerDefaultClientGamePacket(nextID(), CHANNEL, ClientboundLivingSyncEquipmentPacket.class, ClientboundLivingSyncEquipmentPacket::new);
         NFUNetworkStatics.registerDefaultClientGamePacket(nextID(), CHANNEL, EntitySyncherComponent.ClientboundEntitySyncherComponentSyncPacket.class,
             EntitySyncherComponent.ClientboundEntitySyncherComponentSyncPacket::new);
         NFUNetworkStatics.registerDefaultServerGamePacket(nextID(), CHANNEL, EntitySyncherComponent.ServerboundPlayerEntitySyncherComponentSyncPacket.class,
