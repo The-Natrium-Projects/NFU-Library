@@ -294,6 +294,11 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     void tick();
 
     /**
+     * Called when the entity is placed in the level.
+     */
+    void joinLevel();
+
+    /**
      * Get the component type of this component. Note tha the component type must be registered
      * in {@link net.sodiumzh.nfu.registry.NFURegistries#ENTITY_COMPONENT_TYPES}, or it will cause an exception.
      */

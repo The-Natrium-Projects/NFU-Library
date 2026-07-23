@@ -243,6 +243,9 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
         return rebuildOnDeserialization;
     }
 
+    @Override
+    public void joinLevel() {}
+
     public void setRebuildOnDeserialization(boolean value) {
         this.rebuildOnDeserialization = value;
     }
