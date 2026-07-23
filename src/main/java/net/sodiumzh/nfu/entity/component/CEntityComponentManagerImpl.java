@@ -141,6 +141,14 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
         }
     }
 
+    @Override
+    public void joinLevel() {
+        this.getDownstreamComponents().stream()
+            .map(e -> Tuple2.of(e.pathDepth(), e))
+            .sorted(Comparator.comparingInt(Tuple2::getA))
+            .forEach(e -> e.getB().joinLevel());
+    }
+
     private void checkHierarchyOfAllComponents() {
         this.getAllPathsAndDownstreamComponents().entrySet().stream()
             .peek(entry -> {
