@@ -18,6 +18,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.sodiumzh.nfu.function.UnaryOperatorOneArg;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinItemInput;
 
 import javax.annotation.Nonnull;
@@ -38,7 +39,7 @@ public class NFUBlockItem extends ItemNameBlockItem implements INFUItem {
     protected Optional<Supplier<String>> blockDescriptionIdOverride = Optional.empty();
     protected Optional<Supplier<ItemStack>> defaultInstanceSupplier = Optional.empty();
     @Nullable
-    protected BiFunction<ItemStack, MutableComponent, MutableComponent> nameStyle = null;
+    protected UnaryOperatorOneArg<MutableComponent, ItemStack> nameStyle = null;
 
     public NFUBlockItem(Block pBlock, Properties pProperties) {
         super(pBlock, pProperties);
@@ -251,11 +252,12 @@ public class NFUBlockItem extends ItemNameBlockItem implements INFUItem {
     @OnlyIn(Dist.CLIENT)
     @Nullable
     @Override
-    public BiFunction<ItemStack, MutableComponent, MutableComponent> getNameStyle() {
+    public UnaryOperatorOneArg<MutableComponent, ItemStack> getNameStyle() {
         return this.nameStyle;
     }
 
-    public NFUBlockItem setNameStyle(BiFunction<ItemStack, MutableComponent, MutableComponent> styleModifier) {
+    @Override
+    public NFUBlockItem setNameStyle(UnaryOperatorOneArg<MutableComponent, ItemStack> styleModifier) {
         this.nameStyle = styleModifier;
         return this;
     }
@@ -264,7 +266,7 @@ public class NFUBlockItem extends ItemNameBlockItem implements INFUItem {
     public @Nonnull Component getName(ItemStack pStack) {
         Component c = super.getName(pStack);
         if (c instanceof MutableComponent mc)
-            return Optional.ofNullable(getNameStyle()).map(f -> f.apply(pStack, mc)).orElse(mc);
+            return Optional.ofNullable(getNameStyle()).map(f -> f.apply(mc, pStack)).orElse(mc);
         else return c;
     }
 }
