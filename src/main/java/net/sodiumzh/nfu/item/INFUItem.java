@@ -9,10 +9,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
+import net.sodiumzh.nfu.function.UnaryOperatorOneArg;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinItemInput;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinPlayer;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerPlayerGameMode;
 import net.sodiumzh.nfu.object.ICastable;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -201,23 +203,46 @@ public interface INFUItem extends ICastable, ItemLike {
      * to re-format it.
      */
     @Nullable
-    public default BiFunction<ItemStack, MutableComponent, MutableComponent> getNameStyle() {
+    public default UnaryOperatorOneArg<MutableComponent, ItemStack> getNameStyle() {
         return null;
     }
 
-    public INFUItem setNameStyle(BiFunction<ItemStack, MutableComponent, MutableComponent> styleModifier);
+    public INFUItem setNameStyle(UnaryOperatorOneArg<MutableComponent, ItemStack> styleModifier);
 
+    @ApiStatus.NonExtendable
     public default INFUItem setNameStyle(UnaryOperator<MutableComponent> styleModifier) {
-        return setNameStyle((i, c) -> {return styleModifier.apply(c);});
+        return setNameStyle((UnaryOperatorOneArg<MutableComponent, ItemStack>)(c, i) -> styleModifier.apply(c));
     }
 
+    @ApiStatus.NonExtendable
     public default INFUItem setNameStyle(Consumer<MutableComponent> styleModifier) {
-        return setNameStyle((i, c) -> {styleModifier.accept(c); return c;});
+        return setNameStyle((c, i) -> {styleModifier.accept(c); return c;});
     }
 
-    public default INFUItem setNameStyle(BiConsumer<ItemStack, MutableComponent> styleModifier) {
-        return setNameStyle((i, c) -> {styleModifier.accept(i, c); return c;});
+    @ApiStatus.NonExtendable
+    public default INFUItem setNameStyle(BiConsumer<MutableComponent, ItemStack> styleModifier) {
+        return setNameStyle((c, i) -> {styleModifier.accept(c, i); return c;});
     }
 
+    @ApiStatus.NonExtendable
+    public default INFUItem appendNameStyle(UnaryOperatorOneArg<MutableComponent, ItemStack> styleModifier) {
+        if (this.getNameStyle() == null) this.setNameStyle(styleModifier);
+        else this.setNameStyle(this.getNameStyle().thenApply(styleModifier));
+        return this;
+    }
 
+    @ApiStatus.NonExtendable
+    public default INFUItem appendNameStyle(UnaryOperator<MutableComponent> styleModifier) {
+        return appendNameStyle((UnaryOperatorOneArg<MutableComponent, ItemStack>)(c, i) -> styleModifier.apply(c));
+    }
+
+    @ApiStatus.NonExtendable
+    public default INFUItem appendNameStyle(Consumer<MutableComponent> styleModifier) {
+        return appendNameStyle((c, i) -> {styleModifier.accept(c); return c;});
+    }
+
+    @ApiStatus.NonExtendable
+    public default INFUItem appendNameStyle(BiConsumer<MutableComponent, ItemStack> styleModifier) {
+        return appendNameStyle((c, i) -> {styleModifier.accept(c, i); return c;});
+    }
 }
