@@ -1,6 +1,7 @@
 package net.sodiumzh.nfu.util;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -481,4 +482,5 @@ public class NFULevelStatics
 		return EntityComponentAPI.getDefaultSyncher(player).getSynchedGetter("mouseFocus", HitResultInfo.class)
 			.orElseGet(() -> HitResultInfo.miss(player.position())).toHitResult(player.level());
 	}
+
 }

@@ -1,8 +1,11 @@
 package net.sodiumzh.nfu.reflection;
 
+import cpw.mods.modlauncher.api.INameMappingService;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.sodiumzh.nfu.container.ITable2D;
 import net.sodiumzh.nfu.container.Table2D;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;
+import net.sodiumzh.nfu.object.CastableObject;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
 import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.Nullable;
@@ -18,8 +21,9 @@ public class CachedFieldSearchers {
     private static final ThreadLocal<Map<Args, Optional<Field>>> CACHE = ThreadLocal.withInitial(HashMap::new);
 
     public static Optional<Field> findDeclaredField(Class<?> clazz, String name) {
+        String remappedName = ObfuscationReflectionHelper.remapName(INameMappingService.Domain.FIELD, name);
         // First check if recorded
-        Args args = new Args(clazz, name);
+        Args args = new Args(clazz, remappedName);
         @Nullable Optional<Field> f = CACHE.get().getOrDefault(args, null);
         // Here: null = not searched yet; empty = searched, no such field; non-empty = field exists
         if (f != null) return f;
@@ -27,7 +31,7 @@ public class CachedFieldSearchers {
         // f is non-null below, only present/empty
         f = Optional.empty();
         try {
-            f = Optional.ofNullable(clazz.getDeclaredField(name));
+            f = Optional.ofNullable(clazz.getDeclaredField(remappedName));
         } catch (NoSuchFieldException | NoSuchFieldError e) {
             f = Optional.empty();
         }
@@ -45,6 +49,10 @@ public class CachedFieldSearchers {
     public static <T> Optional<T> getFieldValue(Object obj, Class<?> declaredClass, String name, Class<T> valueClass) {
         return getFieldValue(obj, declaredClass, name).filter(v -> valueClass.isAssignableFrom(v.getClass()))
             .map(v -> (T)v);
+    }
+
+    public static void clearCache() {
+        CACHE.get().clear();
     }
 
     private static record Args(Class<?> declaredClass, String name) {
