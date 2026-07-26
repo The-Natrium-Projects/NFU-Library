@@ -1,7 +1,10 @@
 package net.sodiumzh.nfu.reflection;
 
+import cpw.mods.modlauncher.api.INameMappingService;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;
+import net.sodiumzh.nfu.object.CastableObject;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,14 +15,15 @@ public class CachedMethodSearchers {
     private static final ThreadLocal<Map<Args, Optional<Method>>> CACHE = ThreadLocal.withInitial(HashMap::new);
 
     public static Optional<Method> findDeclaredMethod(Class<?> declaredClass, String name, Class<?>... paramClasses) {
-        Args args = new Args(declaredClass, name, paramClasses);
+        String remappedName = ObfuscationReflectionHelper.remapName(INameMappingService.Domain.METHOD, name);
+        Args args = new Args(declaredClass, remappedName, paramClasses);
         Optional<Method> m = CACHE.get().getOrDefault(args, null);
         // If has a record, directly return
         if (m != null) return m;
         // Try finding method
         m = Optional.empty();
         try {
-            m = Optional.ofNullable(declaredClass.getDeclaredMethod(name, paramClasses));
+            m = Optional.of(declaredClass.getDeclaredMethod(remappedName, paramClasses));
         } catch (NoSuchMethodException | NoSuchMethodError e) {
             m = Optional.empty();
         }
@@ -28,7 +32,7 @@ public class CachedMethodSearchers {
         return m;
     }
 
-    public static <T> Optional<Object> invokeIfPresent(T caller, Class<? super T> declaredClass, String name, Tuple2<Class<?>, Object>[] paramClassesAndValues) {
+    public static <T> Optional<Object> invokeIfPresent(T caller, Class<? super T> declaredClass, String name, Tuple2<Class<?>, Object>... paramClassesAndValues) {
         return findDeclaredMethod(declaredClass, name, Arrays.stream(paramClassesAndValues).map(Tuple2::getA).toArray(Class<?>[]::new))
             .map(m -> {
                 try {
@@ -37,6 +41,10 @@ public class CachedMethodSearchers {
                     throw new ReflectionFailedException(e);
                 }
             });
+    }
+
+    public static <T> Optional<Object> invokeIfPresent(T caller, Class<? super T> declaredClass, String name) {
+        return invokeIfPresent(caller, declaredClass, name, new Tuple2[]{});
     }
 
     public static <T, P1> Optional<Object> invokeIfPresent(T caller, Class<? super T> declaredClass, String name, Class<? super P1> p1Class, P1 p1Value) {
@@ -114,6 +122,66 @@ public class CachedMethodSearchers {
                     throw new ReflectionFailedException(e);
                 }
             });
+    }
+
+    public static <T> Optional<CastableObject> invokeIfPresentCastable(T caller, Class<? super T> declaredClass, String name, Tuple2<Class<?>, Object>... paramClassesAndValues) {
+        return invokeIfPresent(caller, declaredClass, name, paramClassesAndValues).map(CastableObject::new);
+    }
+
+    public static <T> Optional<CastableObject> invokeIfPresentCastable(T caller, Class<? super T> declaredClass, String name) {
+        return invokeIfPresent(caller, declaredClass, name).map(CastableObject::new);
+    }
+
+    public static <T, P1> Optional<CastableObject> invokeIfPresentCastable(T caller, Class<? super T> declaredClass, String name, Class<? super P1> p1Class, P1 p1Value) {
+        return invokeIfPresent(caller, declaredClass, name,
+            p1Class, p1Value).map(CastableObject::new);
+    }
+
+    public static <T, P1, P2> Optional<CastableObject> invokeIfPresentCastable(T caller, Class<? super T> declaredClass, String name,
+                                                               Class<? super P1> p1Class, P1 p1Value, Class<? super P2> p2Class, P2 p2Value) {
+        return invokeIfPresent(caller, declaredClass, name,
+            p1Class, p1Value, p2Class, p2Value)
+            .map(CastableObject::new);
+    }
+
+    public static <T, P1, P2, P3> Optional<CastableObject> invokeIfPresentCastable(T caller, Class<? super T> declaredClass, String name,
+                                                                   Class<? super P1> p1Class, P1 p1Value, Class<? super P2> p2Class, P2 p2Value,
+                                                                   Class<? super P3> p3Class, P3 p3Value) {
+        return invokeIfPresent(caller, declaredClass, name,
+            p1Class, p1Value, p2Class, p2Value, p3Class, p3Value)
+            .map(CastableObject::new);
+    }
+
+    public static <T, P1, P2, P3, P4> Optional<CastableObject> invokeIfPresentCastable(T caller, Class<? super T> declaredClass, String name,
+                                                                       Class<? super P1> p1Class, P1 p1Value, Class<? super P2> p2Class, P2 p2Value,
+                                                                       Class<? super P3> p3Class, P3 p3Value, Class<? super P4> p4Class, P4 p4Value) {
+        return invokeIfPresent(caller, declaredClass, name,
+            p1Class, p1Value, p2Class, p2Value, p3Class, p3Value, p4Class, p4Value)
+            .map(CastableObject::new);
+    }
+
+    public static <T, P1, P2, P3, P4, P5> Optional<CastableObject> invokeIfPresentCastable(T caller, Class<? super T> declaredClass, String name,
+                                                                           Class<? super P1> p1Class, P1 p1Value, Class<? super P2> p2Class, P2 p2Value,
+                                                                           Class<? super P3> p3Class, P3 p3Value, Class<? super P4> p4Class, P4 p4Value,
+                                                                           Class<? super P5> p5Class, P5 p5Value)
+    {
+        return invokeIfPresent(caller, declaredClass, name,
+            p1Class, p1Value, p2Class, p2Value, p3Class, p3Value, p4Class, p4Value, p5Class, p5Value)
+            .map(CastableObject::new);
+    }
+
+    public static <T, P1, P2, P3, P4, P5, P6> Optional<CastableObject> invokeIfPresentCastable(T caller, Class<? super T> declaredClass, String name,
+                                                                               Class<? super P1> p1Class, P1 p1Value, Class<? super P2> p2Class, P2 p2Value,
+                                                                               Class<? super P3> p3Class, P3 p3Value, Class<? super P4> p4Class, P4 p4Value,
+                                                                               Class<? super P5> p5Class, P5 p5Value, Class<? super P6> p6Class, P6 p6Value)
+    {
+        return invokeIfPresent(caller, declaredClass, name,
+            p1Class, p1Value, p2Class, p2Value, p3Class, p3Value, p4Class, p4Value, p5Class, p5Value, p6Class, p6Value)
+            .map(CastableObject::new);
+    }
+
+    public static void clearCache() {
+        CACHE.get().clear();
     }
 
     private static record Args(Class<?> declaredClass, String name, Class<?>[] paramClasses) {

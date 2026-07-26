@@ -56,7 +56,7 @@ public class EntityComponentAPI {
         return e.getCapability(EntityComponentStatics.CAP_MANAGER).orElseGet(() -> {
             NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing component manager. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
-            return new CEntityComponentManagerImpl(e);
+            return new EntityComponentManagerPlaceholder(e);
         });
     }
 

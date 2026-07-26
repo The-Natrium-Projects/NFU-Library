@@ -62,6 +62,8 @@ import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerPlayer;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;
 import net.sodiumzh.nfu.network.packet.ClientboundLivingSyncEquipmentPacket;
+import net.sodiumzh.nfu.object.ICastable;
+import net.sodiumzh.nfu.reflection.CachedMethodSearchers;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -811,6 +813,10 @@ public class NFUEntityStatics
 		NFUReflectionStatics.forceSet(mob, Mob.class, "f_21362_", newTarget);	// Mob.target
 	}
 
+    /**
+     * Get entity by UUID.
+     * <p>Note:
+     */
 	@Nullable
 	public static Entity getEntityByUUID(Level level, UUID uuid)
 	{
@@ -818,16 +824,15 @@ public class NFUEntityStatics
 			return sl.getEntity(uuid);
 		Player player = level.getPlayerByUUID(uuid);
 		if (player != null) return player;
-		@SuppressWarnings("unchecked")
-		Iterable<Entity> entities = NFUReflectionStatics.forceInvokeRetVal(level, Level.class, "m_142425_").castTo(LevelEntityGetter.class).getAll();	// Level#getEntities
-		for (Entity e: entities)
-		{
-			if (e.getUUID().equals(uuid))
-				return e;
-		}
-		return null;
+        return getLevelEntityGetter(level).get(uuid);
 	}
-	
+
+    public static LevelEntityGetter<Entity> getLevelEntityGetter(Level level) {
+        Optional<LevelEntityGetter<Entity>> opt = CachedMethodSearchers.invokeIfPresentCastable(level, Level.class, "m_142646_")
+            .map(ICastable::cast);
+        return opt.orElseThrow();
+    }
+
 	/**
 	 * Remove effect if its duration (ticks) and amplifier are no more than given values.
 	 * @param target Target living entity.
@@ -1040,6 +1045,22 @@ public class NFUEntityStatics
             ClientboundLivingSyncEquipmentPacket packet = new ClientboundLivingSyncEquipmentPacket(l);
             NFUNetworkStatics.sendToAllPlayers(l.level(), NFUNetworkChannels.CHANNEL, packet);
         }
+    }
+
+    /**
+     * Get mob attack target. This accessor is available on client, and is synched via
+     * default syncher.
+     */
+    public static Optional<LivingEntity> getMobAttackTarget(Mob mob) {
+        if (mob.level().isClientSide) {
+            return EntityComponentAPI.getDefaultSyncher(mob).hasSynchedGetter("attackTarget", UUID.class) ?
+                EntityComponentAPI.getDefaultSyncher(mob).getSynchedGetter("attackTarget", UUID.class)
+                    .map(uuid -> NFUEntityStatics.getEntityByUUID(mob.level(), uuid))
+                    .filter(e -> e instanceof LivingEntity)
+                    .map(e -> (LivingEntity)e)
+                : Optional.empty();
+        }
+        else return Optional.ofNullable(mob.getTarget());
     }
 
 }
