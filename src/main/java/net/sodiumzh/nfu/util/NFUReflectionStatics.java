@@ -3,18 +3,17 @@ package net.sodiumzh.nfu.util;
 import cpw.mods.modlauncher.api.INameMappingService;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;
 import net.sodiumzh.nfu.object.CastableObject;
 import net.sodiumzh.nfu.reflection.CachedFieldSearchers;
 import net.sodiumzh.nfu.reflection.CachedMethodSearchers;
+import org.apache.commons.io.serialization.ClassNameMatcher;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class NFUReflectionStatics
@@ -523,12 +522,51 @@ public class NFUReflectionStatics
 		return isRunningInMethod(clazz.getName(), methodNameSrg);
 	}
 
+    public static boolean isRunningInAnyDeclaredMethod(Object... classNamePairs) {
+        if (classNamePairs.length % 2 == 1)
+            throw new IllegalArgumentException("Invalid input list. Should be: className1, methodName1, className2, methodName2...");
+        List<String> classNames = new ArrayList<>(classNamePairs.length);
+        List<String> methodNames = new ArrayList<>(classNamePairs.length);
+        for (int i = 0; i < classNamePairs.length; i += 2) {
+            if (classNamePairs[i] instanceof Class<?> clazz && classNamePairs[i + 1] instanceof String str) {
+                classNames.add(clazz.getName());
+                methodNames.add(ObfuscationReflectionHelper.remapName(INameMappingService.Domain.METHOD, str));
+            } else {
+                throw new IllegalArgumentException("Invalid input list. Should be: className1, methodName1, className2, methodName2...");
+            }
+        }
+        return StackWalker.getInstance().walk(frames ->
+            frames.anyMatch(frame -> {
+                int classNameIndex = classNames.indexOf(frame.getClassName());
+                if (classNameIndex < 0) return false;
+                else return classNameIndex == methodNames.indexOf(frame.getMethodName());
+            }));
+    }
+
+    public static boolean isRunningInAnyMethod(Method... methods) {
+        List<String> methodNames = Arrays.stream(methods).map(Method::getName).toList();
+        return StackWalker.getInstance().walk(frames ->
+            frames.anyMatch(frame -> methodNames.contains(frame.getMethodName())));
+    }
+
 	/**
 	 * Check if the program is currently running inside a specific method call.
 	 */
 	public static boolean isRunningInMethod(Method method) {
 		return isRunningInMethod(method.getDeclaringClass(), method.getName());
 	}
+
+    public static boolean isRunningInClass(Class<?> clazz) {
+        return StackWalker.getInstance().walk(frames ->
+            frames.anyMatch(frame -> frame.getClassName().equals(clazz.getName())));
+    }
+
+    public static boolean isRunningInAnyClass(Class<?>... classes) {
+        List<String> names = Arrays.stream(classes).map(Class::getName).toList();
+        return StackWalker.getInstance().walk(frames ->
+            frames.anyMatch(frame -> names.contains(frame.getClassName())));
+    }
+
 
 	/**
 	 * Invoke a method without need of try-catch block.

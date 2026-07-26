@@ -24,8 +24,8 @@ public class NFUNetworkChannels {
         CHANNEL = NFUNetworkStatics.newChannel(NFULibrary.MOD_ID, "nfu_channel", VERSION);
         NFUNetworkStatics.registerDefaultClientGamePacket(nextID(), CHANNEL, ClientboundEntityMotionUpdatePacket.class, ClientboundEntityMotionUpdatePacket::new);
         NFUNetworkStatics.registerDefaultClientGamePacket(nextID(), CHANNEL, ClientboundLivingSyncEquipmentPacket.class, ClientboundLivingSyncEquipmentPacket::new);
-        NFUNetworkStatics.registerDefaultClientGamePacket(nextID(), CHANNEL, EntitySyncherComponent.ClientboundEntitySyncherComponentSyncPacket.class,
-            EntitySyncherComponent.ClientboundEntitySyncherComponentSyncPacket::new);
+        NFUNetworkStatics.registerDefaultClientGamePacket(nextID(), CHANNEL, EntitySyncherComponent.ClientboundEntitySyncherComponentSyncAllPacket.class,
+            EntitySyncherComponent.ClientboundEntitySyncherComponentSyncAllPacket::new);
         NFUNetworkStatics.registerDefaultServerGamePacket(nextID(), CHANNEL, EntitySyncherComponent.ServerboundPlayerEntitySyncherComponentSyncPacket.class,
             EntitySyncherComponent.ServerboundPlayerEntitySyncherComponentSyncPacket::new);
     }

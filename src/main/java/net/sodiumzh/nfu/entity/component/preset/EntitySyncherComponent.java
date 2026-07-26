@@ -1,15 +1,21 @@
 package net.sodiumzh.nfu.entity.component.preset;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ServerGamePacketListener;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.fml.LogicalSide;
 import net.sodiumzh.nfu.annotation.DontCallManually;
+import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.exception.WrongSideException;
 import net.sodiumzh.nfu.level.HitResultInfo;
@@ -17,6 +23,7 @@ import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.network.NFUDataSerializers;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.object.ClientOnly;
+import net.sodiumzh.nfu.object.HierarchyPath;
 import net.sodiumzh.nfu.object.ServerOnly;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import net.sodiumzh.nfu.util.NFUNetworkStatics;
@@ -32,8 +39,12 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
 
     protected Map<String, SynchedData> synchedData = new HashMap<>();
     protected Map<String, SynchedGetter> synchedGetters = new HashMap<>();
-    private Set<String> changedDataKeys = new HashSet<>();
-    long lastReceivedPacketId = -1; // accessed on client, to prevent out-of-date packets received after a newer packet
+    Set<String> changedDataKeys = new HashSet<>();
+    // Accessed on client, to prevent out-of-date packets received after a newer packet.
+    // For auto sync
+    long lastReceivedPacketId = -1;
+    // For manual sync
+    long lastReceivedManualPacketId = -1;
     private int syncInterval = 1;
 
     public EntitySyncherComponent(E entity) {
@@ -220,13 +231,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
     }
 
     public void tick() {
-        if (!this.isClientSide()) {
-            if ((this.getEntity().tickCount % this.syncInterval) == 0) {
-                ClientboundEntitySyncherComponentSyncPacket packet = new ClientboundEntitySyncherComponentSyncPacket(this);
-                NFUNetworkStatics.sendToAllPlayers(this.getEntity().level(), NFUNetworkChannels.CHANNEL, packet);
-                this.changedDataKeys.clear();
-            }
-        } else if (this.getEntity() instanceof Player player) {
+        if (this.isClientSide() && this.getEntity() instanceof Player player) {
             if ((this.getEntity().tickCount % this.syncInterval) == 0) {
                 ServerboundPlayerEntitySyncherComponentSyncPacket packet = new ServerboundPlayerEntitySyncherComponentSyncPacket(this);
                 NFUNetworkStatics.sendToServer(player, NFUNetworkChannels.CHANNEL, packet);
@@ -236,11 +241,31 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
     }
 
     /**
+     * Sync all entities of a level.
+     */
+    public static void syncAll(ServerLevel level, boolean ignoresSyncInterval) {
+        ClientboundEntitySyncherComponentSyncAllPacket packet =
+            new ClientboundEntitySyncherComponentSyncAllPacket(level, ignoresSyncInterval);
+        NFUNetworkStatics.sendToAllPlayers(level, NFUNetworkChannels.CHANNEL, packet);
+        packet.handledComponentPaths.forEach((uuid, path) -> {
+            Optional.ofNullable(uuid).map(level::getEntity)
+                .flatMap(e -> EntityComponentAPI.getComponentByPath(e, path))
+                .filter(c -> c instanceof EntitySyncherComponent<? extends Entity>)
+                .map(c -> (EntitySyncherComponent<?>)c)
+                .ifPresent(c -> c.changedDataKeys.clear());
+        });
+    }
+
+    public boolean shouldSync() {
+        return !this.synchedData.isEmpty() || !this.synchedGetters.isEmpty();
+    }
+
+    /**
      * Manually sync all data and getters from server to client. Do nothing if invoked on client.
      */
-    public void syncAll() {
+    public void sync() {
         if (this.isClientSide()) return;
-        if (this.synchedData.isEmpty() && this.synchedGetters.isEmpty()) return;
+        if (!shouldSync()) return;
         // Update synched getters
         this.synchedGetters.forEach((k, g) -> {
             g.cache = g.getter.apply(this.getEntity());
@@ -325,51 +350,32 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
 
     }
 
-    public static class ClientboundEntitySyncherComponentSyncPacket implements Packet<ClientGamePacketListener> {
-
-        private static final ServerOnly<Long> CURRENT_PACKET_ID = new ServerOnly<>(0L);
-        public final long packetId;
-        @Nullable   // Non-null on server, null on client
-        public final EntitySyncherComponent<? extends Entity> syncher;
-        public final int entityID;
-        public final UUID entityUUID;
-        public final String componentPath;
-        public final Map<String, SyncValueEntry> data = new HashMap<>();
-        public final Map<String, SyncValueEntry> getters = new HashMap<>();
-
-        public ClientboundEntitySyncherComponentSyncPacket(EntitySyncherComponent<? extends Entity> syncher) {
-            this.packetId = CURRENT_PACKET_ID.get();
-            CURRENT_PACKET_ID.set(CURRENT_PACKET_ID.get() + 1);
-            this.syncher = syncher;
-            this.entityID = syncher.getEntity().getId();
-            this.entityUUID = syncher.getEntity().getUUID();
-            this.componentPath = syncher.getPathFromRoot().toLiteral();
+    public static record SyncRecord(Map<String, SyncValueEntry> data, Map<String, SyncValueEntry> getters) {
+        private static SyncRecord byComponent(EntitySyncherComponent<?> syncher) {
+            SyncRecord res = new SyncRecord(new HashMap<>(), new HashMap<>());
             for (String key: syncher.changedDataKeys) {
-                this.data.put(key, new SyncValueEntry(syncher.synchedData.get(key).serializer, syncher.synchedData.get(key).value));
+                res.data.put(key, new SyncValueEntry(syncher.synchedData.get(key).serializer, syncher.synchedData.get(key).value));
             }
             syncher.synchedGetters.entrySet().stream()
                 .filter(entry -> entry.getValue().direction.equals(SynchedGetter.Direction.SERVER_TO_CLIENT))
                 .forEach(entry -> {
-                    this.getters.put(entry.getKey(), new SyncValueEntry(entry.getValue().serializer, entry.getValue().getter.apply(syncher.getEntity())));
+                    res.getters.put(entry.getKey(), new SyncValueEntry(entry.getValue().serializer, entry.getValue().getter.apply(syncher.getEntity())));
                 });
+            return res;
         }
 
-        public ClientboundEntitySyncherComponentSyncPacket(FriendlyByteBuf buf) {
-            this.packetId = buf.readLong();
-            this.syncher = null;
-            this.entityID = buf.readInt();
-            this.entityUUID = buf.readUUID();
-            this.componentPath = buf.readUtf();
+        private void readBuf(FriendlyByteBuf buf) {
             this.data.putAll(buf.readMap(FriendlyByteBuf::readUtf, SyncValueEntry::read));
             this.getters.putAll(buf.readMap(FriendlyByteBuf::readUtf, SyncValueEntry::read));
         }
 
-        @Override
-        public void write(FriendlyByteBuf buf) {
-            buf.writeLong(this.packetId);
-            buf.writeInt(this.entityID);
-            buf.writeUUID(this.entityUUID);
-            buf.writeUtf(componentPath);
+        private static SyncRecord fromBuf(FriendlyByteBuf buf) {
+            SyncRecord res = new SyncRecord(new HashMap<>(), new HashMap<>());
+            res.readBuf(buf);
+            return res;
+        }
+
+        private void writeBuf(FriendlyByteBuf buf) {
             buf.writeMap(data, FriendlyByteBuf::writeUtf, (b, v) -> v.write(b));
             buf.writeMap(getters, FriendlyByteBuf::writeUtf, (b, v) -> v.write(b));
         }
@@ -382,12 +388,105 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
             return getters.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> Optional.ofNullable(e.getValue().value())));
         }
 
+    }
+
+    /**
+     * Posted once each level tick, sync all entities in a level.
+     */
+    public static class ClientboundEntitySyncherComponentSyncAllPacket implements Packet<ClientGamePacketListener> {
+        private static final ServerOnly<Long> CURRENT_PACKET_ID = new ServerOnly<>(0L);
+        public final long packetId;
+        public final ResourceLocation dimension;
+        final Map<UUID, Map<HierarchyPath, SyncRecord>> allEntityData = new HashMap<>();
+        // Cache components handled so we know which components to clear changed data list
+        final Multimap<UUID, HierarchyPath> handledComponentPaths = HashMultimap.create();
+
+        public ClientboundEntitySyncherComponentSyncAllPacket(ServerLevel level, boolean ignoresSyncIntervals) {
+            this.packetId = CURRENT_PACKET_ID.get();
+            CURRENT_PACKET_ID.set(CURRENT_PACKET_ID.get() + 1);
+            this.dimension = level.dimensionTypeId().location();
+            for (Entity e: level.getEntities().getAll()) {
+                allEntityData.putIfAbsent(e.getUUID(), new HashMap<>());
+                EntityComponentAPI.getComponentManager(e).getAllPathsAndDownstreamComponents()
+                    .entrySet().stream()
+                    .filter(entry ->
+                        entry.getValue() instanceof EntitySyncherComponent<?> sc
+                        && sc.shouldSync()
+                        && (ignoresSyncIntervals || sc.getEntity().tickCount % sc.getSyncInterval() == 0))
+                    .forEach(entry -> {
+                        allEntityData.get(e.getUUID()).putIfAbsent(entry.getKey(), SyncRecord.byComponent((EntitySyncherComponent<?>)(entry.getValue())));
+                        handledComponentPaths.put(e.getUUID(), entry.getKey());
+                    });
+            }
+
+        }
+
+        public ClientboundEntitySyncherComponentSyncAllPacket(FriendlyByteBuf buf) {
+            this.packetId = buf.readLong();
+            this.dimension = buf.readResourceLocation();
+            this.allEntityData.putAll(buf.readMap(FriendlyByteBuf::readUUID,
+                 buf1 -> buf1.readMap(buf2 -> HierarchyPath.byLiteral(buf2.readUtf()), SyncRecord::fromBuf)));
+        }
+
+        @Override
+        public void write(FriendlyByteBuf buf) {
+            buf.writeLong(this.packetId);
+            buf.writeResourceLocation(this.dimension);
+            buf.writeMap(this.allEntityData, FriendlyByteBuf::writeUUID,
+                (buf1, map) -> buf1.writeMap(map, (buf2, path) -> buf2.writeUtf(path.toString()),
+                    (buf2, rec) -> rec.writeBuf(buf2)));
+        }
+
         @Override
         public void handle(ClientGamePacketListener pHandler) {
-            EntityComponentPresetClientPacketHandlers.HandleEntitySyncherComponentSync(this, pHandler);
+            EntityComponentPresetClientPacketHandlers.handleEntitySyncherComponentSyncAll(this, pHandler);
         }
     }
 
+    public static class ClientboundEntitySyncherComponentSyncPacket implements Packet<ClientGamePacketListener> {
+        private static final ServerOnly<Long> CURRENT_PACKET_ID = new ServerOnly<>(0L);
+        public final long packetId;
+        @Nullable   // Non-null on server, null on client
+        public final EntitySyncherComponent<? extends Entity> syncher;
+        public final int entityID;
+        public final UUID entityUUID;
+        public final String componentPath;
+        public final SyncRecord syncRecord;
+
+        public ClientboundEntitySyncherComponentSyncPacket(EntitySyncherComponent<? extends Entity> syncher) {
+            this.packetId = CURRENT_PACKET_ID.get();
+            CURRENT_PACKET_ID.set(CURRENT_PACKET_ID.get() + 1);
+            this.syncher = syncher;
+            this.entityID = syncher.getEntity().getId();
+            this.entityUUID = syncher.getEntity().getUUID();
+            this.componentPath = syncher.getPathFromRoot().toLiteral();
+            this.syncRecord = SyncRecord.byComponent(syncher);
+        }
+
+        public ClientboundEntitySyncherComponentSyncPacket(FriendlyByteBuf buf){
+            this.packetId = buf.readLong();
+            this.syncher = null;
+            this.entityID = buf.readInt();
+            this.entityUUID = buf.readUUID();
+            this.componentPath = buf.readUtf();
+            this.syncRecord = SyncRecord.fromBuf(buf);
+        }
+
+        @Override
+        public void write(FriendlyByteBuf buf) {
+            buf.writeLong(this.packetId);
+            buf.writeInt(entityID);
+            buf.writeUUID(entityUUID);
+            buf.writeUtf(componentPath.toString());
+            syncRecord.writeBuf(buf);
+        }
+
+        @Override
+        public void handle(ClientGamePacketListener pHandler) {
+            EntityComponentPresetClientPacketHandlers.handleEntitySyncherComponentSync(this, pHandler);
+        }
+
+    }
     public static class ServerboundPlayerEntitySyncherComponentSyncPacket implements Packet<ServerGamePacketListener> {
 
         private static final ClientOnly<Long> CURRENT_PACKET_ID = new ClientOnly<>(0L);
@@ -437,8 +536,6 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         }
     }
 
-
-
     public static record SyncValueEntry(@Nullable NFUDataSerializer<?> serializer, @Nullable Object value) {
 
         public void write(FriendlyByteBuf buf) {
@@ -470,6 +567,11 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
                     e -> Optional.ofNullable(Minecraft.getInstance().hitResult)
                         .map(HitResultInfo::byHitResult)
                         .orElseGet(() -> HitResultInfo.miss(e.position())));
+            }
+            // For NFUEntityStatics#getMobAttackTarget
+            if (entity instanceof Mob mob) {
+                this.createSynchedGetter("attackTarget", NFUDataSerializers.UUID, new UUID(0L, 0L),
+                    e -> Optional.ofNullable(((Mob)e).getTarget()).map(Entity::getUUID).orElseGet(() -> new UUID(0, 0)));
             }
         }
 
