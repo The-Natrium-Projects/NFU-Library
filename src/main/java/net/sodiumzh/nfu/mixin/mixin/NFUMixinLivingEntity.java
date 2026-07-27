@@ -60,7 +60,7 @@ public abstract class NFUMixinLivingEntity implements NFUMixin<LivingEntity>
 
 	@Inject(method = "aiStep()V", at = @At("TAIL"))
 	private void nfu_postEndBaseAiStepEvent(CallbackInfo ci) {
-		MinecraftForge.EVENT_BUS.post(new LivingEndBaseAiStepEvent(caller()));
+		MinecraftForge.EVENT_BUS.post(new LivingFinishBaseAiStepEvent(caller()));
 	}
 
 	@ModifyReturnValue(method = "getFlyingSpeed()F", at = @At("RETURN"))
@@ -72,5 +72,15 @@ public abstract class NFUMixinLivingEntity implements NFUMixin<LivingEntity>
 			return original * 2.5f * this.caller().getSpeed();
 		else return original;
 	}
+
+    @WrapOperation(method = "tick()V",
+        at = @At(value = "INVOKE", target = "net/minecraft/world/entity/LivingEntity.aiStep ()V"))
+    private void nfu_postAiStepEvents(LivingEntity instance, Operation<Void> original)
+    {
+        MinecraftForge.EVENT_BUS.post(new LivingStartBaseAiStepEvent(instance));
+        original.call(instance);
+        MinecraftForge.EVENT_BUS.post(new LivingFinishAiStepEvent(instance));
+    }
+
 
 }
