@@ -368,6 +368,10 @@ public class NFUMathStatics
 		double vertical = target.y;
 		// Target directly above or below the starting position: shoot vertically.
 		if (horizontal < 1e-12d) {
+			// Shooting downwards always reaches a target below, consistently with the limit of the
+			// flatter trajectory when the horizontal distance approaches zero.
+			if (vertical < 0d)
+				return Optional.of(new Vec3(0d, -speed, 0d));
 			// The projectile passes the target if the apex is not lower than the target.
 			if (vertical > speed * speed / (2d * gravity))
 				return Optional.empty();
@@ -395,6 +399,8 @@ public class NFUMathStatics
 	 *     and -90 for negative Y.
 	 * @param gravity Scalar of the gravity acceleration. Must be positive.
 	 * @return The starting velocity vector, or empty if the target is unreachable or the arguments are invalid.
+	 *     Empty is also returned in the degenerate cases where the speed is not determined, i.e. the target
+	 *     is on the Y axis while the trajectory is not a vertical shot exactly reaching it.
 	 */
 	public static Optional<Vec2> parabolicTrajectoryFixedDirection(Vec2 target, double pitchDegrees, double gravity)
 	{
