@@ -56,7 +56,26 @@ public abstract class NFUMixinLivingEntity implements NFUMixin<LivingEntity>
 
 	@Inject(method = "aiStep()V", at = @At("TAIL"))
 	private void nfu_postEndBaseAiStepEvent(CallbackInfo ci) {
-		MinecraftForge.EVENT_BUS.post(new LivingEndBaseAiStepEvent(caller()));
+		MinecraftForge.EVENT_BUS.post(new LivingFinishBaseAiStepEvent(caller()));
 	}
+
+	@ModifyReturnValue(method = "getFlyingSpeed()F", at = @At("RETURN"))
+	private float nfu_fixMC_172801_FlyingSpeedIssue(float original) {
+		if (!NFUConfigs.CACHED_ENABLES_FLYING_SPEED_SCALING_FIX)
+			return original;
+		// Filter cases, in order to prevent conflict when another mod also fixed this issue by mixin
+		if (original == 0.02f && this.caller().getSpeed() != 1.0f && ! (this.caller().getControllingPassenger() instanceof Player))
+			return original * 2.5f * this.caller().getSpeed();
+		else return original;
+	}
+
+    @WrapOperation(method = "tick()V",
+        at = @At(value = "INVOKE", target = "net/minecraft/world/entity/LivingEntity.aiStep ()V"))
+    private void nfu_postAiStepEvents(LivingEntity instance, Operation<Void> original)
+    {
+        MinecraftForge.EVENT_BUS.post(new LivingStartBaseAiStepEvent(instance));
+        original.call(instance);
+        MinecraftForge.EVENT_BUS.post(new LivingFinishAiStepEvent(instance));
+    }
 
 }
