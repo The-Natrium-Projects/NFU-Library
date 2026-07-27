@@ -3,6 +3,7 @@ package net.sodiumzh.nfu.util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -344,6 +345,86 @@ public class NFUMathStatics
 			}
 		}
 		return roman.toString();
+	}
+
+	// Trajectory //
+
+	/**
+	 * Calculate a parabolic trajectory in the 3D space from (0, 0, 0) to the given target, with a fixed
+	 * starting speed scalar. The gravity direction is negative Y.
+	 * <p> If multiple trajectories are available, the flatter one (i.e. with the smaller elevation angle)
+	 * is returned.
+	 * @param target Target position relative to the starting position.
+	 * @param speed Scalar of the starting velocity. Must be positive.
+	 * @param gravity Scalar of the gravity acceleration. Must be positive.
+	 * @return The starting velocity vector, or empty if the target is unreachable or the arguments are invalid.
+	 */
+	public static Optional<Vec3> parabolicTrajectoryFixedSpeed(Vec3 target, double speed, double gravity)
+	{
+		if (speed <= 1e-12d || gravity <= 1e-12d || !isFinite(target) || !Double.isFinite(speed) || !Double.isFinite(gravity))
+			return Optional.empty();
+		double horizontal = Math.sqrt(target.x * target.x + target.z * target.z);
+		double vertical = target.y;
+		// Target directly above or below the starting position: shoot vertically.
+		if (horizontal < 1e-12d) {
+			// The projectile passes the target if the apex is not lower than the target.
+			if (vertical > speed * speed / (2d * gravity))
+				return Optional.empty();
+			return Optional.of(new Vec3(0d, speed, 0d));
+		}
+		// v^4 - g * (g * d^2 + 2 * h * v^2) >= 0 is required for a solution to exist.
+		double sqSpeed = speed * speed;
+		double discriminant = sqSpeed * sqSpeed - gravity * (gravity * horizontal * horizontal + 2d * vertical * sqSpeed);
+		if (discriminant < 0d)
+			return Optional.empty();
+		// tan(theta) = (v^2 -/+ sqrt(discriminant)) / (g * d), the minus sign gives the flatter trajectory.
+		double tan = (sqSpeed - Math.sqrt(discriminant)) / (gravity * horizontal);
+		// The starting velocity is (horizontalDirection * vh, vv, ...) where vv / vh = tan(theta).
+		double horizontalSpeed = speed / Math.sqrt(1d + tan * tan);
+		double verticalSpeed = horizontalSpeed * tan;
+		return Optional.of(new Vec3(target.x / horizontal * horizontalSpeed, verticalSpeed, target.z / horizontal * horizontalSpeed));
+	}
+
+	/**
+	 * Calculate a parabolic trajectory in the 2D space from (0, 0) to the given target, with a fixed
+	 * starting direction. The gravity direction is negative Y.
+	 * @param target Target position relative to the starting position. The X value must be non-negative.
+	 * @param pitchDegrees Elevation angle of the starting velocity, in degrees. Must be within (-90, 90),
+	 * 	   or exactly 90 or -90 if the target is on the Y axis. 0 stands for positive X, 90 for positive Y
+	 *     and -90 for negative Y.
+	 * @param gravity Scalar of the gravity acceleration. Must be positive.
+	 * @return The starting velocity vector, or empty if the target is unreachable or the arguments are invalid.
+	 */
+	public static Optional<Vec2> parabolicTrajectoryFixedDirection(Vec2 target, double pitchDegrees, double gravity)
+	{
+		if (gravity <= 1e-12d || !Double.isFinite(gravity) || !Double.isFinite(pitchDegrees)
+				|| !Float.isFinite(target.x) || !Float.isFinite(target.y))
+			return Optional.empty();
+		if (target.x < 0f || pitchDegrees > 90d || pitchDegrees < -90d)
+			return Optional.empty();
+		// Target on the Y axis: only a vertical shot can reach it.
+		if (target.x < 1e-6f) {
+			if (pitchDegrees != 90d || target.y < 0f)
+				return Optional.empty();
+			return Optional.of(new Vec2(0f, (float)Math.sqrt(2d * gravity * target.y)));
+		}
+		if (pitchDegrees == 90d || pitchDegrees == -90d)
+			return Optional.empty();
+		double pitch = Math.toRadians(pitchDegrees);
+		double cos = Math.cos(pitch);
+		// y = x * tan(theta) - g * x^2 / (2 * v^2 * cos^2(theta))
+		// => v^2 = g * x^2 / (2 * cos^2(theta) * (x * tan(theta) - y))
+		double drop = target.x * Math.tan(pitch) - target.y;
+		if (drop <= 1e-12d)
+			return Optional.empty();
+		double speed = Math.sqrt(gravity * target.x * target.x / (2d * cos * cos * drop));
+		if (!Double.isFinite(speed))
+			return Optional.empty();
+		return Optional.of(new Vec2((float)(speed * cos), (float)(speed * Math.sin(pitch))));
+	}
+
+	private static boolean isFinite(Vec3 v) {
+		return Double.isFinite(v.x) && Double.isFinite(v.y) && Double.isFinite(v.z);
 	}
 
 }
