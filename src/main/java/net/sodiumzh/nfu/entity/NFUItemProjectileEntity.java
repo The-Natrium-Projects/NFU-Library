@@ -340,7 +340,7 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
 
     public NFUItemProjectileEntity setGravity(float value) {
         this.entityData.set(GRAVITY, value);
-        this.setNoGravity(value > 0f);
+        this.setNoGravity(value < 1e-12f);
         return this;
     }
 
