@@ -132,7 +132,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      */
     public void load()
     {
-        // For those available on both sides and loaded on side setup, it may be loaded twice, and first wins
+        // For those available on both sides and loaded on side setup, it may be loaded twice, and the first wins
         if (this.isLoaded()) return;
         this.table.forEach((k, v) -> {
             if (!v.loaded) {
