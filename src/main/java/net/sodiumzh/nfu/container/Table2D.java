@@ -118,6 +118,33 @@ public class Table2D<R, C, V> implements ITable2D<R, C, V> {
             .map(entry -> new ITable2D.Entry<>(entry.getValue().row(), entry.getValue().column(), entry.getKey()));
     }
 
+    @Override
+    public Set<R> rowSet() {
+        return new HashSet<>(this.tableFromRow.keySet());
+    }
+
+    @Override
+    public Set<C> columnSet() {
+        return new HashSet<>(this.tableFromColumn.keySet());
+    }
+
+    @Override
+    public Set<V> values() {
+        return new HashSet<>(this.tableFromValue.keySet());
+    }
+
+    @Override
+    public List<Tuple3<R, C, V>> entries() {
+        return this.tableFromValue.entries().stream()
+            .map(entry -> new Tuple3<>(entry.getValue().row(), entry.getValue().column(), entry.getKey()))
+            .toList();
+    }
+
+    @Override
+    public List<KeyPair<R, C>> keyPairs() {
+        return this.tableFromValue.values().stream().toList();
+    }
+
     public boolean isEmpty() {
         return this.tableFromValue.isEmpty();
     }

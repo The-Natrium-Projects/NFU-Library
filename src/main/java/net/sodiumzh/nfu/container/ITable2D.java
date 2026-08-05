@@ -43,6 +43,16 @@ public interface ITable2D<R, C, V> {
         this.entryStream().forEach(entry -> action.accept(entry.rowKey(), entry.columnKey(), entry.value()));
     }
 
+    public Set<R> rowSet();
+
+    public Set<C> columnSet();
+
+    public Set<V> values();
+
+    public List<Tuple3<R, C, V>> entries();
+
+    public List<KeyPair<R, C>> keyPairs();
+
     public boolean isEmpty();
 
     public int size();
