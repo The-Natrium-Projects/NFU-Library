@@ -131,7 +131,15 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
             .filter(IEntityComponent::shouldTick)
             .map(e -> Tuple2.of(e.pathDepth(), e))
             .sorted(Comparator.comparingInt(Tuple2::getA))
-            .forEach(e -> e.getB().tick());
+            .forEach(e -> {
+                try {
+                    e.getB().tick();
+                } catch (RuntimeException ex) {
+                    LogUtils.getLogger().error("Exception thrown on entity component tick");
+                    LogUtils.getLogger().error("Mob: " + this.getEntity().getName().getString() + "; Component path: \"" + e.getB().getPathFromRoot() + "\"");
+                    throw ex;
+                }
+            });
         // Check hierarchy if configured each 10s
         if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK && this.getEntity().tickCount % 200 == 0) {
             this.checkHierarchyOfAllComponents();
