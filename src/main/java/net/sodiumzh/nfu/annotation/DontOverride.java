@@ -13,7 +13,8 @@ import static java.lang.annotation.ElementType.METHOD;
  */
 @Target(METHOD)
 @Retention(RetentionPolicy.CLASS)
-public @ interface DontOverride {
+@Deprecated
+public @interface DontOverride {
 
 }
 

@@ -61,6 +61,7 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
     }
 
     public final boolean isAngryAt(LivingEntity target) {
+        if (target == null) return false;
         return angerList.containsKey(target.getUUID());
     }
 
