@@ -1,4 +1,4 @@
-package com.github.mechalopa.hmag.world.level.storage.loot.modifiers;
+package net.sodiumzh.nfu.loot;
 
 import java.util.function.Supplier;
 

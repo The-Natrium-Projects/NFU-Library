@@ -1,6 +1,5 @@
 package net.sodiumzh.nfu.registry;
 
-import com.github.mechalopa.hmag.world.level.storage.loot.modifiers.AddTableLootModifier;
 import com.mojang.serialization.Codec;
 import net.minecraftforge.common.loot.IGlobalLootModifier;
 import net.minecraftforge.registries.DeferredRegister;
@@ -8,6 +7,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.loot.AddItemForEntityLootModifier;
+import net.sodiumzh.nfu.loot.AddTableLootModifier;
 import net.sodiumzh.nfu.loot.ReplaceItemModifier;
 
 public class NFULootModifiers {
