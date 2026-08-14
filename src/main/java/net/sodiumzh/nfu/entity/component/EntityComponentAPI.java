@@ -54,7 +54,8 @@ public class EntityComponentAPI {
 
     public static CEntityComponentManager getComponentManager(Entity e) {
         return e.getCapability(EntityComponentStatics.CAP_MANAGER).orElseGet(() -> {
-            NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing component manager. " +
+            if (e.isAlive())
+                NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing component manager. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
             return new EntityComponentManagerPlaceholder(e);
         });
@@ -62,7 +63,8 @@ public class EntityComponentAPI {
 
     public static EntityDataComponent<Entity> getDataComponent(Entity e) {
         return getComponentManager(e).getSubComponent("dynamic_data", EntityComponentTypes.DATA.get()).orElseGet(() -> {
-            NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing dynamic data component. " +
+            if (e.isAlive())
+                NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing dynamic data component. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
             return EntityComponentTypes.DATA.get().create(e);
         });
@@ -70,7 +72,8 @@ public class EntityComponentAPI {
 
     public static EntityTimerComponent<Entity> getDefaultTimer(Entity e) {
         return getComponentManager(e).getSubComponent("timer", EntityComponentTypes.TIMER.get()).orElseGet(() -> {
-            NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
+            if (e.isAlive())
+                NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
             return EntityComponentTypes.TIMER.get().create(e);
         });
@@ -78,7 +81,8 @@ public class EntityComponentAPI {
 
     public static EntitySyncherComponent<Entity> getDefaultSyncher(Entity e) {
         return getComponentManager(e).getSubComponent("syncher", EntityComponentTypes.SYNCHER.get()).orElseGet(() -> {
-            NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
+            if (e.isAlive())
+                NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
                 "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
             return EntityComponentTypes.SYNCHER.get().create(e);
         });
