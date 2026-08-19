@@ -2,6 +2,9 @@ package net.sodiumzh.nfu.entity;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.Resource;
@@ -13,7 +16,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.function.RegistrableFunction;
@@ -224,11 +226,11 @@ public class MobApplicableItemTable
                 try {
                     if (elem instanceof Item item) return item;
                     else if (elem instanceof ResourceLocation key)
-                        return ForgeRegistries.ITEMS.getValue(key);
+                        return BuiltInRegistries.ITEM.getValue(key);
                     else if (elem instanceof ItemStack itemStack)
                         return itemStack.getItem();
                     else if (elem instanceof String str)
-                        return ForgeRegistries.ITEMS.getValue(new ResourceLocation(str));
+                        return BuiltInRegistries.ITEM.getValue(new ResourceLocation(str));
                     else return Items.AIR;
                 } catch (Exception e) {
                     return Items.AIR;
@@ -258,14 +260,12 @@ public class MobApplicableItemTable
         public ItemStackCriteria addTags(Collection<?> keys) {
             List<TagKey<Item>> tags = keys.stream().map(elem -> {
                 try {
-                    if (elem instanceof TagKey<?> tagKey && tagKey.registry().equals(ForgeRegistries.ITEMS))
+                    if (elem instanceof TagKey<?> tagKey && tagKey.registry().equals(Registries.ITEM))
                         return tagKey;
                     else if (elem instanceof ResourceLocation key)
-                        return Optional.ofNullable(ForgeRegistries.ITEMS.tags())
-                            .map(reg -> reg.createTagKey(key)).orElse(null);
+                        return TagKey.create(Registries.ITEM, key);
                     else if (elem instanceof String str)
-                        return Optional.ofNullable(ForgeRegistries.ITEMS.tags())
-                            .map(reg -> reg.createTagKey(new ResourceLocation(str))).orElse(null);
+                        return TagKey.create(Registries.ITEM, new ResourceLocation(str));
                     else return null;
                 } catch (Exception e) {
                     return null;
@@ -283,8 +283,11 @@ public class MobApplicableItemTable
          * Get all items matching either the item list or the tag list.
          */
         public Set<Item> getAllItemsAndTags() {
-            Set<Item> res = this.tags.stream().flatMap(tag ->
-                    Optional.ofNullable(ForgeRegistries.ITEMS.tags()).map(tm -> tm.getTag(tag).stream()).orElseGet(Stream::of))
+            Set<Item> res = this.tags.stream().flatMap(tag -> {
+                    List<Item> tagItems = new ArrayList<>();
+                    BuiltInRegistries.ITEM.getTagOrEmpty(tag).forEach(holder -> tagItems.add(holder.value()));
+                    return tagItems.stream();
+                })
                 .collect(Collectors.toSet());
             res.addAll(this.items);
             return res;
@@ -337,7 +340,7 @@ public class MobApplicableItemTable
                 return allItemsCache;
             }
             Collection<Item> allItemsToTest = this.items.isEmpty() && this.tags.isEmpty() ?
-                ForgeRegistries.ITEMS.getValues() : getAllItemsAndTags();
+                BuiltInRegistries.ITEM.stream().toList() : getAllItemsAndTags();
             this.allItemsCache = allItemsToTest.stream().filter(i -> {
                 if (registeredPredicate != null && !registeredPredicate.getB().test(i.getDefaultInstance()))
                     return false;
