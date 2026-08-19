@@ -57,4 +57,14 @@ class CBaubleEquippableMobEmptyImpl implements CBaubleEquippableMob
 	public void tick() {
 	}
 
+	@Override
+	public int getTickInterval() {
+		return 1;
+	}
+
+	@Override
+	public void setTickInterval(int tickInterval) {
+
+	}
+
 }

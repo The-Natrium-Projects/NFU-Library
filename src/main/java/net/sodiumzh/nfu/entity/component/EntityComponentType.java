@@ -28,13 +28,20 @@ public record EntityComponentType<E extends Entity, T extends IEntityComponent<E
     public ResourceLocation getKey() {
         ResourceLocation res = NFURegistries.ENTITY_COMPONENT_TYPES.getKey(this);
         if (res != null) return res;
-        else
-            throw new IllegalStateException("Dangling EntityComponentType. Must be registered in NFURegistries.ENTITY_COMPONENT_TYPES.");
+        else {
+            // If not loaded, try loading the registry first
+            NFURegistries.ENTITY_COMPONENT_TYPES.load();
+            res = NFURegistries.ENTITY_COMPONENT_TYPES.getKey(this);
+            if (res == null)
+                throw new IllegalStateException("Dangling EntityComponentType. Must be registered in NFURegistries.ENTITY_COMPONENT_TYPES."
+                + " Type: " + this.componentClass.getName());
+            else return res;
+        }
     }
 
     /**
      * Create component from entity. Always use this to create components, and don't call raw constructors as it doesn't
-     * initialize type, unless you do this manually!!
+     * initialize type, unless you set the type manually!!
      */
     public T create(E entity, boolean serialized) {
         this.availableSide.assertCorrectSide(entity);
