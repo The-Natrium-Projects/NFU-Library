@@ -27,7 +27,7 @@ public class Field3D implements UnaryOperator<Vec3> {
         this.translation = translation;
         this.valueAddition = valueAddition;
         this.baseDefinitionDomain = baseDefinitionDomain;
-        if (Math.abs(spaceScale.x * spaceScale.y * spaceScale.z) < 1e-12)
+        if (Math.abs(spaceScale.x) < 1e-12 || Math.abs(spaceScale.y) < 1e-12 || Math.abs(spaceScale.z) < 1e-12)
             throw new IllegalArgumentException("Field3D space scale xyz cannot be zero.");
     }
 

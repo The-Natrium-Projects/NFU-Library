@@ -1,15 +1,34 @@
 package net.sodiumzh.nfu.entity.component;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.CapabilityDispatcher;
+import net.minecraftforge.common.capabilities.CapabilityProvider;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
+import net.sodiumzh.nfu.entity.component.preset.EntityDataComponent;
+import net.sodiumzh.nfu.entity.component.preset.EntitySyncherComponent;
+import net.sodiumzh.nfu.entity.component.preset.IEntityComponentAccess;
+import net.sodiumzh.nfu.exception.ReflectionFailedException;
 import net.sodiumzh.nfu.mixin.event.entity.EntityFinishConstructionEvent;
+import net.sodiumzh.nfu.object.HierarchyPath;
+import net.sodiumzh.nfu.reflection.CachedFieldSearchers;
+import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
+import net.sodiumzh.nfu.util.NFUEntityStatics;
+import net.sodiumzh.nfu.util.NFUReflectionStatics;
+
+import java.lang.reflect.Field;
+import java.util.Optional;
 
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class EntityComponentEventListeners {
@@ -22,21 +41,25 @@ public class EntityComponentEventListeners {
     }
 
     @SubscribeEvent
-    public static void initComponentMgr(EntityFinishConstructionEvent event) {
-        event.getEntity().getCapability(EntityComponentStatics.CAP_MANAGER).resolve().ifPresentOrElse(m -> {
-            if (event.getEntity() instanceof IEntityComponentManagerHolder holder)
-                holder.initializeComponents(m);
-            EntityComponentSetupEvent initEvent = new EntityComponentSetupEvent(event.getEntity(), m);
-            MinecraftForge.EVENT_BUS.post(initEvent);
-            initEvent.collect();
-        }, () -> { NFUDebugStatics.errorOnce(EntityComponentEventListeners.class,
-            String.format("%s Missing entity component manager", event.getEntity().getName().getString())); });
+    public static void createDefaultComponents(EntityComponentSetupEvent event) {
+        event.addComponent(EntityComponentTypes.PATH_DEFAULT_DATA, EntityComponentTypes.DATA.get());
+        event.addComponent(EntityComponentTypes.PATH_DEFAULT_TIMER, EntityComponentTypes.TIMER.get());
+        event.addComponent(EntityComponentTypes.PATH_DEFAULT_SYNCHER, EntityComponentTypes.SYNCHER.get());
+        if (event.getEntity() instanceof LivingEntity)
+            event.addComponent(EntityComponentTypes.PATH_ATTRIBUTE_MONITOR, EntityComponentTypes.ATTRIBUTE_MONITOR.get());
     }
 
     @SubscribeEvent
-    public static void createDefaultComponents(EntityComponentSetupEvent event) {
-        event.addComponent("/dynamic_data", EntityComponentTypes.DYNAMIC_DATA.get());
-        event.addComponent("/timer", EntityComponentTypes.TIMER.get());
-        event.addComponent("/syncher", EntityComponentTypes.SYNCHER.get());
+    public static void onJoinLevel(EntityJoinLevelEvent event) {
+        event.getEntity().getCapability(EntityComponentStatics.CAP_MANAGER).ifPresent(IEntityComponent::joinLevel);
     }
+
+    @SubscribeEvent
+    public static void onLevelTick(TickEvent.LevelTickEvent event) {
+        if (!event.level.isClientSide() && event.level instanceof ServerLevel sl) {
+            if (event.phase.equals(TickEvent.Phase.START))
+                EntitySyncherComponent.syncAll(sl, false);
+        }
+    }
+
 }

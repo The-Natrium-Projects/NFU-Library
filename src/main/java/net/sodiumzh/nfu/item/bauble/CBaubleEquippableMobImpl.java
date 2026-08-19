@@ -15,6 +15,7 @@ class CBaubleEquippableMobImpl implements CBaubleEquippableMob
 {
 
 	private final Mob mob;
+	private int tickInterval = 5;
 	
 	public CBaubleEquippableMobImpl(Mob mob)
 	{
@@ -265,5 +266,13 @@ class CBaubleEquippableMobImpl implements CBaubleEquippableMob
 		MinecraftForge.EVENT_BUS.post(new BaubleEquippableMobTickEvent.PostTick(mob, this));
 	}
 
+	@Override
+	public int getTickInterval() {
+		return tickInterval;
+	}
 
+	@Override
+	public void setTickInterval(int tickInterval) {
+		this.tickInterval = tickInterval;
+	}
 }

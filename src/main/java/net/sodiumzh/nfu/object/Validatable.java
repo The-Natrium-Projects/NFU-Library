@@ -69,7 +69,7 @@ public final class Validatable<T> {
     }
 
     /**
-     * Apply a modification to the value and validated this object. Note that the value will still be modified
+     * Apply a modification to the value and validate this object. Note that the value will still be modified
      * even if this Validatable is already validated.
      */
     public Validatable<T> modifyAndValidate(Consumer<? super T> modification) {

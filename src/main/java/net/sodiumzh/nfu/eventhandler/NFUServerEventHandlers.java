@@ -7,7 +7,10 @@ import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
+import net.sodiumzh.nfu.capability.CEntityTickingCapability;
 import net.sodiumzh.nfu.entity.ConditionalAttributeModifier;
+import net.sodiumzh.nfu.mixin.event.entity.EntityStartBaseTickEvent;
+import net.sodiumzh.nfu.mixin.event.entity.EntityStartTickEvent;
 import net.sodiumzh.nfu.registry.NFURegistry;
 import net.sodiumzh.nfu.registry.NFURegistryGenerateValuesEvent;
 
@@ -28,11 +31,16 @@ public class NFUServerEventHandlers {
 	{
 		NFURegistry.SERVER_SETUP_DONE.trySet(true);
 		List<NFURegistry<?>> shouldGenerate = NFURegistry.allRegistries().values().stream()
-				.filter(reg -> reg.shouldGenerateOnSetup() && reg.getGenerateOnSetupPhase() == 1)
+				.filter(reg -> reg.isAvailableOnServer() && reg.getLoadTiming().equals(NFURegistry.LoadTiming.SIDE_SETUP))
 				.toList();
 		shouldGenerate = NFURegistry.sortByLoadingOrder(shouldGenerate);
 		shouldGenerate.forEach(reg -> MinecraftForge.EVENT_BUS.post(new NFURegistryGenerateValuesEvent.ServerBefore(reg, event.getServer())));
-		shouldGenerate.forEach(NFURegistry::generateAllValues);
+		shouldGenerate.forEach(NFURegistry::load);
 		shouldGenerate.forEach(reg -> MinecraftForge.EVENT_BUS.post(new NFURegistryGenerateValuesEvent.ServerAfter(reg, event.getServer())));
+	}
+
+	@SubscribeEvent
+	public static void onEntityTick(EntityStartBaseTickEvent event) {
+		CEntityTickingCapability.ALL_CAPS.forEach(c -> event.getEntity().getCapability(c).ifPresent(CEntityTickingCapability::tick));
 	}
 }

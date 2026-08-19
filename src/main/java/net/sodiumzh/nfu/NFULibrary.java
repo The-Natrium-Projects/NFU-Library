@@ -38,6 +38,7 @@ public class NFULibrary {
 		NFUEntityDataSerializers.SERIALIZERS.register(modEventBus);
 		NFUEntityTypes.ENTITY_TYPES.register(modEventBus);
 		NFUEffects.EFFECTS.register(modEventBus);
+		NFULootModifiers.REGISTRY.register(modEventBus);
 		EntityComponentTypes.COLLECTION.merge();
 		NFUEntityComponents.COLLECTION.merge();
 

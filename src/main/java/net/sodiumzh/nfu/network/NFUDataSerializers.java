@@ -1,12 +1,15 @@
 package net.sodiumzh.nfu.network;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.sodiumzh.nfu.NFULibrary;
+import net.sodiumzh.nfu.level.HitResultInfo;
 import net.sodiumzh.nfu.math.*;
 import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.registry.NFURegistryEntryCollection;
@@ -134,7 +137,7 @@ public class NFUDataSerializers {
         );
 
     public static final NFUDataSerializer<Optional<Inequality3D>> OPTIONAL_INEQUALITY_3D =
-        NFUDataSerializer.optionalOf(INEQUALITY_3D);
+        NFUDataSerializer.createOptional(INEQUALITY_3D);
 
     public static final NFUDataSerializer<Field3D> FIELD_3D =
         NFUDataSerializer.create(Field3D.class, CompoundTag.class,
@@ -162,7 +165,23 @@ public class NFUDataSerializers {
     );
 
     public static final NFUDataSerializer<Optional<Field3D>> OPTIONAL_FIELD_3D =
-        NFUDataSerializer.optionalOf(FIELD_3D);
+        NFUDataSerializer.createOptional(FIELD_3D);
+
+    public static final NFUDataSerializer<BlockPos> BLOCK_POS =
+        NFUDataSerializer.create(BlockPos.class, IntArrayTag.class,
+            FriendlyByteBuf::writeBlockPos,
+            FriendlyByteBuf::readBlockPos,
+            o -> new IntArrayTag(new int[]{o.getX(), o.getY(), o.getZ()}),
+            (IntArrayTag t) -> new BlockPos(t.getAsIntArray()[0], t.getAsIntArray()[1], t.getAsIntArray()[2])
+        );
+
+    public static final NFUDataSerializer<HitResultInfo> HIT_RESULT_INFO =
+        NFUDataSerializer.create(HitResultInfo.class, CompoundTag.class,
+            (buf, hri) -> hri.writeBuf(buf),
+            HitResultInfo::readBuf,
+            HitResultInfo::toNBT,
+            HitResultInfo::fromNBT
+        );
 
     static {
         SERIALIZERS.register("boolean", () -> BOOLEAN);
@@ -185,5 +204,7 @@ public class NFUDataSerializers {
         SERIALIZERS.register("optional_inequality_3d", () -> OPTIONAL_INEQUALITY_3D);
         SERIALIZERS.register("field_3d", () -> FIELD_3D);
         SERIALIZERS.register("optional_field_3d", () -> OPTIONAL_FIELD_3D);
+        SERIALIZERS.register("block_pos", () -> BLOCK_POS);
+        SERIALIZERS.register("hit_result_info", () -> HIT_RESULT_INFO);
     }
 }

@@ -44,7 +44,6 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 	@Inject(at = @At("HEAD"), method = "tick()V")
 	private void startBaseTick(CallbackInfo callback)
 	{
-		MinecraftForge.EVENT_BUS.post(new EntityTickEvent(caller()));
 		MinecraftForge.EVENT_BUS.post(new EntityStartBaseTickEvent(caller()));
 	}
 

@@ -15,6 +15,7 @@ import net.sodiumzh.nfu.function.RegistrablePredicate;
 import net.sodiumzh.nfu.item.bauble.IBaubleRegistryEntry;
 import net.sodiumzh.nfu.math.IFieldPattern3D;
 import net.sodiumzh.nfu.math.IInequalityPattern3D;
+import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 
 import java.util.function.Function;
@@ -37,9 +38,8 @@ public class NFURegistries {
      */
     public static final NFURegistry<MobApplicableItemTable> MOB_APPLICABLE_ITEM_TABLES =
             new NFURegistry<MobApplicableItemTable>(new ResourceLocation(NFULibrary.MOD_ID, "mob_applicable_item_tables"))
-                    .setShouldGenerateOnServerSetup()
-                    .setUnavailableBefore(NFURegistry.SetupPhase.SERVER_SETUP)
-                    .setSide(NFURegistry.AvailableSide.SERVER);
+                    .setSide(AvailableSide.SERVER)
+                    .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP);
 
     /**
      * Registry for generic {@link Function}s. Note that the functions' input/output types are generic, and will not do
@@ -57,15 +57,13 @@ public class NFURegistries {
      */
     public static final NFURegistry<VanillaTradeListing> VANILLA_TRADE_LISTINGS =
         new NFURegistry<VanillaTradeListing>(new ResourceLocation(NFULibrary.MOD_ID, "vanilla_trade_listings"))
-                .setShouldGenerateOnServerSetup()
-                .setUnavailableBefore(NFURegistry.SetupPhase.SERVER_SETUP)
-                .setSide(NFURegistry.AvailableSide.SERVER);
+                .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP)
+                .setSide(AvailableSide.SERVER);
 
     public static final NFURegistry<VanillaTradeListingCollection<?>> VANILLA_TRADE_LISTING_COLLECTIONS =
             new NFURegistry<VanillaTradeListingCollection<?>>(new ResourceLocation(NFULibrary.MOD_ID, "vanilla_trade_listing_collections"))
-                .setShouldGenerateOnServerSetup()
-                .setUnavailableBefore(NFURegistry.SetupPhase.SERVER_SETUP)
-                .setSide(NFURegistry.AvailableSide.SERVER)
+                .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP)
+                .setSide(AvailableSide.SERVER)
                 .setLoadAfter(VANILLA_TRADE_LISTINGS);
 
     /**
@@ -73,23 +71,26 @@ public class NFURegistries {
      */
     public static final NFURegistry<VanillaTradeRegistry> VANILLA_TRADE_REGISTRIES =
             new NFURegistry<VanillaTradeRegistry>(new ResourceLocation(NFULibrary.MOD_ID, "vanilla_trade_registries"))
-                    .setShouldGenerateOnServerSetup()
-                    .setUnavailableBefore(NFURegistry.SetupPhase.SERVER_SETUP)
-                    .setSide(NFURegistry.AvailableSide.SERVER)
-                    .setLoadAfter(VANILLA_TRADE_LISTINGS)
-                    .setLoadAfter(VANILLA_TRADE_LISTING_COLLECTIONS);
+                    .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP)
+                    .setSide(AvailableSide.SERVER)
+                    .setLoadAfter(VANILLA_TRADE_LISTINGS, VANILLA_TRADE_LISTING_COLLECTIONS);
 
     public static final NFURegistry<MobAngerReason> MOB_ANGER_REASONS =
-        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "mob_anger_reasons"));
+        new NFURegistry<MobAngerReason>(new ResourceLocation(NFULibrary.MOD_ID, "mob_anger_reasons"))
+            .setSide(AvailableSide.SERVER);
 
     public static final NFURegistry<MobAngerRules> MOB_ANGER_RULES =
-        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "mob_anger_rules"));
+        new NFURegistry<MobAngerRules>(new ResourceLocation(NFULibrary.MOD_ID, "mob_anger_rules"))
+            .setLoadAfter(MOB_ANGER_REASONS)
+            .setSide(AvailableSide.SERVER)
+            .setLoadTiming(NFURegistry.LoadTiming.COMMON_SETUP);
 
     public static final NFURegistry<EntityAttributeProvider> ENTITY_ATTRIBUTE_PROVIDERS =
-            new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "entity_attribute_providers"));
+            new NFURegistry<EntityAttributeProvider>(new ResourceLocation(NFULibrary.MOD_ID, "entity_attribute_providers"));
 
     public static final NFURegistry<IBaubleRegistryEntry> BAUBLES =
-        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "baubles"));
+        new NFURegistry<IBaubleRegistryEntry>(new ResourceLocation(NFULibrary.MOD_ID, "baubles"))
+            .setLoadAfter(ENTITY_ATTRIBUTE_PROVIDERS);
 
     /**
      * A shortcut to {@link IInequalityPattern3D#REGISTRY}.
@@ -102,6 +103,6 @@ public class NFURegistries {
     public static final NFURegistry<IFieldPattern3D> FIELD_PATTERNS = IFieldPattern3D.REGISTRY;
 
     public static final NFURegistry<EntityComponentType<?, ?>> ENTITY_COMPONENT_TYPES =
-        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "entity_component_types"));
+        new NFURegistry<EntityComponentType<?, ?>>(new ResourceLocation(NFULibrary.MOD_ID, "entity_component_types"));
 
 }

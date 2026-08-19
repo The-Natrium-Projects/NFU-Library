@@ -7,9 +7,9 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.MinecraftForge;
+import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.entity.EffectCloudTakeEffectEvent;
-import net.sodiumzh.nfu.registry.NFUCapabilities;
 import net.sodiumzh.nfu.util.NFUContainerStatics;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,24 +38,25 @@ public class NFUAreaEffectCloudMixin implements NFUMixin<AreaEffectCloud> {
         // reducing the risk that someone else mixins into this process
         boolean isModified = !NFUContainerStatics.listEquals(actualList, effects);
         // Store effects to transient data
-        this.caller().getCapability(NFUCapabilities.CAP_ENTITY_DATA).ifPresent(data -> {
-            data.putTransientParameter("NFUMixin_PostEffectEvent_EffectListModified", isModified);
-            data.putTransientParameter("NFUMixin_PostEffectEvent_ActualEffectList", actualList);
-        });
+        EntityComponentAPI.getDataComponent(this.caller())
+            .putTransientVariable("NFUMixin_PostEffectEvent_EffectListModified", isModified);
+        EntityComponentAPI.getDataComponent(this.caller())
+            .putTransientVariable("NFUMixin_PostEffectEvent_ActualEffectList", actualList);
     }
 
     @ModifyReceiver(method = "tick()V", at = @At(value = "INVOKE",
         target = "java/util/List.iterator()Ljava/util/Iterator;", ordinal = 2, remap = false))
     private List<MobEffectInstance> nfu_ModifyEffectList(List<MobEffectInstance> instance) {
         // Keep vanilla behavior if not modified, to prevent potential mixin compat issues
-        if (!this.caller().getCapability(NFUCapabilities.CAP_ENTITY_DATA).resolve().flatMap(d ->
-            d.getTransientParameter("NFUMixin_PostEffectEvent_EffectListModified", Boolean.class))
-            .orElse(false)) {
+
+
+        if (!EntityComponentAPI.getDataComponent(this.caller())
+            .getVariable("NFUMixin_PostEffectEvent_EffectListModified", Boolean.class).orElse(false)) {
             return instance;
         }
         List<MobEffectInstance> effects = new ArrayList<>();
-        this.caller().getCapability(NFUCapabilities.CAP_ENTITY_DATA).ifPresent(data ->
-            data.getTransientParameter("NFUMixin_PostEffectEvent_ActualEffectList", List.class).ifPresent(effects::addAll));
+        EntityComponentAPI.getDataComponent(this.caller())
+            .getVariable("NFUMixin_PostEffectEvent_ActualEffectList", List.class).ifPresent(effects::addAll);
         return effects;
     }
 
@@ -65,15 +66,15 @@ public class NFUAreaEffectCloudMixin implements NFUMixin<AreaEffectCloud> {
     private float nfu_ModifyRadiusConsumption(float original, @Local(ordinal = 0) List<MobEffectInstance> effects)
     {
         // Keep vanilla behavior if not modified, to prevent potential mixin compat issues
-        if (!this.caller().getCapability(NFUCapabilities.CAP_ENTITY_DATA).resolve().flatMap(d ->
-                d.getTransientParameter("NFUMixin_PostEffectEvent_EffectListModified", Boolean.class))
-            .orElse(false)) {
+        if (!EntityComponentAPI.getDataComponent(this.caller())
+            .getVariable("NFUMixin_PostEffectEvent_EffectListModified", Boolean.class).orElse(false))
+        {
             return original;
         }
         AtomicReference<Integer> actualAppliedEffectCount = new AtomicReference<>(0);
-        this.caller().getCapability(NFUCapabilities.CAP_ENTITY_DATA).ifPresent(data ->
-            data.getTransientParameter("NFUMixin_PostEffectEvent_ActualEffectList", List.class)
-                .map(List::size).ifPresent(actualAppliedEffectCount::set));
+        EntityComponentAPI.getDataComponent(this.caller())
+            .getVariable("NFUMixin_PostEffectEvent_ActualEffectList", List.class)
+                .map(List::size).ifPresent(actualAppliedEffectCount::set);
         int expectedCount = effects.size();
         return original * (float) (actualAppliedEffectCount.get()) / (float)expectedCount;
     }
@@ -84,20 +85,18 @@ public class NFUAreaEffectCloudMixin implements NFUMixin<AreaEffectCloud> {
     private int nfu_ModifyDurationConsumption(int original, @Local(ordinal = 0) List<MobEffectInstance> effects)
     {
         // Keep vanilla behavior if not modified, to prevent potential mixin compat issues
-        if (!this.caller().getCapability(NFUCapabilities.CAP_ENTITY_DATA).resolve().flatMap(d ->
-                d.getTransientParameter("NFUMixin_PostEffectEvent_EffectListModified", Boolean.class))
-            .orElse(false)) {
+        if (!EntityComponentAPI.getDataComponent(this.caller())
+            .getVariable("NFUMixin_PostEffectEvent_EffectListModified", Boolean.class).orElse(false))
+        {
             return original;
         }
         AtomicReference<Integer> actualAppliedEffectCount = new AtomicReference<>(0);
-        this.caller().getCapability(NFUCapabilities.CAP_ENTITY_DATA).ifPresent(data ->
-            data.getTransientParameter("NFUMixin_PostEffectEvent_ActualEffectList", List.class)
-                .map(List::size).ifPresent(actualAppliedEffectCount::set));
+        EntityComponentAPI.getDataComponent(this.caller())
+            .getVariable("NFUMixin_PostEffectEvent_ActualEffectList", List.class)
+                .map(List::size).ifPresent(actualAppliedEffectCount::set);
         int expectedCount = effects.size();
-        this.caller().getCapability(NFUCapabilities.CAP_ENTITY_DATA).ifPresent(data -> {
-            data.removeTransientParameter("NFUMixin_PostEffectEvent_EffectListModified");
-            data.removeTransientParameter("NFUMixin_PostEffectEvent_ActualEffectList");
-        });
+        EntityComponentAPI.getDataComponent(this.caller()).putTransientVariable("NFUMixin_PostEffectEvent_EffectListModified", null);
+        EntityComponentAPI.getDataComponent(this.caller()).putTransientVariable("NFUMixin_PostEffectEvent_ActualEffectList", null);
         return Math.round((float) original * (float) (actualAppliedEffectCount.get()) / (float)expectedCount);
     }
 }

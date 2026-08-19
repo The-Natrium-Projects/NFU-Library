@@ -3,16 +3,17 @@ package net.sodiumzh.nfu.util;
 import cpw.mods.modlauncher.api.INameMappingService;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;
 import net.sodiumzh.nfu.object.CastableObject;
+import net.sodiumzh.nfu.reflection.CachedFieldSearchers;
+import net.sodiumzh.nfu.reflection.CachedMethodSearchers;
+import org.apache.commons.io.serialization.ClassNameMatcher;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class NFUReflectionStatics
@@ -202,7 +203,7 @@ public class NFUReflectionStatics
 	 * @param fieldNameSrg Field to find. Use SRG name which can be looked up at: <a href="https://linkie.shedaniel.dev/mappings?namespace=mojang_srg&version=1.20.1&search=">...</a>
 	 * @return An {@link Optional} of the result field, or empty if absent.
 	 */
-	public static <T> Optional<Field> findFieldIfDeclared(Class<?> declaredClass, String fieldNameSrg) {
+	public static Optional<Field> findFieldIfDeclared(Class<?> declaredClass, String fieldNameSrg) {
 		try {
 			Field f = declaredClass.getDeclaredField(remapFieldName(fieldNameSrg));
 			f.setAccessible(true);
@@ -213,6 +214,15 @@ public class NFUReflectionStatics
 			throw new ReflectionFailedException(t);
 		}
     }
+
+	/**
+	 * Safely get a declared field that isn't guaranteed to be present.
+	 * <p>This getter uses {@link CachedFieldSearchers} caching mechanics. To bypass cache mechanics,
+	 * use {@link NFUReflectionStatics#findFieldIfDeclared} instead (not recommended).
+	 */
+	public static Optional<Field> getFieldIfDeclared(Class<?> declaredClass, String fieldNameSrg) {
+		return CachedFieldSearchers.findDeclaredField(declaredClass, fieldNameSrg);
+	}
 
 	/**
 	 * Find public non-static field if present in the given class or superclasses. Including protected/private fields
@@ -403,11 +413,24 @@ public class NFUReflectionStatics
 	}
 
 	/**
+	 * Find a method declared in a given class, including private and static methods, NOT including superclasses.
+	 * <p>
+	 * @param clazz Target class. Nullable only if the method is static.
+	 * @param methodNameSrg SRG name if the method is remapped (i.e. from vanilla MC).
+	 *                         Or original name if not (i.e. from Forge or other mods).
+	 * @param argTypes Method argument types.
+	 * @return an {@link Optional} of the method if present. Or {@link Optional#empty()} if not.
+	 */
+	public static Optional<Method> getMethodIfDeclared(Class<?> clazz, String methodNameSrg, Class<?>... argTypes) {
+		return CachedMethodSearchers.findDeclaredMethod(clazz, methodNameSrg, argTypes);
+	}
+	/**
 	 * Invoke a method declared in a given class, including private and static methods, NOT including superclasses.
 	 * @param obj Target object. Nullable only if the method is static.
 	 * @param methodNameSrg SRG name if the method is remapped (i.e. from vanilla MC). Or original name if not (i.e. from Forge or other mods).
 	 * @param argsThenValues Parameter types followed by values. For example, if a method is foo(String, int), then use : {@code String.class, int.class, "str", 0}
-	 * @return an {@link Optional} of the return value if the method is present. Or {@link Optional#empty()} if not.
+	 * @return an {@link Optional} of the return value as {@link CastableObject} if the method is present (use {@link CastableObject#cast} or {@link CastableObject#castTo} to access the value).
+	 * Or {@link Optional#empty()} if not.
 	 * If the method invoked successfully but the return value is {@code null}, return an {@link Optional} containing an empty {@link CastableObject}.
 	 */
 	public static <T> Optional<CastableObject> invokeMethodIfDeclared(T obj, Class<? super T> declaredClass, String methodNameSrg, Object... argsThenValues) {
@@ -421,6 +444,8 @@ public class NFUReflectionStatics
 			throw new ReflectionFailedException(e);
 		}
 	}
+
+
 
 	/**
 	 * Get all fields (including fields in parent classes, ignoring accessibility, no setting accessible)
@@ -465,6 +490,9 @@ public class NFUReflectionStatics
 		} 
 	}
 
+
+	// STACK WALKING RELATED //
+
 	/**
 	 * Check if the program is currently running inside a specified method call
 	 * of a specified class.
@@ -488,27 +516,57 @@ public class NFUReflectionStatics
 	 * in optional dependency or compatible modules, always use {@link NFUReflectionStatics#isRunningInMethod(String, String)} instead,
 	 * otherwise it may produce {@link NoClassDefFoundError}.
 	 * <p>Note: it cannot distinguish methods with same name.
+	 * <p>WARNING: COSTLY!!!</p>
 	 */
 	public static boolean isRunningInMethod(Class<?> clazz, String methodNameSrg) {
 		return isRunningInMethod(clazz.getName(), methodNameSrg);
 	}
 
+    public static boolean isRunningInAnyDeclaredMethod(Object... classNamePairs) {
+        if (classNamePairs.length % 2 == 1)
+            throw new IllegalArgumentException("Invalid input list. Should be: className1, methodName1, className2, methodName2...");
+        List<String> classNames = new ArrayList<>(classNamePairs.length);
+        List<String> methodNames = new ArrayList<>(classNamePairs.length);
+        for (int i = 0; i < classNamePairs.length; i += 2) {
+            if (classNamePairs[i] instanceof Class<?> clazz && classNamePairs[i + 1] instanceof String str) {
+                classNames.add(clazz.getName());
+                methodNames.add(ObfuscationReflectionHelper.remapName(INameMappingService.Domain.METHOD, str));
+            } else {
+                throw new IllegalArgumentException("Invalid input list. Should be: className1, methodName1, className2, methodName2...");
+            }
+        }
+        return StackWalker.getInstance().walk(frames ->
+            frames.anyMatch(frame -> {
+                int classNameIndex = classNames.indexOf(frame.getClassName());
+                if (classNameIndex < 0) return false;
+                else return classNameIndex == methodNames.indexOf(frame.getMethodName());
+            }));
+    }
+
+    public static boolean isRunningInAnyMethod(Method... methods) {
+        List<String> methodNames = Arrays.stream(methods).map(Method::getName).toList();
+        return StackWalker.getInstance().walk(frames ->
+            frames.anyMatch(frame -> methodNames.contains(frame.getMethodName())));
+    }
+
 	/**
 	 * Check if the program is currently running inside a specific method call.
-	 * <p>Note: it cannot distinguish methods with same name.
 	 */
 	public static boolean isRunningInMethod(Method method) {
 		return isRunningInMethod(method.getDeclaringClass(), method.getName());
 	}
 
-	public static boolean isRunningInClass(String className) {
-		return StackWalker.getInstance().walk(frames ->
-			frames.anyMatch(frame -> frame.getClassName().equals(className)));
-	}
+    public static boolean isRunningInClass(Class<?> clazz) {
+        return StackWalker.getInstance().walk(frames ->
+            frames.anyMatch(frame -> frame.getClassName().equals(clazz.getName())));
+    }
 
-	public static boolean isRunningInClass(Class<?> clazz) {
-		return isRunningInClass(clazz.getName());
-	}
+    public static boolean isRunningInAnyClass(Class<?>... classes) {
+        List<String> names = Arrays.stream(classes).map(Class::getName).toList();
+        return StackWalker.getInstance().walk(frames ->
+            frames.anyMatch(frame -> names.contains(frame.getClassName())));
+    }
+
 
 	/**
 	 * Invoke a method without need of try-catch block.

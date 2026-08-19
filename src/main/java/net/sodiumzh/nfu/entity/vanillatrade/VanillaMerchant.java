@@ -14,12 +14,13 @@ import net.sodiumzh.nfu.util.NFUReflectionStatics;
 import javax.annotation.Nullable;
 
 /**
- * <b>Abstract</b> implementation of {@code CVanillaMerchant}. This class doesn't allow to instantiate directly. 
- * To create custom implementation, first create an interface extending {@code CVanillaMerchant}, then use:
+ * <b>Abstract</b> implementation of {@link IVanillaMerchant}.
+ * To create custom implementation, first create an interface extending {@link IVanillaMerchant}, then use:
  * <p>{@code public class YourImplementation extends VanillaMerchant implements YourInterface}
  * <p>to create an instantiatable subclass.
  */
-public abstract class VanillaMerchant implements CVanillaMerchant
+// TODO Make a component instead
+public abstract class VanillaMerchant implements IVanillaMerchant
 {
 	private final Mob mob;
 	@Nullable

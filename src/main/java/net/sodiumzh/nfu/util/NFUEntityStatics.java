@@ -6,7 +6,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,14 +44,26 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.CapabilityDispatcher;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.annotation.DontCallManually;
+import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
+import net.sodiumzh.nfu.entity.component.preset.EntityDataComponent;
+import net.sodiumzh.nfu.eventhandler.NFUEntityEventHandlers;
+import net.sodiumzh.nfu.mixin.event.entity.EntityFinalizeLoadingEvent;
+import net.sodiumzh.nfu.mixin.event.entity.EntityFinishConstructionEvent;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinClientLevel;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinEntity;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerLevel;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerPlayer;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;
+import net.sodiumzh.nfu.network.packet.ClientboundLivingSyncEquipmentPacket;
+import net.sodiumzh.nfu.object.ICastable;
+import net.sodiumzh.nfu.reflection.CachedMethodSearchers;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -799,27 +813,26 @@ public class NFUEntityStatics
 		NFUReflectionStatics.forceSet(mob, Mob.class, "f_21362_", newTarget);	// Mob.target
 	}
 
-	/**
-	 * @deprecated Use {@link ServerLevel#getEntity(UUID)} instead.
-	 */
-	@Deprecated
+    /**
+     * Get entity by UUID.
+     * <p>Note:
+     */
 	@Nullable
 	public static Entity getEntityByUUID(Level level, UUID uuid)
 	{
 		if (level instanceof ServerLevel sl)
 			return sl.getEntity(uuid);
-		if (level.getPlayerByUUID(uuid) != null)
-			return level.getPlayerByUUID(uuid);
-		@SuppressWarnings("unchecked")
-		Iterable<Entity> entities = NFUReflectionStatics.forceInvokeRetVal(level, Level.class, "m_142425_").castTo(LevelEntityGetter.class).getAll();	// Level#getEntities
-		for (Entity e: entities)
-		{
-			if (e.getUUID().equals(uuid))
-				return e;
-		}
-		return null;
+		Player player = level.getPlayerByUUID(uuid);
+		if (player != null) return player;
+        return getLevelEntityGetter(level).get(uuid);
 	}
-	
+
+    public static LevelEntityGetter<Entity> getLevelEntityGetter(Level level) {
+        Optional<LevelEntityGetter<Entity>> opt = CachedMethodSearchers.invokeIfPresentCastable(level, Level.class, "m_142646_")
+            .map(ICastable::cast);
+        return opt.orElseThrow();
+    }
+
 	/**
 	 * Remove effect if its duration (ticks) and amplifier are no more than given values.
 	 * @param target Target living entity.
@@ -999,6 +1012,55 @@ public class NFUEntityStatics
         } else {
             return e.level().clip(new ClipContext(e.getEyePosition(), center, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, e)).getType() == HitResult.Type.MISS;
         }
+    }
+
+    /**
+     * Try accessing entity type from entity save data without constructing the entity.
+     * <p>It will first try accessing vanilla ID field to see if ID is saved into the nbt.
+     * If not (maybe saved via {@link Entity#saveWithoutId}), it then tries persistent data saved by NFU via {@link NFUEntityEventHandlers#onEntityFinalizeLoading} and
+     * {@link NFUEntityEventHandlers#onEntityFinalizeConstrction}.
+     * @return Entity type if found, or {@code null} if it fails to find. Generally it shouldn't be null, but may somehow fail when
+     * porting old data or for other mod's entities, so consider nullity to prevent possible compatibility issues.
+     */
+    @Nullable
+    public static EntityType<?> getEntityTypeFromNBT(CompoundTag nbt) {
+        String id = nbt.contains("id", Tag.TAG_STRING) ? nbt.getString("id") : (
+                nbt.getCompound("ForgeData").contains("NFU_EntityType", Tag.TAG_STRING) ?
+                        nbt.getCompound("ForgeData").getString("NFU_EntityType") : null);
+        if (id == null || id.isEmpty()) return null;
+
+        ResourceLocation key = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation("minecraft", id);
+        if (ForgeRegistries.ENTITY_TYPES.containsKey(key))
+            return ForgeRegistries.ENTITY_TYPES.getValue(key);
+        else return null;
+    }
+
+    /**
+     * Manually sync a living entity's equipment slots from server to client.
+     * <p>This sync operation generally doesn't need to be done manually. Called for fixing issues that server inventory
+     * is not correctly synced to client appearance.
+     */
+    public static void syncLivingEquipment(LivingEntity l) {
+        if (!l.level().isClientSide()) {
+            ClientboundLivingSyncEquipmentPacket packet = new ClientboundLivingSyncEquipmentPacket(l);
+            NFUNetworkStatics.sendToAllPlayers(l.level(), NFUNetworkChannels.CHANNEL, packet);
+        }
+    }
+
+    /**
+     * Get mob attack target. This accessor is available on client, and is synched via
+     * default syncher.
+     */
+    public static Optional<LivingEntity> getMobAttackTarget(Mob mob) {
+        if (mob.level().isClientSide) {
+            return EntityComponentAPI.getDefaultSyncher(mob).hasSynchedGetter("attackTarget", UUID.class) ?
+                EntityComponentAPI.getDefaultSyncher(mob).getSynchedGetter("attackTarget", UUID.class)
+                    .map(uuid -> NFUEntityStatics.getEntityByUUID(mob.level(), uuid))
+                    .filter(e -> e instanceof LivingEntity)
+                    .map(e -> (LivingEntity)e)
+                : Optional.empty();
+        }
+        else return Optional.ofNullable(mob.getTarget());
     }
 
 }

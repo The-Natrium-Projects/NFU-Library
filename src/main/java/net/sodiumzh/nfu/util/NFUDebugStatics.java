@@ -14,14 +14,14 @@ public class NFUDebugStatics {
 	private static final Set<String> REPORTED_WARNING_MSG = new HashSet<>();
 
 	public static void debugPrintToScreen(Component text, Player receiver) {
-		if (NFUConfigs.CACHED_DEBUG_MODE) {
-			NFUMiscStatics.printToScreen(text, receiver);
+		if (NFUConfigs.CACHED_DEBUG_MSG_OUTPUT) {
+			NFUInfoStatics.printMessage(receiver, text);
 		}
 	}
 
 	public static void debugPrintToScreen(String text, Player receiver) {
-		if (NFUConfigs.CACHED_DEBUG_MODE) {
-			NFUMiscStatics.printToScreen(text, receiver);
+		if (NFUConfigs.CACHED_DEBUG_MSG_OUTPUT) {
+			NFUInfoStatics.printMessage(receiver, text);
 		}
 	}
 

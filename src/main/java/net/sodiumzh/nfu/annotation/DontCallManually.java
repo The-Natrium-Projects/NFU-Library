@@ -8,9 +8,11 @@ import static java.lang.annotation.ElementType.METHOD;
 
 /**
  * Marks that the method is generally internal and should not be called as API.
+ * @deprecated Use {@link org.jetbrains.annotations.ApiStatus.OverrideOnly} instead.
  */
 @Target(METHOD)
 @Retention(RetentionPolicy.CLASS)
+@Deprecated
 public @interface DontCallManually {
 
 }

@@ -1,6 +1,12 @@
 package net.sodiumzh.nfu.entity.component;
 
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.sodiumzh.nfu.entity.component.preset.EntityAttributeMonitorComponent;
+import net.sodiumzh.nfu.entity.component.preset.EntityDataComponent;
+import net.sodiumzh.nfu.entity.component.preset.EntitySyncherComponent;
+import net.sodiumzh.nfu.entity.component.preset.EntityTimerComponent;
+import net.sodiumzh.nfu.object.HierarchyPath;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 
 import java.util.Optional;
@@ -38,25 +44,36 @@ import java.util.Set;
  */
 public class EntityComponentAPI {
 
+    /**
+     * Get the component manager if present. Called when you must specially handle cases of absence (e.g in the entity construction process).
+     * For general usage, use {@code getComponentManager()}.
+     */
+    public static Optional<CEntityComponentManager> getComponentManagerOptional(Entity e) {
+        return e.getCapability(EntityComponentStatics.CAP_MANAGER).resolve();
+    }
+
     public static CEntityComponentManager getComponentManager(Entity e) {
         return e.getCapability(EntityComponentStatics.CAP_MANAGER).orElseGet(() -> {
-            NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing component manager. " +
+            if (e.isAlive())
+                NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing component manager. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
-            return new CEntityComponentManagerImpl(e);
+            return new EntityComponentManagerPlaceholder(e);
         });
     }
 
-    public static EntityDynamicDataComponent<Entity> getDynamicDataComponent(Entity e) {
-        return getComponentManager(e).getSubComponent("dynamic_data", EntityComponentTypes.DYNAMIC_DATA.get()).orElseGet(() -> {
-            NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing dynamic data component. " +
+    public static EntityDataComponent<Entity> getDataComponent(Entity e) {
+        return getComponentManager(e).getSubComponent("data", EntityComponentTypes.DATA.get()).orElseGet(() -> {
+            if (e.isAlive())
+                NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing dynamic data component. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
-            return EntityComponentTypes.DYNAMIC_DATA.get().create(e);
+            return EntityComponentTypes.DATA.get().create(e);
         });
     }
 
     public static EntityTimerComponent<Entity> getDefaultTimer(Entity e) {
         return getComponentManager(e).getSubComponent("timer", EntityComponentTypes.TIMER.get()).orElseGet(() -> {
-            NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
+            if (e.isAlive())
+                NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
             return EntityComponentTypes.TIMER.get().create(e);
         });
@@ -64,17 +81,77 @@ public class EntityComponentAPI {
 
     public static EntitySyncherComponent<Entity> getDefaultSyncher(Entity e) {
         return getComponentManager(e).getSubComponent("syncher", EntityComponentTypes.SYNCHER.get()).orElseGet(() -> {
-            NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
+            if (e.isAlive())
+                NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing default timer component. " +
                 "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
             return EntityComponentTypes.SYNCHER.get().create(e);
         });
     }
 
-    public static <T extends IEntityComponent<? extends Entity>> Optional<T> getComponentByPath(Entity e, String path, EntityComponentType<?, T> type) {
+    public static EntityAttributeMonitorComponent getAttributeMonitor(LivingEntity e) {
+        return getComponentByPathOrFallback(e, HierarchyPath.byNameArray("attribute_monitor"), EntityComponentTypes.ATTRIBUTE_MONITOR.get());
+    }
+
+    public static Optional<IEntityComponent<? extends Entity>> getComponentByPath(Entity e, HierarchyPath path) {
+        return getComponentManager(e).getSubComponentByPath(path);
+    }
+
+    public static Optional<IEntityComponent<? extends Entity>> getComponentByPath(Entity e, String path) {
+        return getComponentManager(e).getSubComponentByPath(HierarchyPath.byLiteral(path));
+    }
+
+    public static <T extends IEntityComponent<? extends Entity>> Optional<T> getComponentByPath(Entity e, HierarchyPath path, EntityComponentType<?, T> type) {
         return getComponentManager(e).getSubComponentByPath(path, type);
+    }
+
+    public static <T extends IEntityComponent<? extends Entity>> Optional<T> getComponentByPath(Entity e, String path, EntityComponentType<?, T> type) {
+        return getComponentByPath(e, HierarchyPath.byLiteral(path), type);
+    }
+
+    public static <T extends IEntityComponent<? extends Entity>> Optional<T> getComponentByPath(Entity e, SubComponentAccessor<? extends Entity, T> accessor) {
+        return getComponentManager(e).getSubComponentByPath(accessor);
     }
 
     public static Set<IEntityComponent<? extends Entity>> getAllComponents(Entity target) {
         return getComponentManager(target).getSelfAndDownstreamComponents();
     }
+
+    /**
+     * Get a component of an entity by path, or create a transient default component as fallback.
+     * <p>Note: the fallback only works as a placeholder, and will not be attached to the entity.
+     */
+    public static <T extends IEntityComponent<? extends Entity>> T getComponentByPathOrFallback(Entity e, HierarchyPath path, EntityComponentType<?, T> type) {
+        return getComponentByPath(e, path, type).orElseGet(() -> type.createUnsafe(e));
+    }
+
+    /**
+     * Get a component of an entity by accessor, or create a transient default component as fallback.
+     * <p>Note: the fallback only works as a placeholder, and will not be attached to the entity.
+     */
+    public static <T extends IEntityComponent<? extends Entity>> T getComponentByPathOrFallback(Entity e, SubComponentAccessor<? extends Entity, T> accessor) {
+        return getComponentByPathOrFallback(e, accessor.getPath(), accessor.getType());
+    }
+
+    /**
+     * Get a component of an entity by path, or create a transient default component as fallback.
+     * <p>Note: the fallback only works as a placeholder, and will not be attached to the entity.
+     */
+    public static <T extends IEntityComponent<? extends Entity>> T getComponentByPathOrFallback(Entity e, String path, EntityComponentType<?, T> type) {
+        return getComponentByPathOrFallback(e, HierarchyPath.byLiteral(path), type);
+    }
+
+    /**
+     * Quick check if a component's path in the component manager is the given path.
+     */
+    public static boolean pathInManagerEquals(IEntityComponent<?> test, HierarchyPath path) {
+        return getComponentByPath(test.getEntity(), path).filter(c -> c == test).isPresent();
+    }
+
+    /**
+     * Quick check if a component's path in the component manager is the given path.
+     */
+    public static boolean pathInManagerEquals(IEntityComponent<?> test, String path) {
+        return getComponentByPath(test.getEntity(), path).filter(c -> c == test).isPresent();
+    }
+
 }

@@ -432,7 +432,7 @@ public class VanillaTradeListingCollectionHelper {
 
                 // Read. Settings may be randomly changed during reading.
                 this.setRequiredLevel(1);	// In json it's 1 by default
-                this.readSingleJson(json, new Tuple3<>(usesPoisson, poissonFactor, currency), NFUConfigs.CACHED_DEBUG_MODE);
+                this.readSingleJson(json, new Tuple3<>(usesPoisson, poissonFactor, currency), NFUConfigs.CACHED_DEBUG_MSG_OUTPUT);
 
                 // Set back, don't let json reading change the settings
                 this.setRandomizationUsesPoisson(usesPoisson);
