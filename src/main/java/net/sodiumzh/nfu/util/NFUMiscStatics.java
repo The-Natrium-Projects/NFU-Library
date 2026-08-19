@@ -1,5 +1,6 @@
 package net.sodiumzh.nfu.util;
 
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -9,7 +10,6 @@ import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.common.util.NonNullSupplier;
-import net.minecraftforge.registries.IForgeRegistry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -199,9 +199,9 @@ public class NFUMiscStatics {
 		return false;
 	}
 	/**
-	 * Get entry from Forge registry if present, otherwise return empty instead of registry default value.
+	 * Get entry from vanilla registry if present, otherwise return empty instead of registry default value.
 	 */
-	public static <T> Optional<T> getEntryOptional(IForgeRegistry<T> reg, ResourceLocation key)
+	public static <T> Optional<T> getEntryOptional(Registry<T> reg, ResourceLocation key)
 	{
 		if (reg.containsKey(key)) return Optional.ofNullable(reg.getValue(key));
 		else return Optional.empty();

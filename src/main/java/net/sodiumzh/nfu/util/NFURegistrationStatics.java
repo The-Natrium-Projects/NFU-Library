@@ -1,23 +1,23 @@
 package net.sodiumzh.nfu.util;
 
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * Utilities for vanilla or Forge registration-related things
+ * Utilities for vanilla or NeoForge registration-related things
  */
 public class NFURegistrationStatics {
 
     public static <T> Optional<Supplier<? extends T>> getDeferredRegisterSupplier(DeferredRegister<T> register, String key) {
-        Map<RegistryObject<T>, Supplier<? extends T>> entries = NFUReflectionStatics.forceGet(
+        Map<DeferredHolder<T, ? extends T>, Supplier<? extends T>> entries = NFUReflectionStatics.forceGet(
             register, DeferredRegister.class, "entries").cast();
         if (entries == null) return Optional.empty();
-        RegistryObject<T> entryKey = null;
-        for (RegistryObject<T> entry: register.getEntries()) {
+        DeferredHolder<T, ? extends T> entryKey = null;
+        for (DeferredHolder<T, ? extends T> entry: register.getEntries()) {
             if (entry.getId().getPath().equals(key)) {
                 entryKey = entry;
                 break;
