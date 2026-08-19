@@ -24,16 +24,16 @@ class BaubleSystemEventListeners
 			if (BaubleEquippableMobRegistries.containsMobType(mob.getClass()))
 			{
 				CBaubleEquippableMobPrvd prvd = new CBaubleEquippableMobPrvd(mob);
-				event.addCapability(new ResourceLocation(NFULibrary.MOD_ID, "cap_bauble_equippable_mob")
-						, prvd);
+				event.addCapability(new ResourceLocation(NFULibrary.MOD_ID, "cap_bauble_equippable_mob"), prvd);
 			}
 		}
 	}
-	
-	@DontCallManually
+
 	@SubscribeEvent
 	public static void onLivingTick(LivingTickEvent event)
 	{
-		event.getEntity().getCapability(BaubleSystemCapabilities.CAP_BAUBLE_EQUIPPABLE_MOB).ifPresent(cap -> cap.tick());
+		event.getEntity().getCapability(BaubleSystemCapabilities.CAP_BAUBLE_EQUIPPABLE_MOB)
+			.filter(cap -> cap.getMob().tickCount % cap.getTickInterval() == 0)
+			.ifPresent(CBaubleEquippableMob::tick);
 	}
 }
