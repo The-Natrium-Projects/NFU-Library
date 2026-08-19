@@ -4,12 +4,12 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.JsonElement;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.container.Tuple3;
 import net.sodiumzh.nfu.container.Tuple4;
@@ -267,7 +267,7 @@ public class VanillaTradeRegistry
 						if (elem.isJsonObject()) {
 							prof = NFUDataStatics.getOptional(elem.getAsJsonObject(), "profession", JsonElement::getAsString)
 								.map(ResourceLocation::new)
-								.map(ForgeRegistries.VILLAGER_PROFESSIONS::getValue)
+								.map(BuiltInRegistries.VILLAGER_PROFESSION::getValue)
 								.orElse(VillagerProfession.NONE);
 						}
 

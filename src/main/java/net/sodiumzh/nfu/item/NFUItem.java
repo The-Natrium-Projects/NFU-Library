@@ -1,6 +1,7 @@
 package net.sodiumzh.nfu.item;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -15,7 +16,6 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.function.UnaryOperatorOneArg;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinItemInput;
 import net.sodiumzh.nfu.object.ICastable;
@@ -190,7 +190,7 @@ public class NFUItem extends Item implements ICastable, INFUItem
 	 */
 	public NFUItem redirectDefaultInstance(ResourceLocation itemKey)
 	{
-		return this.setDefaultInstanceOverride(() -> Optional.ofNullable(ForgeRegistries.ITEMS.getValue(itemKey)).map(Item::getDefaultInstance).orElseGet(() -> ItemStack.EMPTY));
+		return this.setDefaultInstanceOverride(() -> Optional.ofNullable(BuiltInRegistries.ITEM.getValue(itemKey)).map(Item::getDefaultInstance).orElseGet(() -> ItemStack.EMPTY));
 	}
 
 	public NFUItem setGiveCommandUsesDefaultInstance() {

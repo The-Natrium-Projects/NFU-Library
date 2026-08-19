@@ -40,6 +40,7 @@ import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -48,7 +49,6 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 import net.sodiumzh.nfu.entity.component.preset.EntityDataComponent;
@@ -1030,8 +1030,8 @@ public class NFUEntityStatics
         if (id == null || id.isEmpty()) return null;
 
         ResourceLocation key = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation("minecraft", id);
-        if (ForgeRegistries.ENTITY_TYPES.containsKey(key))
-            return ForgeRegistries.ENTITY_TYPES.getValue(key);
+        if (BuiltInRegistries.ENTITY_TYPE.containsKey(key))
+            return BuiltInRegistries.ENTITY_TYPE.getValue(key);
         else return null;
     }
 

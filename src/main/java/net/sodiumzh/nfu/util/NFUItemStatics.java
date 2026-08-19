@@ -1,11 +1,11 @@
 package net.sodiumzh.nfu.util;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraftforge.registries.ForgeRegistries;
 
 public class NFUItemStatics
 {
@@ -38,7 +38,7 @@ public class NFUItemStatics
 	 */	
 	public static ResourceLocation getRegistryKey(Item item)
 	{
-		return ForgeRegistries.ITEMS.getKey(item);
+		return BuiltInRegistries.ITEM.getKey(item);
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class NFUItemStatics
 	 */
 	public static Item getItem(ResourceLocation registryKey)
 	{
-		return ForgeRegistries.ITEMS.getValue(registryKey);
+		return BuiltInRegistries.ITEM.getValue(registryKey);
 	}
 
 	/**
@@ -95,7 +95,7 @@ public class NFUItemStatics
 	 */
 	public static boolean is(ItemStack stack, ResourceLocation registryKey)
 	{
-		return stack.is(ForgeRegistries.ITEMS.getValue(registryKey));
+		return stack.is(BuiltInRegistries.ITEM.getValue(registryKey));
 	}
 	
 	/**
