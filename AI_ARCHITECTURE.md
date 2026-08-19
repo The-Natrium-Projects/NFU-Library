@@ -14,7 +14,9 @@ gameplay content of its own beyond a few debug items and internal test objects.
 
 - **Mod id:** `nfulib` (legacy id: `nautils`; was previously part of `nffservices`)
 - **Base package:** `net.sodiumzh.nfu`
-- **Target:** Minecraft `1.20.1`, Forge `47.x`, Java 17
+- **Target:** Minecraft `1.21.1`, NeoForge `21.1.x`, Java 21 (buildscript/`neoforge.mods.toml`
+  ported to NeoForge's ModDevGradle; the Java sources still use Forge (`net.minecraftforge.*`)
+  APIs and require a follow-up port to NeoForge APIs before the mod will compile/run)
 - **Mappings:** Parchment
 - **Key dependencies:** MixinExtras (bundled via jarJar), JEI (compile/runtime API only)
 - **License:** LGPL-3.0
@@ -28,7 +30,7 @@ bootstrap.
 ## Source layout
 
 - `src/main/java/net/sodiumzh/nfu/**` — all library code, grouped by subsystem (below).
-- `src/main/resources/META-INF/mods.toml` — Forge mod metadata (templated by Gradle).
+- `src/main/resources/META-INF/neoforge.mods.toml` — NeoForge mod metadata (templated by Gradle).
 - `src/main/resources/nfulib.mixins.json` — Mixin config (common + client mixin lists).
 - `src/main/resources/assets|data/nfulib/**` — textures, models, lang, tags for built-in objects.
 - `wiki/` — human-facing documentation (partially incomplete).
