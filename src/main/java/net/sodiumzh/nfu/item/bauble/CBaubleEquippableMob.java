@@ -93,4 +93,8 @@ public interface CBaubleEquippableMob
 		return mob.getCapability(BaubleSystemCapabilities.CAP_BAUBLE_EQUIPPABLE_MOB).orElseGet(
 			() -> new CBaubleEquippableMobEmptyImpl(mob));
 	}
+
+	public int getTickInterval();
+
+	public void setTickInterval(int tickInterval);
 }

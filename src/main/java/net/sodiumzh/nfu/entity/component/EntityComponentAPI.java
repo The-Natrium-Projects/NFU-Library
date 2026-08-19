@@ -62,7 +62,7 @@ public class EntityComponentAPI {
     }
 
     public static EntityDataComponent<Entity> getDataComponent(Entity e) {
-        return getComponentManager(e).getSubComponent("dynamic_data", EntityComponentTypes.DATA.get()).orElseGet(() -> {
+        return getComponentManager(e).getSubComponent("data", EntityComponentTypes.DATA.get()).orElseGet(() -> {
             if (e.isAlive())
                 NFUDebugStatics.errorOnce(EntityComponentAPI.class, String.format("Entity \"%s\" missing dynamic data component. " +
                     "If the entity is pending removal, this message can be ignored.", e.getName().getString()));
