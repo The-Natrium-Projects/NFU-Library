@@ -17,14 +17,11 @@ out
 # gradle
 build
 .gradle
-gradle/*
 
 # other
 eclipse
 libs
 run*
-gradle
-gradle*
 
 !run/saves
 
