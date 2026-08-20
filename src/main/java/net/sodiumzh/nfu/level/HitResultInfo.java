@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.datafix.fixes.EntityUUIDFix;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -15,7 +14,6 @@ import net.sodiumzh.nfu.network.NFUDataSerializers;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import net.sodiumzh.nfu.util.NFUEntityStatics;
 import net.sodiumzh.nfu.util.NFUMathStatics;
-import org.checkerframework.checker.units.qual.C;
 
 import javax.annotation.Nullable;
 import java.util.Comparator;
