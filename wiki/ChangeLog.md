@@ -8,9 +8,9 @@ NFU Registry refactor.
 
 Removed a bunch of legacy classes and methods.
 
-- Removed entity data capability. Use data component (path: `/data`) instead.
-- Removed entity timer capability. Use timer component (path: `/timer`) instead.
-- 
+Completed NFU Entity Component System (NFU-ECS).
+
+Refactored Mob Anger module to use NFU-ECS.
 
 ### 0.x.32
 
