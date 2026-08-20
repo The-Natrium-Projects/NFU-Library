@@ -26,6 +26,24 @@ import javax.annotation.Nonnull;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+
+/**
+ * <p>
+ * <strong>Origin & License:</strong><br>
+ * This code is derived from/copied from the project <strong>Hostile Mobs and Girls</strong>,
+ * originally authored by <strong>Mechalopa</strong>.
+ * </p>
+ *
+ * <p>
+ * This component is licensed under the <strong>GNU Lesser General Public License v3.0</strong> (LGPL-3.0).
+ * You may obtain a copy of the License at:
+ * <a href="https://www.gnu.org/licenses/lgpl-3.0.html">https://www.gnu.org/licenses/lgpl-3.0.html</a>
+ * or see the {@code LICENSE} file in the project root directory.
+ * </p>
+ *
+ * @author Mechalopa (Original)
+ * @see <a href="https://github.com/Mechalopa/Hostile-Mobs-and-Girls/blob/1.20.1/src/main/java/com/github/mechalopa/hmag/world/level/storage/loot/modifiers/AddItemForEntityLootModifier.java">...</a>
+ */
 @Credit("Hostile Mobs and Girls")
 public class AddItemForEntityLootModifier extends LootModifier {
     private static final Codec<LootItemFunction[]> LOOT_FUNCTIONS_CODEC = Codec.PASSTHROUGH.flatXmap(d -> {
