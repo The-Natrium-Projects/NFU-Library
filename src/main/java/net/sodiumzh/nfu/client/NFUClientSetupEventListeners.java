@@ -1,11 +1,11 @@
 package net.sodiumzh.nfu.client;
 
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
-import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModLoader;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.client.event.EntityRenderersEvent;
+import net.neoforged.eventbus.api.SubscribeEvent;
+import net.neoforged.fml.ModLoader;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.client.renderer.EmptyEntityRenderer;
 import net.sodiumzh.nfu.registry.NFUEntityTypes;

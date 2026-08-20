@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.common.MinecraftForge;
 import net.sodiumzh.nfu.container.ITable2D;
 import net.sodiumzh.nfu.container.Table2D;
 import net.sodiumzh.nfu.container.Tuple2;

@@ -2,8 +2,8 @@ package net.sodiumzh.nfu.mixin.event.entity;
 
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.Event.HasResult;
+import net.neoforged.event.entity.living.LivingEvent;
+import net.neoforged.eventbus.api.Event.HasResult;
 
 /**
  * Posted when a {@code LivingEntity} dies, about to drop loot and check if it's killed by a player.

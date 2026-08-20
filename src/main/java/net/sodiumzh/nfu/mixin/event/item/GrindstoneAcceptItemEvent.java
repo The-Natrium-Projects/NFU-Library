@@ -2,7 +2,7 @@ package net.sodiumzh.nfu.mixin.event.item;
 
 
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.Event;
 
 /**
  * Posted when a Grindstone checks if an item can be placed into the input slots.

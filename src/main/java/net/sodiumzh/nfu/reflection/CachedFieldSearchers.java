@@ -1,7 +1,7 @@
 package net.sodiumzh.nfu.reflection;
 
 import cpw.mods.modlauncher.api.INameMappingService;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.sodiumzh.nfu.container.ITable2D;
 import net.sodiumzh.nfu.container.Table2D;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;

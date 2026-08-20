@@ -3,8 +3,8 @@ package net.sodiumzh.nfu.item.bauble;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.fml.event.IModBusEvent;
+import net.neoforged.eventbus.api.Event;
+import net.neoforged.fml.event.IModBusEvent;
 
 import java.util.List;
 import java.util.function.Function;

@@ -1,8 +1,8 @@
 package net.sodiumzh.nfu.capability;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.common.capabilities.AutoRegisterCapability;
-import net.minecraftforge.common.capabilities.Capability;
+import net.neoforged.common.capabilities.AutoRegisterCapability;
+import net.neoforged.common.capabilities.Capability;
 import net.sodiumzh.nfu.network.AvailableSide;
 
 import java.util.HashSet;

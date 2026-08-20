@@ -3,7 +3,7 @@ package net.sodiumzh.nfu.mixin.mixin;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.common.MinecraftForge;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.entity.ItemEntityHurtEvent;
 import net.sodiumzh.nfu.mixin.event.entity.ItemEntityOutOfWorldEvent;

@@ -11,7 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.common.MinecraftForge;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.entity.ThrownPotionAddEffectEvent;
 import net.sodiumzh.nfu.mixin.event.entity.ThrownPotionEffectCloudEvent;

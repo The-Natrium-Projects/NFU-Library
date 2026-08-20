@@ -1,6 +1,6 @@
 package net.sodiumzh.nfu.entity.anger;
 
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.eventbus.api.Event;
 
 /**
  * Posted on {@link MobAngerRules} is constructed, allowing modification through event.

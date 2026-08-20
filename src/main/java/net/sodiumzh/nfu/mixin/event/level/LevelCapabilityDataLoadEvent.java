@@ -2,7 +2,7 @@ package net.sodiumzh.nfu.mixin.event.level;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.eventbus.api.Event;
 
 import javax.annotation.Nonnull;
 

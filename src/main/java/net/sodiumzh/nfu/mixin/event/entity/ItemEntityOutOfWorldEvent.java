@@ -1,7 +1,7 @@
 package net.sodiumzh.nfu.mixin.event.entity;
 
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraftforge.event.entity.item.ItemEvent;
+import net.neoforged.event.entity.item.ItemEvent;
 
 /**
  * Fired when an {@link ItemEntity} falls out of world.

@@ -3,8 +3,8 @@ package net.sodiumzh.nfu.item.bauble;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.fml.event.IModBusEvent;
+import net.neoforged.eventbus.api.Event;
+import net.neoforged.fml.event.IModBusEvent;
 
 public class ModifyBaubleEquippableMobsEvent extends Event implements IModBusEvent
 {

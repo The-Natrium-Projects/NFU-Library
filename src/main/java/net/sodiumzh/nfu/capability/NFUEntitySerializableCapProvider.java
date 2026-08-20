@@ -2,9 +2,9 @@ package net.sodiumzh.nfu.capability;
 
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.util.INBTSerializable;
+import net.neoforged.common.capabilities.Capability;
+import net.neoforged.common.capabilities.ICapabilitySerializable;
+import net.neoforged.common.util.INBTSerializable;
 
 import java.util.function.Supplier;
 

@@ -3,7 +3,7 @@ package net.sodiumzh.nfu.mixin.event.entity;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.eventbus.api.Cancelable;
+import net.neoforged.eventbus.api.Cancelable;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 
 import java.util.ArrayList;

@@ -44,11 +44,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityDispatcher;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.event.entity.EntityTeleportEvent;
+import net.neoforged.common.MinecraftForge;
+import net.neoforged.common.capabilities.Capability;
+import net.neoforged.common.capabilities.CapabilityDispatcher;
+import net.neoforged.common.capabilities.ICapabilityProvider;
+import net.neoforged.event.entity.EntityTeleportEvent;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 import net.sodiumzh.nfu.entity.component.preset.EntityDataComponent;
@@ -468,7 +468,7 @@ public class NFUEntityStatics
 	// Ported from vanilla EnderMan
 	public static boolean isEnderManLookedAt(EnderMan enderman, Player player) {
 		ItemStack itemstack = player.getInventory().armor.get(3);
-		if (net.minecraftforge.common.ForgeHooks.shouldSuppressEnderManAnger(enderman, player, itemstack))
+		if (net.neoforged.common.ForgeHooks.shouldSuppressEnderManAnger(enderman, player, itemstack))
 		{
 			return false;
 		} else

@@ -3,7 +3,7 @@ package net.sodiumzh.nfu.mixin.event.entity;
 import cpw.mods.modlauncher.api.INameMappingService;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 import net.sodiumzh.nfu.exception.InfiniteRecursionException;
 import net.sodiumzh.nfu.util.NFUDebugStatics;

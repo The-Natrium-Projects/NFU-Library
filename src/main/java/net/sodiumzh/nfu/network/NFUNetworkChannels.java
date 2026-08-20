@@ -1,9 +1,9 @@
 package net.sodiumzh.nfu.network;
 
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.eventbus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.network.simple.SimpleChannel;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.entity.component.preset.EntitySyncherComponent;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;

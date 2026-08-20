@@ -1,8 +1,8 @@
 package net.sodiumzh.nfu.registry;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.fml.event.IModBusEvent;
+import net.neoforged.eventbus.api.Event;
+import net.neoforged.fml.event.IModBusEvent;
 
 public abstract class NFURegistryGenerateValuesEvent extends Event {
 

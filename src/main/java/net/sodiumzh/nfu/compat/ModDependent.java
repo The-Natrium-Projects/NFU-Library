@@ -1,7 +1,7 @@
 package net.sodiumzh.nfu.compat;
 
 
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

@@ -2,7 +2,7 @@ package net.sodiumzh.nfu.entity.anger;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraftforge.eventbus.api.Cancelable;
+import net.neoforged.eventbus.api.Cancelable;
 import net.sodiumzh.nfu.event.NFULivingEvent;
 import org.jetbrains.annotations.Nullable;
 

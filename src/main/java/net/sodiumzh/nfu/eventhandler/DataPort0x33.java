@@ -2,8 +2,8 @@ package net.sodiumzh.nfu.eventhandler;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.eventbus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.mixin.event.entity.EntityLoadEvent;
 import org.checkerframework.checker.units.qual.C;

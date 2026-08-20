@@ -11,9 +11,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.network.NetworkRegistry;
+import net.neoforged.network.PacketDistributor;
+import net.neoforged.network.simple.SimpleChannel;
 
 import java.util.List;
 import java.util.Optional;

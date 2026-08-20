@@ -2,7 +2,7 @@ package net.sodiumzh.nfu.mixin.mixin;
 
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.common.MinecraftForge;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.item.GrindstoneAcceptItemEvent;
 import org.spongepowered.asm.mixin.Mixin;

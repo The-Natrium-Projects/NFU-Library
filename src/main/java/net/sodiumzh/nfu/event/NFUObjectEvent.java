@@ -1,6 +1,6 @@
 package net.sodiumzh.nfu.event;
 
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.eventbus.api.Event;
 
 /**
  * An utility class of a simple event with a specified object.

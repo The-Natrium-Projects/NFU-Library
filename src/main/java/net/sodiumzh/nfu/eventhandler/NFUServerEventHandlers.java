@@ -1,11 +1,11 @@
 package net.sodiumzh.nfu.eventhandler;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent.Phase;
-import net.minecraftforge.event.TickEvent.ServerTickEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.common.MinecraftForge;
+import net.neoforged.event.TickEvent.Phase;
+import net.neoforged.event.TickEvent.ServerTickEvent;
+import net.neoforged.event.server.ServerStartingEvent;
+import net.neoforged.eventbus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.capability.CEntityTickingCapability;
 import net.sodiumzh.nfu.entity.ConditionalAttributeModifier;

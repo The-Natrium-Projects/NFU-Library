@@ -1,7 +1,7 @@
 package net.sodiumzh.nfu.capability;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.common.capabilities.Capability;
+import net.neoforged.common.capabilities.Capability;
 
 import java.util.function.Supplier;
 

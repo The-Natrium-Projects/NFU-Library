@@ -1,8 +1,8 @@
 package net.sodiumzh.nfu.util;
 
 import cpw.mods.modlauncher.api.INameMappingService;
-import net.minecraftforge.fml.loading.FMLLoader;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;
 import net.sodiumzh.nfu.object.CastableObject;

@@ -4,8 +4,8 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.eventbus.api.Cancelable;
+import net.neoforged.event.entity.ProjectileImpactEvent;
+import net.neoforged.eventbus.api.Cancelable;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinProjectile;
 

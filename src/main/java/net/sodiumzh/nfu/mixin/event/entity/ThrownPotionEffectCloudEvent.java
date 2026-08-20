@@ -4,7 +4,7 @@ import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
-import net.minecraftforge.eventbus.api.Cancelable;
+import net.neoforged.eventbus.api.Cancelable;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 
 import javax.annotation.Nonnull;

@@ -1,7 +1,7 @@
 package net.sodiumzh.nfu.event;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.event.entity.EntityEvent;
+import net.neoforged.event.entity.EntityEvent;
 
 /**
  * An utility class as a templated {@link EntityEvent} that can automatically cast the entity to given class.

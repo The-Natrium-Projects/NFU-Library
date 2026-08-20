@@ -3,7 +3,7 @@ package net.sodiumzh.nfu.mixin.event.entity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.eventbus.api.Cancelable;
+import net.neoforged.eventbus.api.Cancelable;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 
 @Cancelable

@@ -2,7 +2,7 @@ package net.sodiumzh.nfu.entity.component;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.common.util.INBTSerializable;
+import net.neoforged.common.util.INBTSerializable;
 import net.sodiumzh.nfu.annotation.DontOverride;
 import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.object.HierarchyPath;

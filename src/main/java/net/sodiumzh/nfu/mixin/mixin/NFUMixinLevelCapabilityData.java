@@ -1,9 +1,9 @@
 package net.sodiumzh.nfu.mixin.mixin;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.INBTSerializable;
-import net.minecraftforge.common.util.LevelCapabilityData;
+import net.neoforged.common.MinecraftForge;
+import net.neoforged.common.util.INBTSerializable;
+import net.neoforged.common.util.LevelCapabilityData;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.level.LevelCapabilityDataLoadEvent;
 import org.spongepowered.asm.mixin.Mixin;

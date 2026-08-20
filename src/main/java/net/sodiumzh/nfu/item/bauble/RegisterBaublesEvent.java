@@ -1,7 +1,7 @@
 package net.sodiumzh.nfu.item.bauble;
 
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.fml.event.IModBusEvent;
+import net.neoforged.eventbus.api.Event;
+import net.neoforged.fml.event.IModBusEvent;
 
 /**
  * Fired on registering bauble items. Bauble items are only allowed to register here.

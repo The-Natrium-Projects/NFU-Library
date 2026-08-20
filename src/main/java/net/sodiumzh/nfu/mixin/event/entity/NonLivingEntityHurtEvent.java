@@ -3,8 +3,8 @@ package net.sodiumzh.nfu.mixin.event.entity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraftforge.event.entity.EntityEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.neoforged.event.entity.EntityEvent;
+import net.neoforged.event.entity.living.LivingHurtEvent;
 
 /**
  * Fired when a non-living entity gets hurt only on server. 

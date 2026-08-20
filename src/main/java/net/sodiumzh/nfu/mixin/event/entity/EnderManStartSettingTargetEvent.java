@@ -2,8 +2,8 @@ package net.sodiumzh.nfu.mixin.event.entity;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.EnderMan;
-import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
-import net.minecraftforge.eventbus.api.Cancelable;
+import net.neoforged.event.entity.living.LivingChangeTargetEvent;
+import net.neoforged.eventbus.api.Cancelable;
 import net.sodiumzh.nfu.event.NFULivingEvent;
 
 /**

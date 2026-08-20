@@ -3,7 +3,7 @@ package net.sodiumzh.nfu.entity.component.preset;
 import net.minecraft.network.protocol.game.ServerGamePacketListener;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.server.ServerLifecycleHooks;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 import net.sodiumzh.nfu.object.HierarchyPath;

@@ -1,7 +1,7 @@
 package net.sodiumzh.nfu.mixin.mixin;
 
 import net.minecraft.world.entity.projectile.ThrownTrident;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.common.MinecraftForge;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.entity.ThrownTridentSetBaseDamageEvent;
 import net.sodiumzh.nfu.mixin.event.entity.ThrownTridentSetFinalDamageEvent;

@@ -4,7 +4,7 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.common.MinecraftForge;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.entity.component.preset.IEntityComponentAccess;
 import net.sodiumzh.nfu.network.AvailableSide;

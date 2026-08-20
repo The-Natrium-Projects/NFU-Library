@@ -1,7 +1,7 @@
 package net.sodiumzh.nfu.mixin.event.entity;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.event.entity.EntityEvent;
+import net.neoforged.event.entity.EntityEvent;
 
 public class NonLivingEntityOutOfWorldEvent extends EntityEvent
 {

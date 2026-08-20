@@ -2,7 +2,7 @@ package net.sodiumzh.nfu.entity.component;
 
 import com.mojang.blaze3d.shaders.Effect;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.fml.util.thread.EffectiveSide;
+import net.neoforged.fml.util.thread.EffectiveSide;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.event.NFUEntityEvent;
 import net.sodiumzh.nfu.exception.WrongSideException;

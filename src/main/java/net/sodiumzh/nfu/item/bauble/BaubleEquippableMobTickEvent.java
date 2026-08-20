@@ -1,7 +1,7 @@
 package net.sodiumzh.nfu.item.bauble;
 
 import net.minecraft.world.entity.Mob;
-import net.minecraftforge.eventbus.api.Cancelable;
+import net.neoforged.eventbus.api.Cancelable;
 import net.sodiumzh.nfu.event.NFULivingEvent;
 
 

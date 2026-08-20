@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
-import net.minecraftforge.common.util.INBTSerializable;
+import net.neoforged.common.util.INBTSerializable;
 
 /**
  * The main interface as Vanilla Merchant implementation for generic mobs.

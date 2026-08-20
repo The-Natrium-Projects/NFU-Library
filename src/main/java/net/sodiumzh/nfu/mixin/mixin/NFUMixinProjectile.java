@@ -2,7 +2,7 @@ package net.sodiumzh.nfu.mixin.mixin;
 
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.common.MinecraftForge;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.entity.ProjectileHitEvent;
 import org.spongepowered.asm.mixin.Mixin;

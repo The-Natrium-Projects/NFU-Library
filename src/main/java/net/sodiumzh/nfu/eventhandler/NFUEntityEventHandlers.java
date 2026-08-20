@@ -2,8 +2,8 @@ package net.sodiumzh.nfu.eventhandler;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.eventbus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.mixin.event.entity.EntityFinalizeLoadingEvent;
 import net.sodiumzh.nfu.mixin.event.entity.EntityFinishConstructionEvent;

@@ -2,7 +2,7 @@ package net.sodiumzh.nfu.object;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.fml.util.thread.EffectiveSide;
+import net.neoforged.fml.util.thread.EffectiveSide;
 import net.sodiumzh.nfu.exception.WrongSideException;
 
 import javax.annotation.Nullable;

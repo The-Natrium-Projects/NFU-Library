@@ -277,7 +277,7 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
             }
         }
 
-        if (hitresult.getType() != HitResult.Type.MISS && !enteredPortal && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, hitresult)) {
+        if (hitresult.getType() != HitResult.Type.MISS && !enteredPortal && !net.neoforged.event.ForgeEventFactory.onProjectileImpact(this, hitresult)) {
             this.onHit(hitresult);
         }
     }

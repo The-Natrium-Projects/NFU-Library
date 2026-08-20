@@ -3,8 +3,8 @@ package net.sodiumzh.nfu.entity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.event.TickEvent;
+import net.neoforged.eventbus.api.SubscribeEvent;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 
 import java.util.HashMap;

@@ -1,6 +1,6 @@
 package net.sodiumzh.nfu.entity.vanillatrade;
 
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.eventbus.api.Event;
 
 /**
  * Posted when the FIRST {@link VanillaTradeListingCollectionHelper} is created for a {@link VanillaTradeListingCollection},
