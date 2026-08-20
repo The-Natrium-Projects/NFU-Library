@@ -4,6 +4,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.Resource;
@@ -11,7 +13,6 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.container.ITable2D;
 import net.sodiumzh.nfu.container.Table2D;
@@ -148,6 +149,7 @@ public class RandomEnchantmentSelector
 	{
 		MinecraftServer server = NFULibrary.getServer();
 		if (server == null) return this;
+		Registry<Enchantment> enchantments = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
 		ResourceManager mgr = server.getResourceManager();
 		List<Resource> resources = mgr.getResourceStack(location);
 		for (Resource r: resources)
@@ -156,7 +158,7 @@ public class RandomEnchantmentSelector
 				InputStream input = r.open();
 				Reader reader = new InputStreamReader(input);
 				JsonElement json = JsonParser.parseReader(reader);
-				this.readSingleJson(json);
+				this.readSingleJson(json, enchantments);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -164,11 +166,11 @@ public class RandomEnchantmentSelector
 		return this;
 	}
 
-	private void readSingleJson(JsonElement json) {
+	private void readSingleJson(JsonElement json, Registry<Enchantment> enchantments) {
 		for (JsonElement element : json.getAsJsonArray()) {
 			try {
 				JsonObject jo = element.getAsJsonObject();
-				Enchantment enc = ForgeRegistries.ENCHANTMENTS.getValue(new ResourceLocation(jo.get("enchantment").getAsString()));
+				Enchantment enc = enchantments.getValue(new ResourceLocation(jo.get("enchantment").getAsString()));
 				if (enc == null) continue;
 
 				int[] levels;
@@ -220,7 +222,10 @@ public class RandomEnchantmentSelector
 		if (!includeCurse && !includeNonCurse)
 			throw new IllegalArgumentException("RandomEnchantmentSelector#allEnchantments: must include either curse or non-curse.");
 		RandomEnchantmentSelector res = new RandomEnchantmentSelector();
-		Stream<Enchantment> allEnc = ForgeRegistries.ENCHANTMENTS.getValues().stream();
+		MinecraftServer server = NFULibrary.getServer();
+		if (server == null)
+			throw new IllegalStateException("RandomEnchantmentSelector#allEnchantments: server is not available.");
+		Stream<Enchantment> allEnc = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT).stream();
 		if (!includeTreasure)
 			allEnc = allEnc.filter(enc -> !enc.isTreasureOnly());
 		if (!includeNonTreasure)

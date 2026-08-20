@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
 import com.google.common.base.Suppliers;
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -14,15 +14,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.minecraftforge.common.loot.IGlobalLootModifier;
-import net.minecraftforge.common.loot.LootModifier;
+import net.neoforged.neoforge.common.loot.IGlobalLootModifier;
+import net.neoforged.neoforge.common.loot.LootModifier;
 import net.sodiumzh.nfu.annotation.Credit;
 
 @Credit("Hostile Mobs and Girls")
 public class AddTableLootModifier extends LootModifier
 {
-    public static final Supplier<Codec<AddTableLootModifier>> CODEC =
-        Suppliers.memoize(() -> RecordCodecBuilder.create(inst -> codecStart(inst)
+    public static final Supplier<MapCodec<AddTableLootModifier>> CODEC =
+        Suppliers.memoize(() -> RecordCodecBuilder.mapCodec(inst -> codecStart(inst)
                 .and(ResourceLocation.CODEC.fieldOf("table").forGetter(m -> m.lootTable)).apply(inst, AddTableLootModifier::new)));
     private final ResourceLocation lootTable;
 
@@ -43,7 +43,7 @@ public class AddTableLootModifier extends LootModifier
     }
 
     @Override
-    public Codec<? extends IGlobalLootModifier> codec()
+    public MapCodec<? extends IGlobalLootModifier> codec()
     {
         return CODEC.get();
     }

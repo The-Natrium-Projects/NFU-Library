@@ -14,10 +14,10 @@ import net.minecraft.world.item.ItemNameBlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.function.UnaryOperatorOneArg;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinItemInput;
 
@@ -138,7 +138,7 @@ public class NFUBlockItem extends ItemNameBlockItem implements INFUItem {
      */
     public NFUBlockItem redirectDefaultInstance(ResourceLocation itemKey)
     {
-        return this.setDefaultInstanceOverride(() -> Optional.ofNullable(ForgeRegistries.ITEMS.getValue(itemKey)).map(Item::getDefaultInstance).orElseGet(() -> ItemStack.EMPTY));
+        return this.setDefaultInstanceOverride(() -> Optional.ofNullable(BuiltInRegistries.ITEM.getValue(itemKey)).map(Item::getDefaultInstance).orElseGet(() -> ItemStack.EMPTY));
     }
 
     public NFUBlockItem setGiveCommandUsesDefaultInstance() {

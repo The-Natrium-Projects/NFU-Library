@@ -3,6 +3,9 @@ package net.sodiumzh.nfu.entity.vanillatrade;
 import com.google.common.collect.Multimap;
 import com.google.gson.*;
 import com.mojang.logging.LogUtils;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.Resource;
@@ -15,7 +18,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.crafting.CraftingHelper;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.container.Tuple3;
 import net.sodiumzh.nfu.registry.NFUConfigs;
@@ -573,12 +575,12 @@ public class VanillaTradeListingCollectionHelper {
         try {
             // Case of a single item type
             if (element.isJsonPrimitive()) {
-                Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(element.getAsString()));
+                Item item = BuiltInRegistries.ITEM.getValue(new ResourceLocation(element.getAsString()));
                 return new ItemStack[]{(item == null || item == Items.AIR) ? ItemStack.EMPTY : item.getDefaultInstance()};
             }
             // Case of an ItemStack representation of Forge format
             else if (element.isJsonObject()) {
-                Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(element.getAsJsonObject().get("item").getAsString()));
+                Item item = BuiltInRegistries.ITEM.getValue(new ResourceLocation(element.getAsJsonObject().get("item").getAsString()));
                 return new ItemStack[]{(item == null || item == Items.AIR) ?
                         ItemStack.EMPTY :
                         CraftingHelper.getItemStack(element.getAsJsonObject(), true, true)};
@@ -633,9 +635,12 @@ public class VanillaTradeListingCollectionHelper {
     public static Tuple<Enchantment, Integer> readEnchantment(JsonElement element)
     {
         if (element == null) return null;
+        MinecraftServer server = NFULibrary.getServer();
+        if (server == null) return null;
+        Registry<Enchantment> enchantments = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
         if (element.isJsonObject())
         {
-            Enchantment e = ForgeRegistries.ENCHANTMENTS.getValue(new ResourceLocation(
+            Enchantment e = enchantments.getValue(new ResourceLocation(
                 NFUDataStatics.getOptionalString(element.getAsJsonObject(), "id").orElseGet(() ->
                     NFUDataStatics.getOptionalString(element.getAsJsonObject(), "key").orElse("minecraft:none"))));
             if (e == null) return null;
@@ -643,7 +648,7 @@ public class VanillaTradeListingCollectionHelper {
                     element.getAsJsonObject().get("level").getAsInt() : e.getMaxLevel();
             return new Tuple<>(e, lv);
         } else if (element.isJsonPrimitive()) {
-            Enchantment e = ForgeRegistries.ENCHANTMENTS.getValue(new ResourceLocation(element.getAsString()));
+            Enchantment e = enchantments.getValue(new ResourceLocation(element.getAsString()));
             if (e == null) return null;
             return new Tuple<>(e, e.getMaxLevel());
         }

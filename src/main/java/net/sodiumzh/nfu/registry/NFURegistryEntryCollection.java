@@ -1,7 +1,7 @@
 package net.sodiumzh.nfu.registry;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import net.sodiumzh.nfu.container.Tuple2;
 
 import javax.annotation.Nonnull;

@@ -2,9 +2,9 @@ package net.sodiumzh.nfu.util;
 
 import com.mojang.datafixers.util.Either;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -14,7 +14,7 @@ import java.util.function.Supplier;
  */
 public class NFUCompatStatics {
 
-    public static <T> Optional<RegistryObject<T>> registerModDependent(DeferredRegister<? super T> register,
+    public static <T> Optional<DeferredHolder<? super T, T>> registerModDependent(DeferredRegister<? super T> register,
         String path, String dependingModId, Supplier<T> entry)
     {
         if (ModList.get().isLoaded(dependingModId))
@@ -24,7 +24,7 @@ public class NFUCompatStatics {
         else return Optional.empty();
     }
 
-    public static <T1 extends Item, T2 extends Item> Either<RegistryObject<T1>, RegistryObject<T2>>
+    public static <T1 extends Item, T2 extends Item> Either<DeferredHolder<Item, T1>, DeferredHolder<Item, T2>>
     registerModDependentOrElse(DeferredRegister<Item> register, String path, String dependingModId,
         Supplier<? extends T1> entrySupplier, Supplier<? extends T2> fallbackSupplier)
     {

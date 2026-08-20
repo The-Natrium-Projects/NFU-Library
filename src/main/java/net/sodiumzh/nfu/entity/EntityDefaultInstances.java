@@ -1,10 +1,10 @@
 package net.sodiumzh.nfu.entity;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 
 import java.util.HashMap;
@@ -29,7 +29,7 @@ class EntityDefaultInstances {
     @SubscribeEvent
     private static void createDefaultInstances(TickEvent.LevelTickEvent event) {
         if (!TABLE.isEmpty()) return;
-        ForgeRegistries.ENTITY_TYPES.forEach(type -> {
+        BuiltInRegistries.ENTITY_TYPE.forEach(type -> {
             try {
                 TABLE.put(type, type.create(event.level));
             } catch (Exception e) {

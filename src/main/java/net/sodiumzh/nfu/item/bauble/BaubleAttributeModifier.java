@@ -2,10 +2,10 @@ package net.sodiumzh.nfu.item.bauble;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.container.Tuple3;
 
 import javax.annotation.Nullable;
@@ -262,7 +262,7 @@ public class BaubleAttributeModifier
 	public static BaubleAttributeModifier fromJson(JsonElement inJson) {
 		try {
 			JsonObject inJsonObj = inJson.getAsJsonObject();
-			Attribute attr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(inJsonObj.get("attribute").getAsString()));
+			Attribute attr = BuiltInRegistries.ATTRIBUTE.getValue(new ResourceLocation(inJsonObj.get("attribute").getAsString()));
 			double amount = inJsonObj.get("amount").getAsDouble();
 			AttributeModifier.Operation operation = null;
 			switch (inJsonObj.get("operation").getAsString()) {

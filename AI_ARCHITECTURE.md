@@ -14,13 +14,17 @@ gameplay content of its own beyond a few debug items and internal test objects.
 
 - **Mod id:** `nfulib` (legacy id: `nautils`; was previously part of `nffservices`)
 - **Base package:** `net.sodiumzh.nfu`
-- **Target:** Minecraft `1.20.1`, Forge `47.x`, Java 17
+- **Target:** Minecraft `1.21.1`, NeoForge `21.1.x`, Java 21 (buildscript/`neoforge.mods.toml`
+  ported to NeoForge's ModDevGradle; most of the Java sources still use Forge (`net.minecraftforge.*`)
+  APIs and require a follow-up port to NeoForge APIs before the mod will compile/run —
+  the registry system (`registry/` and registry call sites throughout the codebase)
+  has already been ported to NeoForge style, see below)
 - **Mappings:** Parchment
 - **Key dependencies:** MixinExtras (bundled via jarJar), JEI (compile/runtime API only)
 - **License:** LGPL-3.0
 
 The mod entry point is `NFULibrary` (`@Mod("nfulib")`). Its constructor wires up
-everything: registers Forge `DeferredRegister`s, merges NFU custom registries,
+everything: registers NeoForge `DeferredRegister`s, merges NFU custom registries,
 initializes the entity-component and bauble systems, and configures save-data
 redirection. There is no gameplay logic in the entry class itself — it is pure
 bootstrap.
@@ -28,7 +32,7 @@ bootstrap.
 ## Source layout
 
 - `src/main/java/net/sodiumzh/nfu/**` — all library code, grouped by subsystem (below).
-- `src/main/resources/META-INF/mods.toml` — Forge mod metadata (templated by Gradle).
+- `src/main/resources/META-INF/neoforge.mods.toml` — NeoForge mod metadata (templated by Gradle).
 - `src/main/resources/nfulib.mixins.json` — Mixin config (common + client mixin lists).
 - `src/main/resources/assets|data/nfulib/**` — textures, models, lang, tags for built-in objects.
 - `wiki/` — human-facing documentation (partially incomplete).
@@ -42,7 +46,7 @@ bootstrap.
   their default implementations.
 - **`NFU...Statics` classes** in `util/` are stateless helper libraries — the
   primary "standard library" surface of the mod.
-- **Supplier-based registration.** NFU's custom registries and Forge registrations
+- **Supplier-based registration.** NFU's custom registries and NeoForge registrations
   both register `Supplier`s and resolve lazily.
 - **Annotations as contracts.** `annotation/` holds marker annotations
   (`@DontOverride`, `@DontCallManually`, `@MustBeRegistered`, `@CapabilityInterface`,
@@ -58,18 +62,21 @@ bootstrap.
 ## Sub-modules
 
 ### 1. Custom Registry System — `registry/`
-A lightweight, Forge-independent registry framework for registering arbitrary
+A lightweight, mod-loader-independent registry framework for registering arbitrary
 custom data types by `ResourceLocation` key.
 - `NFURegistry<T>` — a single registry; declared statically per data type. Values
   are `Supplier`-backed and resolved lazily (or eagerly at a configurable setup phase).
 - `NFURegistryEntryCollection` — a `DeferredRegister`-like helper for declaring
-  entries, returning `Accessor` handles (analogous to `RegistryObject`); entries
+  entries, returning `Accessor` handles (analogous to NeoForge's `DeferredHolder`); entries
   are committed via `merge()`.
 - `NFURegistries` holds the "registry of registries". Other files
   (`NFUItems`, `NFUEntityTypes`, `NFUEffects`, `NFUCapabilities`, `NFUEntityComponents`,
   `NFUFunctions`, `NFUPredicates`, `NFUConfigs`, `NFUTags`, `NFUEntityDataSerializers`,
   `NFUCapabilityAttachment`) declare the library's own built-in registered objects
-  using both Forge and NFU registries.
+  using both NeoForge (`DeferredRegister`/`DeferredHolder` over vanilla `BuiltInRegistries`)
+  and NFU registries. Vanilla registry lookups throughout the codebase go through
+  `BuiltInRegistries` (or, for the data-driven Enchantment registry, via
+  `RegistryAccess#registryOrThrow`) rather than Forge's removed `ForgeRegistries`.
 - `NFUConfigs` defines the Forge config spec (save-data porter toggle, debug mode,
   flying-speed-fix toggle) and caches values.
 
@@ -242,11 +249,11 @@ and are listed in the `client` section of `nfulib.mixins.json`.
 
 ## How the pieces fit together (runtime flow)
 
-1. **Bootstrap:** `NFULibrary` constructor registers Forge `DeferredRegister`s,
+1. **Bootstrap:** `NFULibrary` constructor registers NeoForge `DeferredRegister`s,
    merges NFU custom registries, and initializes the ECS, bauble system, and
    save-data redirector.
 2. **Registration events:** Dependent mods and NFU itself declare registered objects
-   via Forge registries and `NFURegistryEntryCollection`, plus subsystem-specific
+   via vanilla/NeoForge registries and `NFURegistryEntryCollection`, plus subsystem-specific
    register/modify events (baubles, trades, anger rules, components).
 3. **Attachment:** Capabilities/components are attached to entities on creation via
    the provider classes and ECS manager.

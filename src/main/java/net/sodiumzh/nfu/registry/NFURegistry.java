@@ -5,8 +5,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.util.thread.EffectiveSide;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import net.sodiumzh.nfu.annotation.NotYetImplemented;
 import net.sodiumzh.nfu.exception.DuplicateRegistryEntryException;
 import net.sodiumzh.nfu.network.AvailableSide;
@@ -320,7 +320,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     /**
      * Register an object from supplier.
      * @return An {@code Accessor} for getting the object, so that you can assign it to a
-     * static field. Its usage is similar to {@link RegistryObject}.
+     * static field. Its usage is similar to {@link DeferredHolder}.
      * <p>It's recommended to use {@link NFURegistryEntryCollection} instead (just like using {@link DeferredRegister}).
      * Directly registering may cause issues if the class in which you're registering objects is not loaded on setup phase.
      */

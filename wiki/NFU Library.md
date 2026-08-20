@@ -24,7 +24,7 @@ Note that you must call the class where registries are defined in your mod main 
 
 #### Registration
 
-`RegistryEntryCollection` is a utility for registering entries into registries. Its usage is similar to Forge `DeferredRegister`.
+`RegistryEntryCollection` is a utility for registering entries into registries. Its usage is similar to NeoForge `DeferredRegister`.
 
 ##### Declaration
 
@@ -42,9 +42,9 @@ Registration should be declared in the same class of `RegistryEntryCollection` a
 public static final NFURegistry.Accessor<YourDataType> YOUR_ENTRY = REGISTER.register("your_entry", () -> new YourDataType(...));
 ```
 
-This action registers `YourDataType(...)` with key `your_mod_id:your_entry` into `REGISTER`. Like Forge registry, `NFURegistry` also uses `Supplier`s instead of instances.
+This action registers `YourDataType(...)` with key `your_mod_id:your_entry` into `REGISTER`. Like NeoForge registry, `NFURegistry` also uses `Supplier`s instead of instances.
 
-It returns a `NFURegistry.Accessor` which is similar to `RegistryObject` for Forge registry. You can call `get()` to access the value.
+It returns a `NFURegistry.Accessor` which is similar to `DeferredHolder` for NeoForge registry. You can call `get()` to access the value.
 
 ##### Merging
 

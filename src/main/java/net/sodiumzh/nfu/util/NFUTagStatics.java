@@ -1,5 +1,7 @@
 package net.sodiumzh.nfu.util;
 
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -8,19 +10,16 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.IForgeRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class NFUTagStatics
 {
 	public static boolean hasTag(Entity obj, ResourceLocation tag)
 	{
-		TagKey<EntityType<?>> tagKey = ForgeRegistries.ENTITY_TYPES.tags().createTagKey(tag);
-		return ForgeRegistries.ENTITY_TYPES.tags().getTag(tagKey).contains(obj.getType());
+		TagKey<EntityType<?>> tagKey = TagKey.create(Registries.ENTITY_TYPE, tag);
+		return BuiltInRegistries.ENTITY_TYPE.wrapAsHolder(obj.getType()).is(tagKey);
 	}
 	
 	public static boolean hasTag(Entity obj, String tag)
@@ -35,8 +34,8 @@ public class NFUTagStatics
 	
 	public static boolean hasTag(Item obj, ResourceLocation tag)
 	{
-		TagKey<Item> tagKey = ForgeRegistries.ITEMS.tags().createTagKey(tag);
-		return ForgeRegistries.ITEMS.tags().getTag(tagKey).contains(obj);
+		TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tag);
+		return BuiltInRegistries.ITEM.wrapAsHolder(obj).is(tagKey);
 	}
 	
 	public static boolean hasTag(Item obj, String tag)
@@ -69,8 +68,8 @@ public class NFUTagStatics
 	
 	public static boolean hasTag(Block obj, ResourceLocation tag)
 	{
-		TagKey<Block> tagKey = ForgeRegistries.BLOCKS.tags().createTagKey(tag);
-		return ForgeRegistries.BLOCKS.tags().getTag(tagKey).contains(obj);
+		TagKey<Block> tagKey = TagKey.create(Registries.BLOCK, tag);
+		return BuiltInRegistries.BLOCK.wrapAsHolder(obj).is(tagKey);
 	}
 	
 	public static boolean hasTag(Block obj, String tag)
@@ -86,8 +85,10 @@ public class NFUTagStatics
 	
 	public static ArrayList<EntityType<?>> getAllEntityTypesUnderTag(ResourceLocation tag)
 	{
-		TagKey<EntityType<?>> tagKey = ForgeRegistries.ENTITY_TYPES.tags().createTagKey(tag);
-		return NFUContainerStatics.iterableToList(ForgeRegistries.ENTITY_TYPES.tags().getTag(tagKey));
+		TagKey<EntityType<?>> tagKey = TagKey.create(Registries.ENTITY_TYPE, tag);
+		ArrayList<EntityType<?>> res = new ArrayList<>();
+		BuiltInRegistries.ENTITY_TYPE.getTagOrEmpty(tagKey).forEach(holder -> res.add(holder.value()));
+		return res;
 	}
 	
 	public static ArrayList<EntityType<?>> getAllEntityTypesUnderTag(String tag)
@@ -102,8 +103,10 @@ public class NFUTagStatics
 	
 	public static ArrayList<Item> getAllItemsUnderTag(ResourceLocation tag)
 	{
-		TagKey<Item> tagKey = ForgeRegistries.ITEMS.tags().createTagKey(tag);
-		return NFUContainerStatics.iterableToList(ForgeRegistries.ITEMS.tags().getTag(tagKey));
+		TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tag);
+		ArrayList<Item> res = new ArrayList<>();
+		BuiltInRegistries.ITEM.getTagOrEmpty(tagKey).forEach(holder -> res.add(holder.value()));
+		return res;
 	}
 	
 	public static ArrayList<Item> getAllItemsUnderTag(String tag)
@@ -118,8 +121,10 @@ public class NFUTagStatics
 	
 	public static ArrayList<Block> getAllBlocksUnderTag(ResourceLocation tag)
 	{
-		TagKey<Block> tagKey = ForgeRegistries.BLOCKS.tags().createTagKey(tag);
-		return NFUContainerStatics.iterableToList(ForgeRegistries.BLOCKS.tags().getTag(tagKey));
+		TagKey<Block> tagKey = TagKey.create(Registries.BLOCK, tag);
+		ArrayList<Block> res = new ArrayList<>();
+		BuiltInRegistries.BLOCK.getTagOrEmpty(tagKey).forEach(holder -> res.add(holder.value()));
+		return res;
 	}
 	
 	public static ArrayList<Block> getAllBlocksUnderTag(String tag)
@@ -147,11 +152,8 @@ public class NFUTagStatics
 		return TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation(modId, name));
 	}
 
-	public static <T> List<TagKey<T>> getAllTags(T block, IForgeRegistry<T> registry) {
-		if (registry.tags() == null) return List.of();
-		return Optional.ofNullable(registry.tags())
-			.flatMap(tags -> tags.getReverseTag(block).map(t -> t.getTagKeys().toList()))
-			.orElse(List.of());
+	public static <T> List<TagKey<T>> getAllTags(T value, Registry<T> registry) {
+		return registry.wrapAsHolder(value).tags().toList();
 	}
 
 }

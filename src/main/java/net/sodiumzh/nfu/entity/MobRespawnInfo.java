@@ -2,6 +2,7 @@ package net.sodiumzh.nfu.entity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -14,7 +15,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.INBTSerializable;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.util.NFUEntityStatics;
 import net.sodiumzh.nfu.util.NFUInfoStatics;
 import net.sodiumzh.nfu.util.NFUNBTStatics;
@@ -148,7 +148,7 @@ public class MobRespawnInfo implements INBTSerializable<CompoundTag>
 	 */
 	public void writeNBT(CompoundTag writeInto)
 	{
-		writeInto.putString(MOB_TYPE_KEY, ForgeRegistries.ENTITY_TYPES.getKey(type).toString());
+		writeInto.putString(MOB_TYPE_KEY, BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
 		writeInto.put(MOB_NBT_KEY, this.info.copy());
 	}
 
@@ -162,7 +162,7 @@ public class MobRespawnInfo implements INBTSerializable<CompoundTag>
 	@SuppressWarnings("unchecked")
 	@Override
 	public void deserializeNBT(CompoundTag nbt) {
-		this.type = nbt.contains(MOB_TYPE_KEY, Tag.TAG_STRING) ? (EntityType<? extends Mob>) ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(nbt.getString("mob_type"))) : null;
+		this.type = nbt.contains(MOB_TYPE_KEY, Tag.TAG_STRING) ? (EntityType<? extends Mob>) BuiltInRegistries.ENTITY_TYPE.getValue(new ResourceLocation(nbt.getString("mob_type"))) : null;
 		this.info = nbt.contains(MOB_NBT_KEY, Tag.TAG_COMPOUND) ? nbt.getCompound(MOB_NBT_KEY) : new CompoundTag();
 	}
 }
