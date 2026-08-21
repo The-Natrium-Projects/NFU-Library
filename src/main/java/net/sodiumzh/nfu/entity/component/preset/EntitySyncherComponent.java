@@ -91,7 +91,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
      * @param value New value.
      */
     public <T> void setSynchedData(String key, Class<T> dataClass, T value) {
-        if (this.getEntity().level().isClientSide)
+        if (this.getEntity().getLevel().isClientSide)
             return;
         if (this.hasSynchedData(key, dataClass)) {
             this.synchedData.get(key).value = value;
@@ -105,7 +105,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
      */
     @ApiStatus.Internal
     public void setSynchedDataClient(String key, Object value) {
-        if (!this.getEntity().level().isClientSide)
+        if (!this.getEntity().getLevel().isClientSide)
             throw new WrongSideException("setSynchedDataClient invoked on server.");
         if (this.hasSynchedData(key, Object.class)) {
             this.synchedData.get(key).value = value;
@@ -274,7 +274,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         // Label all keys changed, so that we sync all data
         this.changedDataKeys.addAll(this.synchedData.keySet());
         ClientboundEntitySyncherComponentSyncPacket packet = new ClientboundEntitySyncherComponentSyncPacket(this);
-        NFUNetworkStatics.sendToAllPlayers(this.getEntity().level(), NFUNetworkChannels.CHANNEL, packet);
+        NFUNetworkStatics.sendToAllPlayers(this.getEntity().getLevel(), NFUNetworkChannels.CHANNEL, packet);
         this.changedDataKeys.clear();
     }
 
@@ -319,7 +319,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         }
 
         public @Nullable Object get() {
-            if (owner.getEntity().level().isClientSide)
+            if (owner.getEntity().getLevel().isClientSide)
                 return this.cache;
             else return getter.apply(owner.getEntity());
         }

@@ -480,7 +480,7 @@ public class NFULevelStatics
 	 */
 	public static HitResult getMouseFocus(Player player) {
 		return EntityComponentAPI.getDefaultSyncher(player).getSynchedGetter("mouseFocus", HitResultInfo.class)
-			.orElseGet(() -> HitResultInfo.miss(player.position())).toHitResult(player.level());
+			.orElseGet(() -> HitResultInfo.miss(player.position())).toHitResult(player.getLevel());
 	}
 
 }

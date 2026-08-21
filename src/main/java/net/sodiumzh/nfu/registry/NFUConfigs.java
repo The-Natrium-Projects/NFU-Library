@@ -8,13 +8,14 @@ public class NFUConfigs
 {
 	protected static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 	public static ForgeConfigSpec CONFIG;
-	
+
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_SAVE_DATA_PORTER;
 	public static final ForgeConfigSpec.BooleanValue SPEC_DEBUG_MSG_OUTPUT;
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENTITY_COMPONENT_HIERARCHY_CHECK;
     public static final ForgeConfigSpec.BooleanValue SPEC_CRASHES_ON_ENTITY_LOAD_FAILED;
+	public static final ForgeConfigSpec.BooleanValue SPEC_BYPASSES_UNBOUND_KEY_CHECK;
 
-	public static final ForgeConfigSpec.BooleanValue ENABLES_FLYING_SPEED_SCALING_FIX;
+	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_FLYING_SPEED_SCALING_FIX;
 
 	static
 	{
@@ -24,10 +25,13 @@ public class NFUConfigs
 				.define("enablesSaveDataPorter", true);
 		BUILDER.pop();
 		BUILDER.push("fixes");
-		ENABLES_FLYING_SPEED_SCALING_FIX = BUILDER.comment("Fix of a vanilla issue that some flying mobs' flying " +
+		SPEC_ENABLES_FLYING_SPEED_SCALING_FIX = BUILDER.comment("Fix of a vanilla issue that some flying mobs' flying " +
 				"speed is not multiplied by AI speed modifiers (MC-172801). If some mob's flying speed goes wrong, " +
 				"consider disabling this config entry.")
 			.define("enablesFlyingSpeedScalingFix", true);
+		SPEC_BYPASSES_UNBOUND_KEY_CHECK = BUILDER.comment("If true, unbound registry key will not throw exception. Enabling this option might fix some broken world save data " +
+				"caused by \"Unbound values in registry\" error. Use this feature at your own risk.")
+			.define("bypassesUnboundKeyCheck", false);
 		BUILDER.pop();
 		BUILDER.push("debug");
 		BUILDER.comment("Debug options. Only enable them when you're debugging or testing mods or modpacks." +
@@ -44,22 +48,24 @@ public class NFUConfigs
 
 		CONFIG = BUILDER.build();
 	}
-	
+
 	public static boolean CACHED_ENABLES_SAVE_DATA_PORTER = true;
 	public static boolean CACHED_DEBUG_MSG_OUTPUT = false;
 	public static boolean CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK = false;
 	public static boolean CACHED_CRASHES_ON_ENTITY_LOAD_FAILED = false;
 	public static boolean CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = true;
-	
+	public static boolean CACHED_BYPASSES_UNBOUND_KEY_CHECK = false;
+
 	public static void refresh()
 	{
 		CACHED_ENABLES_SAVE_DATA_PORTER = SPEC_ENABLES_SAVE_DATA_PORTER.get();
 		CACHED_DEBUG_MSG_OUTPUT = SPEC_DEBUG_MSG_OUTPUT.get();
 		CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK = SPEC_ENTITY_COMPONENT_HIERARCHY_CHECK.get();
         CACHED_CRASHES_ON_ENTITY_LOAD_FAILED = SPEC_CRASHES_ON_ENTITY_LOAD_FAILED.get();
-		CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = ENABLES_FLYING_SPEED_SCALING_FIX.get();
+		CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = SPEC_ENABLES_FLYING_SPEED_SCALING_FIX.get();
+		CACHED_BYPASSES_UNBOUND_KEY_CHECK = SPEC_BYPASSES_UNBOUND_KEY_CHECK.get();
 	}
-	
+
 	@SubscribeEvent
 	public static void loadConfig(final ModConfigEvent event)
 	{

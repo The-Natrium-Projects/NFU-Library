@@ -23,7 +23,7 @@ public class NFUClientboundPacketHandlers {
         Entity e = mc.level.getEntity(packet.getId());
         if (e == null) return;
         e.setPos(e.position().add(packet.getDeltaPos()));
-        e.addDeltaMovement(packet.getDeltaVelocity());
+        e.setDeltaMovement(e.getDeltaMovement().add(packet.getDeltaVelocity()));
     }
 
     public static void handleLivingSyncEquipment(ClientboundLivingSyncEquipmentPacket packet, ClientGamePacketListener listener) {
