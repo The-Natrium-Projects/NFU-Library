@@ -1001,7 +1001,7 @@ public class NFUEntityStatics
         if (pos.distanceTo(e.getEyePosition()) > 128.0D) {
             return false;
         } else {
-            return e.level().clip(new ClipContext(e.getEyePosition(), pos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, e)).getType() == HitResult.Type.MISS;
+            return e.getLevel().clip(new ClipContext(e.getEyePosition(), pos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, e)).getType() == HitResult.Type.MISS;
         }
     }
 
@@ -1010,7 +1010,7 @@ public class NFUEntityStatics
         if (center.distanceTo(e.getEyePosition()) > 128.0D) {
             return false;
         } else {
-            return e.level().clip(new ClipContext(e.getEyePosition(), center, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, e)).getType() == HitResult.Type.MISS;
+            return e.getLevel().clip(new ClipContext(e.getEyePosition(), center, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, e)).getType() == HitResult.Type.MISS;
         }
     }
 
@@ -1041,9 +1041,9 @@ public class NFUEntityStatics
      * is not correctly synced to client appearance.
      */
     public static void syncLivingEquipment(LivingEntity l) {
-        if (!l.level().isClientSide()) {
+        if (!l.getLevel().isClientSide()) {
             ClientboundLivingSyncEquipmentPacket packet = new ClientboundLivingSyncEquipmentPacket(l);
-            NFUNetworkStatics.sendToAllPlayers(l.level(), NFUNetworkChannels.CHANNEL, packet);
+            NFUNetworkStatics.sendToAllPlayers(l.getLevel(), NFUNetworkChannels.CHANNEL, packet);
         }
     }
 
@@ -1052,10 +1052,10 @@ public class NFUEntityStatics
      * default syncher.
      */
     public static Optional<LivingEntity> getMobAttackTarget(Mob mob) {
-        if (mob.level().isClientSide) {
+        if (mob.getLevel().isClientSide) {
             return EntityComponentAPI.getDefaultSyncher(mob).hasSynchedGetter("attackTarget", UUID.class) ?
                 EntityComponentAPI.getDefaultSyncher(mob).getSynchedGetter("attackTarget", UUID.class)
-                    .map(uuid -> NFUEntityStatics.getEntityByUUID(mob.level(), uuid))
+                    .map(uuid -> NFUEntityStatics.getEntityByUUID(mob.getLevel(), uuid))
                     .filter(e -> e instanceof LivingEntity)
                     .map(e -> (LivingEntity)e)
                 : Optional.empty();

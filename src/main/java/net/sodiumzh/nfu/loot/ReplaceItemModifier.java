@@ -35,7 +35,7 @@ import net.sodiumzh.nfu.annotation.Credit;
  * </p>
  *
  * @author Mechalopa (Original)
- * @see <a href="https://github.com/Mechalopa/Hostile-Mobs-and-Girls/blob/1.20.1/src/main/java/com/github/mechalopa/hmag/world/level/storage/loot/modifiers/ReplaceItemModifier.java">...</a>
+ * @see <a href="https://github.com/Mechalopa/Hostile-Mobs-and-Girls/blob/1.19.2/src/main/java/com/github/mechalopa/hmag/world/level/storage/loot/modifiers/ReplaceItemModifier.java">...</a>
  */
 @Credit("Hostile Mobs and Girls")
 public class ReplaceItemModifier extends LootModifier

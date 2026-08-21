@@ -66,7 +66,7 @@ public enum AvailableSide {
     }
 
     public boolean isCorrectSide(Entity ctx) {
-        return isCorrectSide(ctx.level());
+        return isCorrectSide(ctx.getLevel());
     }
 
     public boolean isCorrectSide(BlockEntity ctx) {
@@ -123,7 +123,7 @@ public enum AvailableSide {
      * Check if the side is correct, and throw if not.
      */
     public void assertCorrectSide(Entity ctx) {
-        assertCorrectSide(ctx.level());
+        assertCorrectSide(ctx.getLevel());
     }
 
     /**

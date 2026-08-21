@@ -54,7 +54,7 @@ public abstract class VanillaMerchantComponent extends EntityComponentBase<Mob> 
         {
             this.offers = new MerchantOffers();
         }
-        if (this.offers.isEmpty() && !this.getMob().level().isClientSide)
+        if (this.offers.isEmpty() && !this.getMob().getLevel().isClientSide)
         {
             this.generateTrades();
         }
@@ -109,7 +109,7 @@ public abstract class VanillaMerchantComponent extends EntityComponentBase<Mob> 
 
     @Override
     public boolean isClientSide() {
-        return this.getMob().level().isClientSide();
+        return this.getMob().getLevel().isClientSide();
     }
 
     @Override

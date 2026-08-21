@@ -1,5 +1,6 @@
 package net.sodiumzh.nfu.mixin.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -9,6 +10,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.mixin.event.entity.*;
+import net.sodiumzh.nfu.registry.NFUConfigs;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -59,7 +61,7 @@ public abstract class NFUMixinLivingEntity implements NFUMixin<LivingEntity>
 		MinecraftForge.EVENT_BUS.post(new LivingFinishBaseAiStepEvent(caller()));
 	}
 
-	@ModifyReturnValue(method = "getFlyingSpeed()F", at = @At("RETURN"))
+	/*@ModifyReturnValue(method = "getFlyingSpeed()F", at = @At("RETURN"))
 	private float nfu_fixMC_172801_FlyingSpeedIssue(float original) {
 		if (!NFUConfigs.CACHED_ENABLES_FLYING_SPEED_SCALING_FIX)
 			return original;
@@ -67,7 +69,7 @@ public abstract class NFUMixinLivingEntity implements NFUMixin<LivingEntity>
 		if (original == 0.02f && this.caller().getSpeed() != 1.0f && ! (this.caller().getControllingPassenger() instanceof Player))
 			return original * 2.5f * this.caller().getSpeed();
 		else return original;
-	}
+	}*/
 
     @WrapOperation(method = "tick()V",
         at = @At(value = "INVOKE", target = "net/minecraft/world/entity/LivingEntity.aiStep ()V"))
