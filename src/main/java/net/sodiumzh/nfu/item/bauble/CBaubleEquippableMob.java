@@ -45,7 +45,7 @@ public interface CBaubleEquippableMob
 	/**
 	 * Invoked once before slots tick.
 	 */
-	public void preTick();
+	public void beforeTick();
 	
 	/**
 	 * Invoked on each slot tick.
@@ -56,7 +56,7 @@ public interface CBaubleEquippableMob
 	/**
 	 * Invoked once after slots tick.
 	 */
-	public void postTick();
+	public void afterTick();
 	
 	/**
 	 * Directly invoked on mob tick.

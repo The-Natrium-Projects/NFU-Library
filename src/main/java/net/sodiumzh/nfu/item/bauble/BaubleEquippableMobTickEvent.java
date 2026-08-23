@@ -8,7 +8,7 @@ import net.sodiumzh.nfu.event.NFULivingEvent;
 /**
  * Events posted during Bauble-equippable mob tick.
  * <p><b>Note: DO NOT directly listen to this event!</b> It will post 4 times each tick, 
- * including pre-tick, pre-slot-tick, post-slot-tick, post-tick successively. Listen to specific events instead.
+ * including before-tick, before-slot-tick, after-slot-tick, after-tick successively. Listen to specific events instead.
  */
 public abstract class BaubleEquippableMobTickEvent extends NFULivingEvent<Mob>
 {
@@ -19,15 +19,14 @@ public abstract class BaubleEquippableMobTickEvent extends NFULivingEvent<Mob>
 		super(mob);
 		this.capability = cap;
 	}
-	
-	
+
 	/**
 	 * Posted before slots pre-tick but after attribute modifiers update for Bauble-equippable mobs.
 	 */
-	public static class PreTick extends BaubleEquippableMobTickEvent
+	public static class BeforeTick extends BaubleEquippableMobTickEvent
 	{
 
-		public PreTick(Mob mob, CBaubleEquippableMob cap)
+		public BeforeTick(Mob mob, CBaubleEquippableMob cap)
 		{
 			super(mob, cap);
 		}
@@ -36,10 +35,10 @@ public abstract class BaubleEquippableMobTickEvent extends NFULivingEvent<Mob>
 	/**
 	 * Posted after slots pre-tick before slots tick for Bauble-equippable mobs.
 	 */
-	public static class PreSlotTick extends BaubleEquippableMobTickEvent
+	public static class BeforeSlotTick extends BaubleEquippableMobTickEvent
 	{
 
-		public PreSlotTick(Mob mob, CBaubleEquippableMob cap)
+		public BeforeSlotTick(Mob mob, CBaubleEquippableMob cap)
 		{
 			super(mob, cap);
 		}
@@ -48,10 +47,10 @@ public abstract class BaubleEquippableMobTickEvent extends NFULivingEvent<Mob>
 	/**
 	 * Posted after slots tick before slots post-tick for Bauble-equippable mobs.
 	 */
-	public static class PostSlotTick extends BaubleEquippableMobTickEvent
+	public static class AfterSlotTick extends BaubleEquippableMobTickEvent
 	{
 
-		public PostSlotTick(Mob mob, CBaubleEquippableMob cap)
+		public AfterSlotTick(Mob mob, CBaubleEquippableMob cap)
 		{
 			super(mob, cap);
 		}
@@ -76,10 +75,10 @@ public abstract class BaubleEquippableMobTickEvent extends NFULivingEvent<Mob>
 	/**
 	 * Posted after slots post-tick for Bauble-equippable mobs.
 	 */
-	public static class PostTick extends BaubleEquippableMobTickEvent
+	public static class AfterTick extends BaubleEquippableMobTickEvent
 	{
 
-		public PostTick(Mob mob, CBaubleEquippableMob cap)
+		public AfterTick(Mob mob, CBaubleEquippableMob cap)
 		{
 			super(mob, cap);
 		}

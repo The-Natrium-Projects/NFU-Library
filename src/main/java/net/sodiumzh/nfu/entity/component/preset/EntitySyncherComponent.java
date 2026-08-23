@@ -232,11 +232,15 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
 
     public void tick() {
         if (this.isClientSide() && this.getEntity() instanceof Player player) {
+            // Handle player client2server sync
             if ((this.getEntity().tickCount % this.syncInterval) == 0) {
                 ServerboundPlayerEntitySyncherComponentSyncPacket packet = new ServerboundPlayerEntitySyncherComponentSyncPacket(this);
                 NFUNetworkStatics.sendToServer(player, NFUNetworkChannels.CHANNEL, packet);
                 this.changedDataKeys.clear();
             }
+            // Sync once on the first tick
+            if (this.getEntity().tickCount == 1)
+                this.sync();
         }
     }
 

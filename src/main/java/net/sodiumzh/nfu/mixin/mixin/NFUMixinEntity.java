@@ -30,37 +30,45 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 	@Shadow public abstract InteractionResult interact(Player pPlayer, InteractionHand pHand);
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void onEntityConstructor(CallbackInfo ci) {
+	private void nfu_onEntityConstructor(CallbackInfo ci) {
 		MinecraftForge.EVENT_BUS.post(new EntityFinishConstructionEvent(caller()));
 	}
 
 	@Inject(at = @At("HEAD"), method = "hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z", cancellable = true)
-	private void hurt(DamageSource src, float amount, CallbackInfoReturnable<Boolean> callback)
+	private void nfu_hurt(DamageSource src, float amount, CallbackInfoReturnable<Boolean> callback)
 	{
 		if (NFUMixinHooks.onNonLivingEntityHurt(caller(), src, amount))
 			callback.setReturnValue(false);
 	}
 
 	@Inject(at = @At("HEAD"), method = "tick()V")
-	private void startBaseTick(CallbackInfo callback)
+	private void nfu_startBaseTick(CallbackInfo callback)
 	{
 		MinecraftForge.EVENT_BUS.post(new EntityStartBaseTickEvent(caller()));
 	}
 
 	@Inject(at = @At("TAIL"), method = "tick()V")
-	private void finishBaseTick(CallbackInfo callback)
+	private void nfu_finishBaseTick(CallbackInfo callback)
 	{
 		MinecraftForge.EVENT_BUS.post(new EntityFinishBaseTickEvent(caller()));
 	}
 
 	@Inject(at = @At("HEAD"), method = "load(Lnet/minecraft/nbt/CompoundTag;)V")
-	private void beforeLoad(CompoundTag nbt, CallbackInfo callback)
+	private void nfu_beforeLoad(CompoundTag nbt, CallbackInfo callback)
 	{
 		MinecraftForge.EVENT_BUS.post(new EntityLoadEvent(caller(), nbt));
 	}
 
+	@WrapOperation(method = "load(Lnet/minecraft/nbt/CompoundTag;)V",
+		at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.deserializeCaps (Lnet/minecraft/nbt/CompoundTag;)V"))
+	private void nfu_onDeserializeCaps(Entity instance, CompoundTag compoundTag, Operation<Void> original) {
+		MinecraftForge.EVENT_BUS.post(new EntityCapabilityLoadEvent(instance));
+		original.call(instance, compoundTag);
+		MinecraftForge.EVENT_BUS.post(new EntityCapabilityFinishLoadingEvent(instance));
+	}
+
 	@Inject(at = @At("TAIL"), method = "load(Lnet/minecraft/nbt/CompoundTag;)V")
-	private void afterLoad(CompoundTag nbt, CallbackInfo callback)
+	private void nfu_afterLoad(CompoundTag nbt, CallbackInfo callback)
 	{
 		MinecraftForge.EVENT_BUS.post(new EntityFinalizeLoadingEvent(caller(), nbt));
 	}
@@ -68,7 +76,7 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 	@Inject(method = "load(Lnet/minecraft/nbt/CompoundTag;)V", at =
 			@At(value = "INVOKE", target = "net/minecraft/CrashReport.forThrowable(Ljava/lang/Throwable;Ljava/lang/String;)Lnet/minecraft/CrashReport;"),
 	cancellable = true)
-	private void loadFailed(CompoundTag pCompound, CallbackInfo ci,
+	private void nfu_loadFailed(CompoundTag pCompound, CallbackInfo ci,
 							@Local(ordinal = 0) Throwable throwable,
 							@Local(ordinal = 0, argsOnly = true) CompoundTag nbt)
 	{
@@ -81,13 +89,13 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 	}
 
 	@Inject(method = "discard()V", at = @At("HEAD"))
-	private void onDiscard(CallbackInfo ci) {
+	private void nfu_onDiscard(CallbackInfo ci) {
 		MinecraftForge.EVENT_BUS.post(new EntityDiscardEvent(caller()));
 	}
 
 	@WrapOperation(method = "rideTick()V",
 		at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.tick()V"))
-	private void onRideTick(Entity instance, Operation<Void> original) {
+	private void nfu_onRideTick(Entity instance, Operation<Void> original) {
 		NFUEntityStatics.notifyEntityTickStart(instance);
 		MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
 		original.call(instance);
@@ -97,7 +105,7 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 
 	@Inject(method = "makeStuckInBlock(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/phys/Vec3;)V",
 		at = @At("HEAD"), cancellable = true)
-	private void onStuckInBlock(BlockState pState, Vec3 pMotionMultiplier, CallbackInfo ci,
+	private void nfu_onStuckInBlock(BlockState pState, Vec3 pMotionMultiplier, CallbackInfo ci,
 								@Local(argsOnly = true) LocalRef<Vec3> multiplierRef)
 	{
 		var event = new EntityStuckInBlockEvent(caller(), pState, pMotionMultiplier);
