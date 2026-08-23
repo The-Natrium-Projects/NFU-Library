@@ -1,11 +1,14 @@
 package net.sodiumzh.nfu.entity.component;
 
+import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.sodiumzh.nfu.exception.WrongSideException;
 import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.registry.NFURegistries;
 
 import javax.annotation.Nonnull;
+import java.util.Locale;
 import java.util.function.Function;
 
 /**
@@ -33,7 +36,7 @@ public record EntityComponentType<E extends Entity, T extends IEntityComponent<E
             NFURegistries.ENTITY_COMPONENT_TYPES.load();
             res = NFURegistries.ENTITY_COMPONENT_TYPES.getKey(this);
             if (res == null)
-                throw new IllegalStateException("Dangling EntityComponentType. Must be registered in NFURegistries.ENTITY_COMPONENT_TYPES."
+                throw new IllegalStateException("Unregistered EntityComponentType. Must be registered in NFURegistries.ENTITY_COMPONENT_TYPES."
                 + " Type: " + this.componentClass.getName());
             else return res;
         }
@@ -44,7 +47,12 @@ public record EntityComponentType<E extends Entity, T extends IEntityComponent<E
      * initialize type, unless you set the type manually!!
      */
     public T create(E entity, boolean serialized) {
-        this.availableSide.assertCorrectSide(entity);
+        try {
+            this.availableSide.assertCorrectSide(entity);
+        } catch (WrongSideException e) {
+            LogUtils.getLogger().error(String.format(Locale.ENGLISH, "Access of component type %s on wrong side.", this.getKey()));
+            throw e;
+        }
         T res = this.factory().apply(entity);
         res.setType(this);
         res.setSerialize(serialized);
