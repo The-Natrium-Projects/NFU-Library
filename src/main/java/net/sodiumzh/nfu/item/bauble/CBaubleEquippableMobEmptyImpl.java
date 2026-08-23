@@ -42,7 +42,7 @@ class CBaubleEquippableMobEmptyImpl implements CBaubleEquippableMob
 	}
 
 	@Override
-	public void preTick() {
+	public void beforeTick() {
 	}
 
 	@Override
@@ -50,7 +50,7 @@ class CBaubleEquippableMobEmptyImpl implements CBaubleEquippableMob
 	}
 
 	@Override
-	public void postTick() {
+	public void afterTick() {
 	}
 
 	@Override

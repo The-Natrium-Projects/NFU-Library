@@ -54,7 +54,7 @@ class CBaubleEquippableMobImpl implements CBaubleEquippableMob
 		getModifiers().forEach(BaubleAttributeModifier::tick);
 	}
 	
-	private void refreshSlotModifiers()
+	public void refreshSlotModifiers()
 	{
 		modifiers.forEach(BaubleAttributeModifier::stopApplying);
 		modifiers.clear();
@@ -182,7 +182,7 @@ class CBaubleEquippableMobImpl implements CBaubleEquippableMob
 	}
 	
 	@Override
-	public void preTick()
+	public void beforeTick()
 	{
 		HashSet<IBaubleRegistryEntry> tickedEntries = new HashSet<>();
 		for (String slotKey: getBaubleSlotAccessor().getAccessors().keySet())
@@ -213,7 +213,7 @@ class CBaubleEquippableMobImpl implements CBaubleEquippableMob
 	}
 	
 	@Override
-	public void postTick()
+	public void afterTick()
 	{
 		HashSet<IBaubleRegistryEntry> tickedEntries = new HashSet<>();
 		for (String slotKey: getBaubleSlotAccessor().getAccessors().keySet())
@@ -254,16 +254,16 @@ class CBaubleEquippableMobImpl implements CBaubleEquippableMob
 			}
 		}
 		this.modifierTick();
-		MinecraftForge.EVENT_BUS.post(new BaubleEquippableMobTickEvent.PreTick(mob, this));
-		this.preTick();
-		MinecraftForge.EVENT_BUS.post(new BaubleEquippableMobTickEvent.PreSlotTick(mob, this));
+		MinecraftForge.EVENT_BUS.post(new BaubleEquippableMobTickEvent.BeforeTick(mob, this));
+		this.beforeTick();
+		MinecraftForge.EVENT_BUS.post(new BaubleEquippableMobTickEvent.BeforeSlotTick(mob, this));
 		for (String key: accessors.getAccessors().keySet())
 		{
 			this.slotTick(new BaubleProcessingArgs(accessors.getItemStack(key), this, key));
 		}
-		MinecraftForge.EVENT_BUS.post(new BaubleEquippableMobTickEvent.PostSlotTick(mob, this));
-		this.postTick();
-		MinecraftForge.EVENT_BUS.post(new BaubleEquippableMobTickEvent.PostTick(mob, this));
+		MinecraftForge.EVENT_BUS.post(new BaubleEquippableMobTickEvent.AfterSlotTick(mob, this));
+		this.afterTick();
+		MinecraftForge.EVENT_BUS.post(new BaubleEquippableMobTickEvent.AfterTick(mob, this));
 	}
 
 	@Override
