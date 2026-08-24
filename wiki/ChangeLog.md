@@ -1,3 +1,13 @@
+### 0.2.33.1
+
+Added some information on entity component goes wrong
+
+Fixed syncher unsynched on entity created
+
+Fixed Bauble attribute modifiers causing HP truncation on save&load
+
+Added mixin events: `EntityCapabilityLoadEvent`, `EntityCapabilityFinishLoadingEvent`
+
 ### 0.x.33
 
 NFU Registry refactor.
