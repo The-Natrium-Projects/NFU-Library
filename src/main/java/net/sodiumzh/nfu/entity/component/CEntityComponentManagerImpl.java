@@ -12,6 +12,7 @@ import net.sodiumzh.nfu.object.HierarchyPath;
 import net.sodiumzh.nfu.object.Validatable;
 import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.registry.NFURegistries;
+import net.sodiumzh.nfu.util.NFUDebugStatics;
 import net.sodiumzh.nfu.util.NFUNBTStatics;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,9 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
 
     private boolean constructionDone = false;
     private final Validatable<Map<HierarchyPath, IEntityComponent<?>>> preConstructed = new Validatable<>(new HashMap<>());    // Valid only in construction. Invalidated after construction.
+    // Count tick/serialization errors, and throws if too many errors are encountered
+    // Excessive error count indicates tickly errors which are not tolerated
+    private int errorCount = 0;
 
     CEntityComponentManagerImpl(Entity entity) {
         super(entity);
@@ -134,10 +138,15 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
             .forEach(e -> {
                 try {
                     e.getB().tick();
-                } catch (RuntimeException ex) {
-                    LogUtils.getLogger().error("Exception thrown on entity component tick");
-                    LogUtils.getLogger().error("Mob: " + this.getEntity().getName().getString() + "; Component path: \"" + e.getB().getPathFromRoot() + "\"");
-                    throw ex;
+                } catch (Exception ex) {
+                    LogUtils.getLogger().error("NFU: Exception thrown on entity component tick");
+                    LogUtils.getLogger().error("Entity: " + this.getEntity().getName().getString() + "; Component path: \"" + e.getB().getPathFromRoot() + "\"");
+                    ex.printStackTrace();
+                    this.errorCount++;
+                    if (this.errorCount > 255) {
+                        LogUtils.getLogger().error("NFU: Too many (>= 256) errors caught on entity component tick/save. Probably a tickly error is happening. Thrown.");
+                        throw ex;
+                    }
                 }
             });
         // Check hierarchy if configured each 10s
@@ -181,11 +190,22 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
             .filter(entry -> entry.getValue().shouldSerialize())
             .sorted(Comparator.comparingInt(entry -> entry.getKey().length()))
             .forEach(entry -> {
-                CompoundTag nbt1 = new CompoundTag();
-                nbt1.putString("type", entry.getValue().getType().getKey().toString());
-                nbt1.putBoolean("rebuild", entry.getValue().shouldRebuildOnDeserialization());
-                nbt1.put("data", Optional.ofNullable(entry.getValue().serializeNBT()).orElse(new CompoundTag()));
-                nbt.put(entry.getKey().toLiteral(), nbt1);
+                try {
+                    CompoundTag nbt1 = new CompoundTag();
+                    nbt1.putString("type", entry.getValue().getType().getKey().toString());
+                    nbt1.putBoolean("rebuild", entry.getValue().shouldRebuildOnDeserialization());
+                    nbt1.put("data", Optional.ofNullable(entry.getValue().serializeNBT()).orElse(new CompoundTag()));
+                    nbt.put(entry.getKey().toLiteral(), nbt1);
+                } catch (Exception ex) {
+                    LogUtils.getLogger().error("NFU: Exception thrown on entity component save");
+                    LogUtils.getLogger().error("Entity: " + this.getEntity().getName().getString() + "; Component path: \"" + entry.getValue().getPathFromRoot() + "\"");
+                    ex.printStackTrace();
+                    this.errorCount++;
+                    if (this.errorCount > 255) {
+                        LogUtils.getLogger().error("NFU: Too many (>= 256) errors caught on entity component tick/save/load. Probably a tickly error is happening. Thrown.");
+                        throw ex;
+                    }
+                }
             });
 
 
@@ -203,91 +223,31 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
             .map(entry -> new AbstractMap.SimpleEntry<>(HierarchyPath.byLiteral(entry.getKey()), (CompoundTag) (entry.getValue())))  // Implicitly assert tag type
             .sorted(Comparator.comparingInt(entry -> entry.getKey().length()))
             .forEach(entry -> {
-                IEntityComponent<?> component = this.getSubComponentByPath(entry.getKey()).orElse(null);
-                if (component == null && entry.getValue().getBoolean("rebuild")) {
-                    var type = NFURegistries.ENTITY_COMPONENT_TYPES.getOptionalValue(new ResourceLocation(entry.getValue().getString("type"))).orElse(null);
-                    if (type != null) { // Missing type means invalid entry, ignore
-                        component = type.createUnsafe(this.getEntity());
-                        this.addSubComponentByPath(entry.getKey(), component);
+                try {
+                    IEntityComponent<?> component = this.getSubComponentByPath(entry.getKey()).orElse(null);
+                    if (component == null && entry.getValue().getBoolean("rebuild")) {
+                        var type = NFURegistries.ENTITY_COMPONENT_TYPES.getOptionalValue(new ResourceLocation(entry.getValue().getString("type"))).orElse(null);
+                        if (type != null) { // Missing type means invalid entry, ignore
+                            component = type.createUnsafe(this.getEntity());
+                            this.addSubComponentByPath(entry.getKey(), component);
+                        }
                     }
-                }
-                if (component != null) {
-                    component.deserializeNBT(entry.getValue().getCompound("data"));
+                    if (component != null) {
+                        component.deserializeNBT(entry.getValue().getCompound("data"));
+                    }
+                } catch (Exception ex) {
+                    LogUtils.getLogger().error("NFU: Exception thrown on entity component load");
+                    LogUtils.getLogger().error("Entity: " + this.getEntity().getName().getString() + "; Component path: \"" + entry.getKey() + "\"");
+                    ex.printStackTrace();
+                    this.errorCount++;
+                    if (this.errorCount > 255) {
+                        LogUtils.getLogger().error("NFU: Too many (>= 256) errors caught on entity component tick/save/load. Probably a tickly error is happening. Thrown.");
+                        throw ex;
+                    }
                 }
             });
 
-        /*nbt.getAllKeys().stream()
-            .map(k -> new Tuple2<>(k, nbt.getCompound(k)))
-            .filter(t -> !t.getB().isEmpty())
-            .map(t -> new Tuple2<>(t.getA(), deserializeOrRebuildComponent(this.getEntity(), this.getSubComponent(t.getA()).orElse(null), t.getB())))
-            .forEach(tp -> {
-                // If the component is absent, add it
-                if (this.getSubComponent(tp.getA()).isEmpty())
-                    this.addSubComponent(tp.getA(), tp.getB());
-                    // this means occupied by a component of wrong type, and shouldn't happen
-                else if (this.getSubComponent(tp.getA(), tp.getB().getType()).isEmpty())
-                    throw new IllegalStateException("Component type conflict: deserializing subcomponent /" + tp.getA() + " of type " + tp.getB().getType().getKey() +
-                        " but it's occupied by a component of another type " + this.getSubComponent(tp.getA()).map(c -> c.getType().getKey()).orElseThrow());
-                // Otherwise deserialization has been handled in the map() body above, and needs no more action
-            });*/
         MinecraftForge.EVENT_BUS.post(new EntityComponentManagerDeserializeEvent.After(this.getEntity(), nbt));
-    }
-
-    private CompoundTag serializeComponent(String name, IEntityComponent<? extends Entity> component) {
-        try {
-            CompoundTag nbt = new CompoundTag();
-            nbt.putString("type", component.getType().getKey().toString());
-            nbt.put("data", Optional.ofNullable(component.serializeNBT()).orElseGet(CompoundTag::new));
-            CompoundTag subcomponents = new CompoundTag();
-            component.getSubComponents().entrySet().stream()
-                .filter(entry -> entry.getValue().shouldSerialize())
-                .forEach(entry -> subcomponents.put(name, serializeComponent(entry.getKey(), entry.getValue())));
-            nbt.put("subcomponents", subcomponents);
-            return nbt;
-        } catch (RuntimeException e) {
-            LogUtils.getLogger().error(e.getMessage());
-            LogUtils.getLogger().error("Component " + name + " serialization failed. Discarded.");
-            return new CompoundTag();
-        }
-    }
-
-    /**
-     * Deserialize a given component and all downstream components, or rebuild from type if it's absent.
-     */
-    /* The format is: {
-        "type": {component_type},
-        "data": {NBT which is handled in the component's deserialize() method},
-        "subcomponents": {
-            "name1": {subcomponent data in the same format},
-            "name2": ...,
-            "name3": ...
-        }
-     }
-     */
-    @Nullable
-    private <T extends IEntityComponent<? extends Entity>> T deserializeOrRebuildComponent(Entity e, @Nullable T component, CompoundTag nbt) {
-        try {
-            // Name is read in the parent
-            EntityComponentType<? extends Entity, ? extends IEntityComponent<? extends Entity>> type =
-                NFURegistries.ENTITY_COMPONENT_TYPES.getValue(new ResourceLocation(nbt.getString("type")));
-            if (type == null) {
-                // If missing factory, cut this branch
-                return null;
-            }
-            if (component != null && !component.getType().equals(type)) {
-                throw new IllegalStateException("Component type conflict: deserializing " + type.getKey() + " + to path " +
-                    component.getPathFromRoot() + ", but the path is occupied by a component of " + component.getType().getKey());
-            }
-            T res = component == null ? (T) type.createUnsafe(this.getEntity()) : component;
-            res.setSerialize(true); // Components loaded from NBT should be always serialized
-            // Deserialize this component
-            res.deserializeNBT(nbt.getCompound("data"));
-
-            return res;
-        } catch (RuntimeException ex) {
-            LogUtils.getLogger().error(ex.getMessage());
-            return null;
-        }
     }
 
     @Override
