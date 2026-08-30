@@ -25,3 +25,4 @@ description="${nfu_description}"
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
+
