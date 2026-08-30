@@ -141,12 +141,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
                 } catch (Exception ex) {
                     LogUtils.getLogger().error("NFU: Exception thrown on entity component tick");
                     LogUtils.getLogger().error("Entity: " + this.getEntity().getName().getString() + "; Component path: \"" + e.getB().getPathFromRoot() + "\"");
-                    ex.printStackTrace();
-                    this.errorCount++;
-                    if (this.errorCount > 255) {
-                        LogUtils.getLogger().error("NFU: Too many (>= 256) errors caught on entity component tick/save. Probably a tickly error is happening. Thrown.");
-                        throw ex;
-                    }
+                    throw ex;
                 }
             });
         // Check hierarchy if configured each 10s
@@ -199,12 +194,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
                 } catch (Exception ex) {
                     LogUtils.getLogger().error("NFU: Exception thrown on entity component save");
                     LogUtils.getLogger().error("Entity: " + this.getEntity().getName().getString() + "; Component path: \"" + entry.getValue().getPathFromRoot() + "\"");
-                    ex.printStackTrace();
-                    this.errorCount++;
-                    if (this.errorCount > 255) {
-                        LogUtils.getLogger().error("NFU: Too many (>= 256) errors caught on entity component tick/save/load. Probably a tickly error is happening. Thrown.");
-                        throw ex;
-                    }
+                    throw ex;
                 }
             });
 
@@ -239,11 +229,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
                     LogUtils.getLogger().error("NFU: Exception thrown on entity component load");
                     LogUtils.getLogger().error("Entity: " + this.getEntity().getName().getString() + "; Component path: \"" + entry.getKey() + "\"");
                     ex.printStackTrace();
-                    this.errorCount++;
-                    if (this.errorCount > 255) {
-                        LogUtils.getLogger().error("NFU: Too many (>= 256) errors caught on entity component tick/save/load. Probably a tickly error is happening. Thrown.");
-                        throw ex;
-                    }
+                    throw ex;
                 }
             });
 
