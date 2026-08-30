@@ -408,7 +408,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         public ClientboundEntitySyncherComponentSyncAllPacket(ServerLevel level, boolean ignoresSyncIntervals) {
             this.packetId = CURRENT_PACKET_ID.get();
             CURRENT_PACKET_ID.set(CURRENT_PACKET_ID.get() + 1);
-            this.dimension = level.dimensionTypeId().location();
+            this.dimension = level.dimension().location();
             for (Entity e: level.getEntities().getAll()) {
                 allEntityData.putIfAbsent(e.getUUID(), new HashMap<>());
                 EntityComponentAPI.getComponentManager(e).getAllPathsAndDownstreamComponents()

@@ -1,6 +1,6 @@
 package net.sodiumzh.nfu.util;
 
-import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.SerializableUUID;
 import net.minecraft.nbt.*;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -156,7 +156,7 @@ public class NFUNBTStatics {
 			if (aint.length != 4) {
 				return Optional.empty();
 			} else {
-				return Optional.of(UUIDUtil.uuidFromIntArray(aint));
+				return Optional.of(SerializableUUID.uuidFromIntArray(aint));
 			}
 		}
 	}

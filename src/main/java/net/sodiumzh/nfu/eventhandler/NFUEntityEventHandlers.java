@@ -43,13 +43,13 @@ public class NFUEntityEventHandlers {
     public static void onEntityFinalizeLoading(EntityFinalizeLoadingEvent event) {
         // Record entity type into forge data, so that we can read the type from an NBT from saveWithoutId
         // If this data is absent in the loading nbt, it may be wiped after loading, so add it again
-        event.getEntity().getPersistentData().putString("NFU_EntityType", ForgeRegistries.ENTITY_TYPES.getKey(event.getEntity().getType()).toString());
+        event.getEntity().getPersistentData().putString("NFU_EntityType", ForgeRegistries.ENTITIES.getKey(event.getEntity().getType()).toString());
     }
 
     @SubscribeEvent
     public static void onEntityFinalizeConstrction(EntityFinishConstructionEvent event) {
         // Record entity type into forge data, so that we can read the type from an NBT from saveWithoutId
-        event.getEntity().getPersistentData().putString("NFU_EntityType", ForgeRegistries.ENTITY_TYPES.getKey(event.getEntity().getType()).toString());
+        event.getEntity().getPersistentData().putString("NFU_EntityType", ForgeRegistries.ENTITIES.getKey(event.getEntity().getType()).toString());
     }
 
 

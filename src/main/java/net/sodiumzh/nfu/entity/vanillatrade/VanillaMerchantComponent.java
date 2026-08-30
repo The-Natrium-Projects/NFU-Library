@@ -2,18 +2,17 @@ package net.sodiumzh.nfu.entity.vanillatrade;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
-import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
 
 import javax.annotation.Nullable;
+import java.util.Random;
 
 /**
  * Base abstract component implementation of {@link IVanillaMerchant}.
@@ -27,7 +26,7 @@ public abstract class VanillaMerchantComponent extends EntityComponentBase<Mob> 
     private Player tradingPlayer = null;
     private MerchantOffers offers;
     private int xp;
-    protected RandomSource rnd = RandomSource.create();
+    protected static Random RND = new Random();
 
     public VanillaMerchantComponent(Mob entity) {
         super(entity);

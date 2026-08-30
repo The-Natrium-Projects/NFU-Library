@@ -70,7 +70,7 @@ public class HealingHandlerComponent extends EntityComponentBase<LivingEntity> {
             {
                 if (consume)
                 {
-                    ItemStack remaining = stack.getCraftingRemainingItem();
+                    ItemStack remaining = stack.getContainerItem();
                     stack.shrink(1);
                     if (player != null)
                         NFUItemStatics.giveOrDrop(player, remaining);

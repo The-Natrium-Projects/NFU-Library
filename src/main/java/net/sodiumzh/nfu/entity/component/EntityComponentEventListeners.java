@@ -10,8 +10,9 @@ import net.minecraftforge.common.capabilities.CapabilityProvider;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.capability.NFUEntitySerializableCapProvider;
@@ -26,6 +27,7 @@ import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import net.sodiumzh.nfu.util.NFUEntityStatics;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
+import org.apache.commons.compress.archivers.sevenz.CLI;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -50,13 +52,13 @@ public class EntityComponentEventListeners {
     }
 
     @SubscribeEvent
-    public static void onJoinLevel(EntityJoinLevelEvent event) {
+    public static void onJoinLevel(EntityJoinWorldEvent event) {
         event.getEntity().getCapability(EntityComponentStatics.CAP_MANAGER).ifPresent(IEntityComponent::joinLevel);
     }
 
     @SubscribeEvent
-    public static void onLevelTick(TickEvent.LevelTickEvent event) {
-        if (!event.level.isClientSide() && event.level instanceof ServerLevel sl) {
+    public static void onLevelTick(TickEvent.WorldTickEvent event) {
+        if (event.side.equals(LogicalSide.SERVER) && event.world instanceof ServerLevel sl) {
             if (event.phase.equals(TickEvent.Phase.START))
                 EntitySyncherComponent.syncAll(sl, false);
         }

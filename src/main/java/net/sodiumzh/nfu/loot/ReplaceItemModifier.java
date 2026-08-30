@@ -1,21 +1,18 @@
 package net.sodiumzh.nfu.loot;
 
-import java.util.function.Supplier;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
-import com.google.common.base.Suppliers;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import com.google.gson.JsonObject;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.minecraftforge.common.loot.IGlobalLootModifier;
+import net.minecraftforge.common.loot.GlobalLootModifierSerializer;
 import net.minecraftforge.common.loot.LootModifier;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.sodiumzh.nfu.annotation.Credit;
@@ -35,12 +32,11 @@ import net.sodiumzh.nfu.annotation.Credit;
  * </p>
  *
  * @author Mechalopa (Original)
- * @see <a href="https://github.com/Mechalopa/Hostile-Mobs-and-Girls/blob/1.19.2/src/main/java/com/github/mechalopa/hmag/world/level/storage/loot/modifiers/ReplaceItemModifier.java">...</a>
+ * @see <a href="https://github.com/Mechalopa/Hostile-Mobs-and-Girls/blob/1.18.2/src/main/java/com/github/mechalopa/hmag/world/level/storage/loot/modifiers/ReplaceItemModifier.java">...</a>
  */
 @Credit("Hostile Mobs and Girls")
 public class ReplaceItemModifier extends LootModifier
 {
-    public static final Supplier<Codec<ReplaceItemModifier>> CODEC = Suppliers.memoize(() -> RecordCodecBuilder.create(inst -> codecStart(inst).and(inst.group(ForgeRegistries.ITEMS.getCodec().optionalFieldOf("original", Items.BARRIER).forGetter(m -> m.original), ForgeRegistries.ITEMS.getCodec().optionalFieldOf("replacement", Items.BARRIER).forGetter(m -> m.replacement))).apply(inst, ReplaceItemModifier::new)));
     private final Item original;
     private final Item replacement;
 
@@ -53,9 +49,9 @@ public class ReplaceItemModifier extends LootModifier
 
     @Nonnull
     @Override
-    public ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context)
+    public List<ItemStack> doApply(List<ItemStack> generatedLoot, LootContext context)
     {
-        if (this.original == null || this.original.equals(Items.BARRIER) || this.replacement == null || this.replacement.equals(Items.BARRIER))
+        if (this.original == null || this.replacement == null)
         {
             return generatedLoot;
         }
@@ -70,13 +66,27 @@ public class ReplaceItemModifier extends LootModifier
                 {
                     return stack;
                 }
-            }).collect(Collectors.toCollection(ObjectArrayList::new));
+            }).collect(Collectors.toList());
         }
     }
 
-    @Override
-    public Codec<? extends IGlobalLootModifier> codec()
+    public static class Serializer extends GlobalLootModifierSerializer<ReplaceItemModifier>
     {
-        return CODEC.get();
+        @Override
+        public ReplaceItemModifier read(ResourceLocation name, JsonObject object, LootItemCondition[] conditions)
+        {
+            Item original = ForgeRegistries.ITEMS.getValue(new ResourceLocation((GsonHelper.getAsString(object, "original"))));
+            Item replacement = ForgeRegistries.ITEMS.getValue(new ResourceLocation((GsonHelper.getAsString(object, "replacement"))));
+            return new ReplaceItemModifier(conditions, original, replacement);
+        }
+
+        @Override
+        public JsonObject write(ReplaceItemModifier instance)
+        {
+            JsonObject json = makeConditions(instance.conditions);
+            json.addProperty("original", ForgeRegistries.ITEMS.getKey(instance.original).toString());
+            json.addProperty("replacement", ForgeRegistries.ITEMS.getKey(instance.replacement).toString());
+            return json;
+        }
     }
 }

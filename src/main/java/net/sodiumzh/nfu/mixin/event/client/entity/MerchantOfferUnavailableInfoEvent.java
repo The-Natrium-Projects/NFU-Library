@@ -10,7 +10,7 @@ import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.eventbus.api.Event;
-import net.sodiumzh.nfu.entity.vanillatrade.CVanillaMerchant;
+import net.sodiumzh.nfu.entity.vanillatrade.IVanillaMerchant;
 import net.sodiumzh.nfu.util.NFUMiscStatics;
 import net.sodiumzh.nfu.util.NFUReflectionStatics;
 
@@ -64,10 +64,10 @@ public class MerchantOfferUnavailableInfoEvent extends Event
 	 * If not found (not existing or not using this vanilla merchant system e.g. vanilla villager), returns null.
 	 */
 	@Nullable
-	public <T extends CVanillaMerchant> T searchOngoingMerchant(Capability<? extends T> cap, double range)
+	public <T extends IVanillaMerchant> T searchOngoingMerchant(Capability<? extends T> cap, double range)
 	{
 		List<Entity> list = this.player.level.getEntities(player, player.getBoundingBox().inflate(range)).stream().filter(entity -> 
-			NFUMiscStatics.getValueFromCapability(entity, cap, CVanillaMerchant::getTradingPlayer) == player
+			NFUMiscStatics.getValueFromCapability(entity, cap, IVanillaMerchant::getTradingPlayer) == player
 		).toList();
 		return list.isEmpty() ? null : NFUMiscStatics.getValueFromCapability(list.get(0), cap, c -> c);
 	}

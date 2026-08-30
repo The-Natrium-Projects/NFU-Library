@@ -1030,8 +1030,8 @@ public class NFUEntityStatics
         if (id == null || id.isEmpty()) return null;
 
         ResourceLocation key = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation("minecraft", id);
-        if (ForgeRegistries.ENTITY_TYPES.containsKey(key))
-            return ForgeRegistries.ENTITY_TYPES.getValue(key);
+        if (ForgeRegistries.ENTITIES.containsKey(key))
+            return ForgeRegistries.ENTITIES.getValue(key);
         else return null;
     }
 

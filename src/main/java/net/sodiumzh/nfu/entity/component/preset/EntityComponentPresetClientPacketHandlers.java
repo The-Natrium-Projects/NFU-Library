@@ -56,7 +56,7 @@ public class EntityComponentPresetClientPacketHandlers {
         PacketUtils.ensureRunningOnSameThread(packet, listener, mc);
         ClientLevel level = mc.level;
         if (level == null) return;
-        if (!level.dimensionTypeId().location().equals(packet.dimension)) return;
+        if (!level.dimension().location().equals(packet.dimension)) return;
 
         for (Entity e: NFUEntityStatics.getLevelEntityGetter(level).getAll()) {
             CEntityComponentManager mgr = EntityComponentAPI.getComponentManager(e);

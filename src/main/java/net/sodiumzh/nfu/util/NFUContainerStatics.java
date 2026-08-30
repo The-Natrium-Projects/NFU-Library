@@ -1,9 +1,7 @@
 package net.sodiumzh.nfu.util;
 
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.sodiumzh.nfu.container.Tuple2;
-import net.sodiumzh.nfu.math.ThreadSafeRandomSource;
 import net.sodiumzh.nfu.math.WeightedRandomSelector;
 
 import javax.annotation.Nullable;

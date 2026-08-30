@@ -15,7 +15,7 @@ import java.util.List;
 public class NFUMixinTagBuilder implements NFUMixin<Tag.Builder> {
 
 
-    @WrapOperation(method = "build(Ljava/util/function/Function;Ljava/util/function/Function;)Lcom/mojang/datafixers/util/Either;",
+    /*@WrapOperation(method = "build(Ljava/util/function/Function;Ljava/util/function/Function;)Lcom/mojang/datafixers/util/Either;",
     at = @At(value = "INVOKE", target = "java/util/List.isEmpty()Z"))
     private <T> boolean fixTag(List<Tag.BuilderEntry> instance, Operation<Boolean> original)
     {
@@ -29,6 +29,6 @@ public class NFUMixinTagBuilder implements NFUMixin<Tag.Builder> {
             instance.clear();
         }
         return original.call(instance);
-    }
+    }*/
 
 }

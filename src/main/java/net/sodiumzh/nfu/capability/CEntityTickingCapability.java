@@ -1,7 +1,6 @@
 package net.sodiumzh.nfu.capability;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.common.capabilities.AutoRegisterCapability;
 import net.minecraftforge.common.capabilities.Capability;
 import net.sodiumzh.nfu.network.AvailableSide;
 
@@ -32,7 +31,6 @@ import java.util.Set;
  *
  * @param <T> The entity type this capability attaches to.
  */
-@AutoRegisterCapability
 public interface CEntityTickingCapability<T extends Entity>
 {
     static final Set<Capability<? extends CEntityTickingCapability<? extends Entity>>> ALL_CAPS = new HashSet<>();
