@@ -24,6 +24,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 import net.sodiumzh.nfu.exception.ReflectionFailedException;
 import net.sodiumzh.nfu.object.IChainModifiable;
 import net.sodiumzh.nfu.registry.NFUEntityDataSerializers;
@@ -100,7 +101,6 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
     private boolean ignoresOwner = true;
     @Nullable
     private Consumer<NFUItemProjectileEntity> onTick = null;
-    private final Multimap<Integer, Consumer<NFUItemProjectileEntity>> scheduledServerActions = HashMultimap.create();
 
     public NFUItemProjectileEntity(EntityType<? extends NFUItemProjectileEntity> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -249,14 +249,10 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
         }
         if (this.onTick != null)
             this.onTick.accept(this);
-        if (!this.level.isClientSide) {
-            this.scheduledServerActions.get(this.tickCount).forEach(c -> c.accept(this));
-        }
     }
 
     protected void tickHit() {
-        super.tick();
-        HitResult hitresult = ProjectileUtil.getHitResult(this, this::canHitEntity);
+        HitResult hitresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
         boolean enteredPortal = false;
         if (hitresult.getType() == HitResult.Type.BLOCK) {
             BlockPos blockpos = ((BlockHitResult)hitresult).getBlockPos();
@@ -477,8 +473,8 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
         return this;
     }
 
-    public NFUItemProjectileEntity scheduleServerActions(int timePoint, Consumer<NFUItemProjectileEntity> action) {
-        this.scheduledServerActions.put(timePoint, action);
+    public NFUItemProjectileEntity scheduleServerActions(int delay, Consumer<NFUItemProjectileEntity> action) {
+        EntityComponentAPI.getDefaultTimer(this).addDelayedAction(() -> action.accept(this), delay, 1, false, false);
         return this;
     }
 
