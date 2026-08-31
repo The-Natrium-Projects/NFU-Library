@@ -59,6 +59,7 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 		MinecraftForge.EVENT_BUS.post(new EntityLoadEvent(caller(), nbt));
 	}
 
+
 	@WrapOperation(method = "load(Lnet/minecraft/nbt/CompoundTag;)V",
 		at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.deserializeCaps (Lnet/minecraft/nbt/CompoundTag;)V", remap = false))
 	private void nfu_onDeserializeCaps(Entity instance, CompoundTag compoundTag, Operation<Void> original) {
