@@ -84,6 +84,7 @@ public class AttachedItemDisplayerEntity extends Entity implements ItemSupplier 
                 return;
             }
             this.moveTo(this.attachedTo.getBoundingBox().getCenter().add(this.offset.get()));
+            this.setRemainingFireTicks(0);
         }
     }
 

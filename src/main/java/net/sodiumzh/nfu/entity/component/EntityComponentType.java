@@ -35,9 +35,14 @@ public record EntityComponentType<E extends Entity, T extends IEntityComponent<E
             // If not loaded, try loading the registry first
             NFURegistries.ENTITY_COMPONENT_TYPES.load();
             res = NFURegistries.ENTITY_COMPONENT_TYPES.getKey(this);
-            if (res == null)
-                throw new IllegalStateException("Unregistered EntityComponentType. Must be registered in NFURegistries.ENTITY_COMPONENT_TYPES."
-                + " Type: " + this.componentClass.getName());
+            if (res == null) {
+                LogUtils.getLogger().error("NFU: Missing EntityComponentType for component class " + this.componentClass.getName());
+                StringBuilder existingTypes = new StringBuilder("Types registered: ");
+                NFURegistries.ENTITY_COMPONENT_TYPES.keySet().forEach(key -> existingTypes.append("\"").append(key.toString()).append("\","));
+                existingTypes.replace(existingTypes.length() - 1, existingTypes.length(), ".");
+                LogUtils.getLogger().info(existingTypes.toString());
+                throw new IllegalStateException("Unregistered EntityComponentType. Must be registered in NFURegistries.ENTITY_COMPONENT_TYPES.");
+            }
             else return res;
         }
     }
