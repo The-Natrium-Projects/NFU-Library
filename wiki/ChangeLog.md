@@ -1,3 +1,9 @@
+### 0.2.33.2
+
+Fixed Item Displayer Entity getting on fire.
+
+Fixed NFU Projectile being ticked twice.
+
 ### 0.2.33.1
 
 Added some information on entity component goes wrong
