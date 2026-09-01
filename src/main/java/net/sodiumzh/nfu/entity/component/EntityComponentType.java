@@ -38,6 +38,8 @@ public record EntityComponentType<E extends Entity, T extends IEntityComponent<E
             if (res == null) {
                 LogUtils.getLogger().error("NFU: Missing EntityComponentType for component class " + this.componentClass.getName());
                 StringBuilder existingTypes = new StringBuilder("Types registered: ");
+                if (NFURegistries.ENTITY_COMPONENT_TYPES.keySet().isEmpty())
+                    existingTypes.append("(None) ");
                 NFURegistries.ENTITY_COMPONENT_TYPES.keySet().forEach(key -> existingTypes.append("\"").append(key.toString()).append("\","));
                 existingTypes.replace(existingTypes.length() - 1, existingTypes.length(), ".");
                 LogUtils.getLogger().info(existingTypes.toString());

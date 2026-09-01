@@ -29,7 +29,7 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
     private final Set<UUID> tempRemoval = new HashSet<>();
     private float damageThreshold = 1e-3f;
 
-    public MobAngerHandlerComponent(Mob mob, MobAngerRules rules) {
+    public MobAngerHandlerComponent(Mob mob, @Nonnull MobAngerRules rules) {
         super(mob);
         this.rules = rules;
     }

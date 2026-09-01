@@ -10,6 +10,7 @@ import net.sodiumzh.nfu.entity.anger.MobAngerHandlerComponent;
 import net.sodiumzh.nfu.entity.anger.MobAngerRules;
 import net.sodiumzh.nfu.entity.component.EntityComponentSetupEvent;
 import net.sodiumzh.nfu.entity.component.EntityComponentType;
+import net.sodiumzh.nfu.entity.component.SubComponentAccessor;
 import net.sodiumzh.nfu.entity.component.preset.EntityAttributeMonitorComponent;
 import net.sodiumzh.nfu.entity.component.preset.EntityItemStackMonitorComponent;
 import net.sodiumzh.nfu.entity.component.preset.HealingHandlerComponent;
@@ -25,5 +26,10 @@ public class NFUEntityComponents {
         DEFAULT_ANGER_HANDLER = COLLECTION.register("default_anger_handler", () ->
         new EntityComponentType<>(Mob.class, MobAngerHandlerComponent.class, AvailableSide.SERVER,
             mob -> new MobAngerHandlerComponent(mob, MobAngerRules.ATTACKER.get())));
+
+    public static final HierarchyPath PATH_DEFAULT_ANGER_HANDLER = HierarchyPath.byLiteral("default_anger_handler");
+
+    public static final SubComponentAccessor<Mob, MobAngerHandlerComponent> ACCESSOR_DEFAULT_ANGER_HANDLER
+        = new SubComponentAccessor<>(PATH_DEFAULT_ANGER_HANDLER, DEFAULT_ANGER_HANDLER);
 
 }
