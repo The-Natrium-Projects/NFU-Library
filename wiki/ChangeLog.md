@@ -1,3 +1,7 @@
+### 0.2.33.3
+
+Implemented config `crashesOnEntityLoadFails`.
+
 ### 0.2.33.2
 
 Fixed Item Displayer Entity getting on fire.
