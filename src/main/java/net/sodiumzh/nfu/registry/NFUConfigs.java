@@ -12,7 +12,7 @@ public class NFUConfigs
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_SAVE_DATA_PORTER;
 	public static final ForgeConfigSpec.BooleanValue SPEC_DEBUG_MSG_OUTPUT;
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENTITY_COMPONENT_HIERARCHY_CHECK;
-    public static final ForgeConfigSpec.BooleanValue SPEC_CRASHES_ON_ENTITY_LOAD_FAILED;
+    public static final ForgeConfigSpec.BooleanValue SPEC_CRASHES_ON_ENTITY_LOAD_FAILS;
 	public static final ForgeConfigSpec.BooleanValue SPEC_BYPASSES_UNBOUND_KEY_CHECK;
 
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_FLYING_SPEED_SCALING_FIX;
@@ -44,9 +44,9 @@ public class NFUConfigs
 		SPEC_ENTITY_COMPONENT_HIERARCHY_CHECK = BUILDER.comment("If true, the NFU Entity Component system will check hierarchy validity in runtime. Setting this " +
 				"true will throw exception if the hierarchy is wrong, but will cause extra resource cost. Recommended to open only when in a debug environment.")
 				.define("entityComponentHierarchyCheck", false);
-        SPEC_CRASHES_ON_ENTITY_LOAD_FAILED = BUILDER.comment("If true, when an exception is thrown on entity loading from " +
+        SPEC_CRASHES_ON_ENTITY_LOAD_FAILS = BUILDER.comment("If true, when an exception is thrown on entity loading from " +
             "save data, the game will crash instead of skipping the entity.")
-                .define("crashedOnEntityLoadFailed", false);
+                .define("crashedOnEntityLoadFails", false);
 		BUILDER.pop();
 
 		CONFIG = BUILDER.build();
@@ -55,7 +55,7 @@ public class NFUConfigs
 	public static boolean CACHED_ENABLES_SAVE_DATA_PORTER = true;
 	public static boolean CACHED_DEBUG_MSG_OUTPUT = false;
 	public static boolean CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK = false;
-	public static boolean CACHED_CRASHES_ON_ENTITY_LOAD_FAILED = false;
+	public static boolean CACHED_CRASHES_ON_ENTITY_LOAD_FAILS = false;
 	public static boolean CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = true;
 	public static boolean CACHED_BYPASSES_UNBOUND_KEY_CHECK = false;
 
@@ -64,7 +64,7 @@ public class NFUConfigs
 		CACHED_ENABLES_SAVE_DATA_PORTER = SPEC_ENABLES_SAVE_DATA_PORTER.get();
 		CACHED_DEBUG_MSG_OUTPUT = SPEC_DEBUG_MSG_OUTPUT.get();
 		CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK = SPEC_ENTITY_COMPONENT_HIERARCHY_CHECK.get();
-        CACHED_CRASHES_ON_ENTITY_LOAD_FAILED = SPEC_CRASHES_ON_ENTITY_LOAD_FAILED.get();
+        CACHED_CRASHES_ON_ENTITY_LOAD_FAILS = SPEC_CRASHES_ON_ENTITY_LOAD_FAILS.get();
 		CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = SPEC_ENABLES_FLYING_SPEED_SCALING_FIX.get();
 		CACHED_BYPASSES_UNBOUND_KEY_CHECK = SPEC_BYPASSES_UNBOUND_KEY_CHECK.get();
 	}
