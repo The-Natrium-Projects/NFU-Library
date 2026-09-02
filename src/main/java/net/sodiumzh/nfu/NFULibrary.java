@@ -2,6 +2,8 @@ package net.sodiumzh.nfu;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -17,6 +19,7 @@ import net.sodiumzh.nfu.entity.component.EntityComponentStatics;
 import net.sodiumzh.nfu.entity.component.EntityComponentTypes;
 import net.sodiumzh.nfu.item.bauble.BaubleEquippingConditions;
 import net.sodiumzh.nfu.item.bauble.NFUBaubleAPI;
+import net.sodiumzh.nfu.mixin.event.entity.EntityLoadEvent;
 import net.sodiumzh.nfu.network.NFUDataSerializers;
 import net.sodiumzh.nfu.registry.*;
 import net.sodiumzh.nfu.savedata.redirector.SaveDataLocationRedirector;
@@ -89,6 +92,12 @@ public class NFULibrary {
 		public static void onServerStopped(ServerStoppedEvent event) {
 			server = null;
 		}
+
+        @SubscribeEvent
+        public static void test(EntityLoadEvent event) {
+            if (event.getEntity() instanceof Zombie)
+                throw new RuntimeException("test");
+        }
 	}
 	
 }
