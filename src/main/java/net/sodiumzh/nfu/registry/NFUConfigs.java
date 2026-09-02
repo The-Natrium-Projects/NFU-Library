@@ -39,7 +39,7 @@ public class NFUConfigs
 				.define("entityComponentHierarchyCheck", false);
         SPEC_CRASHES_ON_ENTITY_LOAD_FAILS = BUILDER.comment("If true, when an exception is thrown on entity loading from " +
             "save data, the game will crash instead of skipping the entity.")
-                .define("crashedOnEntityLoadFails", false);
+                .define("crashesOnEntityLoadFails", false);
 		BUILDER.pop();
 
 		CONFIG = BUILDER.build();
