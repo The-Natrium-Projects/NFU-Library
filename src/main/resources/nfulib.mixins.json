@@ -26,6 +26,7 @@
     "NFUMixinServerPlayer",
     "NFUMixinServerPlayerGameMode",
     "NFUMixinThrownTrident",
+    "NFUPersistentEntitySectionManagerMixin",
     "NFUThrownPotionMixin"
   ],
   "client": [
