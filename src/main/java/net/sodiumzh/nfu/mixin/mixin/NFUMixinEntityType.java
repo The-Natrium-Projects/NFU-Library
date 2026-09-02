@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
+import net.sodiumzh.nfu.exception.EntityLoadingFailureException;
 import net.sodiumzh.nfu.exception.InfiniteRecursionException;
 import net.sodiumzh.nfu.mixin.NFUMixin;
 import net.sodiumzh.nfu.registry.NFUConfigs;
@@ -33,12 +34,11 @@ public class NFUMixinEntityType implements NFUMixin<EntityType<?>>
     private static void throwsOnLoadStaticEntity(CompoundTag pCompound, Level pLevel, CallbackInfoReturnable<Optional<Entity>> cir,
                                                 @Local(ordinal = 0) RuntimeException exception)
     {
-        if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK) {
-            LogUtils.getLogger().error("Crashed for an exception thrown on entity loading. To disable crash, set NFU config 'crashedOnEntityLoadFailed' to false.");
-            throw exception;
+        if (NFUConfigs.CACHED_CRASHES_ON_ENTITY_LOAD_FAILED) {
+            throw new EntityLoadingFailureException("Crashed for an exception thrown on entity loading. To disable crash, set nfulib config (in nfulib_common.toml) 'crashedOnEntityLoadFailed' to false.", exception);
         }
         if (exception instanceof InfiniteRecursionException) {
-            throw exception;
+            throw new EntityLoadingFailureException(exception);
         }
     }
 }
