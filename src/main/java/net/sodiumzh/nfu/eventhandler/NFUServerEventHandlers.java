@@ -30,7 +30,7 @@ public class NFUServerEventHandlers {
 		if (event.phase == Phase.START) {
 			ConditionalAttributeModifier.update();
 			if (ENTITY_LOADING_THROWN.get() != null) {
-				throw new RuntimeException("Crashed for an exception thrown on entity loading. To disable crash, set nfulib config (in nfulib_common.toml) 'crashedOnEntityLoadFailed' to false.", ENTITY_LOADING_THROWN.get());
+				throw new RuntimeException("Crashed for an exception thrown on entity loading. To disable crash, set nfulib config (in nfulib_common.toml) 'crashedOnEntityLoadFails' to false.", ENTITY_LOADING_THROWN.get());
 			}
 		}
 	}
