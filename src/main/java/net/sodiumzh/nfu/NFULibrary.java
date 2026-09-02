@@ -95,7 +95,7 @@ public class NFULibrary {
 
         @SubscribeEvent
         public static void test(EntityLoadEvent event) {
-            if (event.getEntity() instanceof Zombie)
+            if (event.getEntity() instanceof Skeleton)
                 throw new RuntimeException("test");
         }
 	}
