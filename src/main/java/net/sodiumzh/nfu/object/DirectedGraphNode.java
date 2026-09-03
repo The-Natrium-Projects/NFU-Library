@@ -112,11 +112,43 @@ public interface DirectedGraphNode<T extends DirectedGraphNode<T>> {
      */
     public static <T extends DirectedGraphNode<T>> List<T> sortByOccurrenceOrder(Collection<T> nodes)
     {
-        return nodes.stream().sorted(Comparator.comparing(n -> n, (n1, n2) -> {
-            if (n1.isUpstreamNodeOf(n2.self())) return -1;
-            else if (n2.isDownstreamNodeOf(n1.self())) return 1;
-            else return 0;
-        })).collect(Collectors.toList());
+        // Kahn's algorithm: repeatedly output nodes having no upstream nodes remaining.
+        // Direct edges between two nodes in the input are enough for ordering; transitive
+        // upstream/downstream relations follow from outputting each node only after all its
+        // direct upstream nodes have been output.
+        Map<T, Integer> remainingUpstreamCount = new IdentityHashMap<>();
+        Map<T, List<T>> downstreamNodes = new IdentityHashMap<>();
+        Set<T> nodeSet = new HashSet<>(nodes);
+        for (T node : nodes) {
+            remainingUpstreamCount.putIfAbsent(node, 0);
+            for (T child : node.children()) {
+                // Ignore edges to nodes outside the input collection
+                if (!nodeSet.contains(child) || child == node) continue;
+                downstreamNodes.computeIfAbsent(node, n -> new ArrayList<>()).add(child);
+                remainingUpstreamCount.merge(child, 1, Integer::sum);
+            }
+        }
+        // Start from nodes without upstream nodes, keeping the input order for stability
+        List<T> ready = nodes.stream()
+            .filter(n -> remainingUpstreamCount.get(n) == 0)
+            .collect(Collectors.toCollection(ArrayList::new));
+        List<T> result = new ArrayList<>(nodes.size());
+        while (!ready.isEmpty()) {
+            T node = ready.remove(0);
+            result.add(node);
+            for (T downstream : downstreamNodes.getOrDefault(node, List.of())) {
+                int remaining = remainingUpstreamCount.merge(downstream, -1, Integer::sum);
+                if (remaining == 0) ready.add(downstream);
+            }
+        }
+        if (result.size() < nodeSet.size()) {
+            // Should never happen as cycles are checked on graph construction; append the rest
+            // in input order as fallback to avoid silently dropping nodes.
+            for (T node : nodes) {
+                if (!result.contains(node)) result.add(node);
+            }
+        }
+        return result;
     }
 
 
