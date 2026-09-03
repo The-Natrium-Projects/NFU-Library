@@ -13,7 +13,6 @@ import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.object.DirectedGraphNode;
 import net.sodiumzh.nfu.object.LimitedMutable;
-import net.sodiumzh.nfu.object.Validatable;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -35,14 +34,16 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
 
     /** Collection of all declared registries. */
     private static final HashBiMap<ResourceLocation, NFURegistry<?>> REGISTRIES = HashBiMap.create();
-    /** Internal map. */
+    /** Internal map. Access must be synchronized on {@code this}. */
     private final HashMap<ResourceLocation, Entry<? extends T>> table = new HashMap<>();
     /** Indicates when the registry should be built. */
     private LoadTiming loadTiming = LoadTiming.COMMON_SETUP;
     /** Indicates which side this registry can be accessed. Values are all {@code null} if on the wrong side. */
     private AvailableSide availableSide = AvailableSide.BOTH;
-    /** Reverse map for key getting. This map's availability also indicates if the registry has been built. */
-    private Validatable<HashMap<T, ResourceLocation>> reverseMap = new Validatable<>(new HashMap<>());
+    /** Reverse map for key getting. A {@code null} reference indicates the registry hasn't been built.
+     * Volatile for safe publication: the fully-built map is published atomically on loading and never
+     * mutated afterwards (late registration replaces it with a copied map). */
+    private volatile @Nullable HashMap<T, ResourceLocation> reverseMap = null;
     /** Indicates this registry should be loaded before the listed registries. */
     private final List<NFURegistry<?>> shouldLoadBefore = new ArrayList<>();
     /** If false, access will never be allowed before loading and will always return null. */
@@ -127,31 +128,33 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     // Loading related //
 
     /**
-     * Load all values that haven't been loaded, and label the registry as loaded (by validating the reverse map).
+     * Load all values that haven't been loaded, and label the registry as loaded (by publishing the reverse map).
      * It doesn't impact values already loaded.
+     * <p>Synchronized: loading must not race with concurrent loading or late registration. The reverse map is
+     * built into a local map and published atomically at the end, so readers never observe a half-built map.
      */
-    public void load()
+    public synchronized void load()
     {
         // For those available on both sides and loaded on side setup, it may be loaded twice, and the first wins
         if (this.isLoaded()) return;
+        HashMap<T, ResourceLocation> newReverseMap = new HashMap<>();
         this.table.forEach((k, v) -> {
             if (!v.loaded) {
                 v.loadFinal();
                 T value = v.get();
                 if (value != null) {
-                    this.reverseMap.modify(m -> {
-                        if (m.containsKey(value))
-                            throw DuplicateRegistryEntryException.duplicateValue(m.get(value).toString(), k.toString());
-                        m.put(value, k);
-                    });
+                    if (newReverseMap.containsKey(value))
+                        throw DuplicateRegistryEntryException.duplicateValue(newReverseMap.get(value).toString(), k.toString());
+                    newReverseMap.put(value, k);
                 }
             }
         });
-        this.reverseMap.validate();
+        // Publish the fully-built map atomically. This volatile write happens-before any read that observes it.
+        this.reverseMap = newReverseMap;
     }
 
     public boolean isLoaded() {
-        return reverseMap.isValidated();
+        return this.reverseMap != null;
     }
 
     public LoadTiming getLoadTiming()
@@ -237,18 +240,24 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      * Total amount of entries in this registry, including unloaded and error entries.
      */
     public int size() {
-        return table.size();
+        synchronized (this) {
+            return table.size();
+        }
     }
 
     public boolean isEmpty() {
-        return table.isEmpty();
+        synchronized (this) {
+            return table.isEmpty();
+        }
     }
 
     /**
      * Whether the registry contains the given key. It doesn't check if the value is loaded or null.
      */
     public boolean containsKey(ResourceLocation key) {
-        return table.containsKey(key);
+        synchronized (this) {
+            return table.containsKey(key);
+        }
     }
 
     /**
@@ -259,11 +268,11 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         if (!this.isLoaded()) {
             if (this.getLoadTiming().equals(LoadTiming.FIRST_ACCESS)) {
                 this.load();
-                return this.reverseMap.get().containsKey(value);
             }
             else return false;
         }
-        return this.reverseMap.get().containsKey(value);
+        // Non-null here: load() either publishes the map or throws.
+        return this.reverseMap.containsKey(value);
     }
 
     /**
@@ -272,7 +281,10 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      */
     @Nullable
     public T getValue(ResourceLocation key) {
-        Entry<? extends T> entry = table.get(key);
+        Entry<? extends T> entry;
+        synchronized (this) {
+            entry = table.get(key);
+        }
         if (entry == null) return null;
         return entry.get();
     }
@@ -286,11 +298,10 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         if (!this.isLoaded()) {
             if (this.getLoadTiming().equals(LoadTiming.FIRST_ACCESS)) {
                 this.load();
-                return this.reverseMap.get().get(value);
             }
             else return null;
         }
-        return this.reverseMap.get().get(value);
+        return this.reverseMap.get(value);
     }
 
     public Optional<ResourceLocation> getOptionalKey(T value) {
@@ -298,7 +309,10 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     public Set<ResourceLocation> keySet() {
-        return table.keySet();
+        // Snapshot: the table may be concurrently mutated by registration.
+        synchronized (this) {
+            return Set.copyOf(table.keySet());
+        }
     }
 
     /**
@@ -310,11 +324,10 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         if (!this.isLoaded()) {
             if (this.getLoadTiming().equals(LoadTiming.FIRST_ACCESS)) {
                 this.load();
-                return this.reverseMap.get().keySet();
             }
             else return Set.of();
         }
-        return this.reverseMap.get().keySet();
+        return this.reverseMap.keySet();
     }
 
     /**
@@ -324,7 +337,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      * <p>It's recommended to use {@link NFURegistryEntryCollection} instead (just like using {@link DeferredRegister}).
      * Directly registering may cause issues if the class in which you're registering objects is not loaded on setup phase.
      */
-    public <U extends T> Accessor<U> register(ResourceLocation key, Supplier<U> supplier)
+    public synchronized <U extends T> Accessor<U> register(ResourceLocation key, Supplier<U> supplier)
     {
         if (this.containsKey(key)) throw DuplicateRegistryEntryException.registeredTwice(key.toString());
         Entry<U> entry = new Entry<>(this, supplier, key);
@@ -334,9 +347,12 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
             entry.loadFinal();
             T value = entry.get();
             if (value != null) {
-                if (this.reverseMap.get().containsKey(value))
-                    throw DuplicateRegistryEntryException.duplicateValue(this.reverseMap.get().get(value).toString(), key.toString());
-                this.reverseMap.get().put(value, key);
+                if (this.reverseMap.containsKey(value))
+                    throw DuplicateRegistryEntryException.duplicateValue(this.reverseMap.get(value).toString(), key.toString());
+                // Never mutate the published map; atomically replace it with an updated copy.
+                HashMap<T, ResourceLocation> updated = new HashMap<>(this.reverseMap);
+                updated.put(value, key);
+                this.reverseMap = updated;
             }
         }
         return new Accessor<>(entry);
@@ -346,7 +362,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      * Register an object from supplier if it's not present.
      * @return An {@code Optional<Accessor>} if registered. {@code Optional#empty()} if the entry exists.
      */
-    public <U extends T> Optional<Accessor<U>> registerIfAbsent(ResourceLocation key, Supplier<U> supplier)
+    public synchronized <U extends T> Optional<Accessor<U>> registerIfAbsent(ResourceLocation key, Supplier<U> supplier)
     {
         if (this.containsKey(key)) return Optional.empty();
         return Optional.of(this.register(key, supplier));
@@ -356,7 +372,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
      * Only for {@link NFURegistryEntryCollection}.
      */
     @ApiStatus.Internal
-    void registerRaw(ResourceLocation key, Entry<? extends T> value)
+    synchronized void registerRaw(ResourceLocation key, Entry<? extends T> value)
     {
         this.table.put(key, value);
     }
@@ -364,10 +380,12 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     static class Entry<T>
     {
         private final Supplier<T> supplier;
-        private @Nullable T cachedValue;
+        /** Volatile: safely published together with {@link #loaded}. */
+        private volatile @Nullable T cachedValue;
         private final NFURegistry<? super T> registry;
         private final ResourceLocation key;
-        private boolean loaded = false;
+        /** Volatile: the publication flag. A read of {@code true} happens-after the write of {@link #cachedValue}. */
+        private volatile boolean loaded = false;
 
         public Entry(@Nonnull NFURegistry<? super T> registry, @Nonnull Supplier<T> supplier, ResourceLocation key)
         {
@@ -400,12 +418,20 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                     return null;
                 if (this.cachedValue != null)
                     throw new IllegalStateException("NFURegistry.Entry value is present but not labeled loaded.");
-                this.tryLoad();
+                // Double-checked locking: keep the post-load read path lock-free while ensuring
+                // only one thread runs the supplier during concurrent pre-load access.
+                synchronized (this) {
+                    if (!this.isLoaded())
+                        this.tryLoad();
+                }
                 return cachedValue;
             }
             else return cachedValue;
         }
 
+        /**
+         * Not synchronized itself: must only be called from within {@code synchronized (this)} in {@link #get()}.
+         */
         private void tryLoad() {
             try {
                 cachedValue = supplier.get();
@@ -423,8 +449,10 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
 
         /**
          * Load the value, and label this entry as built. A built entry will never try loading again even if it's null.
+         * <p>Synchronized so that the value write and the {@code loaded} flag are published atomically
+         * w.r.t. concurrent {@link #get()} calls.
          */
-        public void loadFinal() {
+        public synchronized void loadFinal() {
             if (!this.isLoaded()) {
                 try {
                     this.cachedValue = this.supplier.get();
@@ -446,7 +474,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     public static class Accessor<T> implements Supplier<T>
     {
         private final Entry<T> entry;
-        private boolean validated;  // Labels whether this entry has been registered into a registry. If it's false, the get() will always return null.
+        private volatile boolean validated;  // Labels whether this entry has been registered into a registry. If it's false, the get() will always return null.
 
         Accessor(Entry<T> entry) {
             this.entry = entry;
