@@ -516,7 +516,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     public static List<NFURegistry<?>> sortByLoadingOrder(Collection<NFURegistry<?>> raw) {
-        return DirectedGraphNode.sortByOccurrenceOrder(raw);
+        return DirectedGraphNode.topologicalSort(raw);
     }
 
     /**
