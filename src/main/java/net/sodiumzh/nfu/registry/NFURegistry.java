@@ -415,6 +415,8 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                 if (this.cachedValue == null)
                     throw new RuntimeException("NFU registry entry loading returned null. Entry: " + this.key +
                         "; Registry: " + this.registry.getKeyOfRegistry());
+                if (this.registry.isLoaded())
+                    this.registry.reverseMap.put(this.cachedValue, this.key);
             }
         }
 
