@@ -48,12 +48,6 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     private final List<NFURegistry<?>> shouldLoadBefore = new ArrayList<>();
     /** If false, access will never be allowed before loading and will always return null. */
     private boolean allowsAccessBeforeLoading = true;
-    /**
-     * If true, the values will keep {@code null} if entry construction throws an exception on registry loading. Otherwise, the exception will be thrown out.
-     * <p>This configuration doesn't throw if an entry loads correctly but gets a {@code null}, and doesn't guarantee non-null if false.
-     * <p>This configuration doesn't impact access attempts before register loading. In this case, it will still return null if exception happens.
-     */
-    private boolean allowsLoadingFailures = false;
 
     // Methods below //
 
@@ -139,8 +133,8 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         if (this.isLoaded()) return;
         HashMap<T, ResourceLocation> newReverseMap = new HashMap<>();
         this.table.forEach((k, v) -> {
-            if (!v.loaded) {
-                v.loadFinal();
+            if (!v.isLoaded()) {
+                v.load();
                 T value = v.get();
                 if (value != null) {
                     if (newReverseMap.containsKey(value))
@@ -164,25 +158,6 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
 
     public NFURegistry<T> setLoadTiming(LoadTiming phase) {
         this.loadTiming = phase;
-        return this;
-    }
-
-    /**
-     * If true, the values will keep {@code null} if entry construction throws an exception on registry loading. Otherwise, the exception will be thrown out.
-     * <p>This configuration doesn't throw if an entry loads correctly but gets a {@code null}, and doesn't guarantee non-null if false.
-     * <p>This configuration doesn't impact access attempts before register loading. In this case, it will still return null if exception happens.
-     */
-    public boolean allowsLoadingFailures() {
-        return this.allowsLoadingFailures;
-    }
-
-    /**
-     * If set true, the values will keep {@code null} if an entry construction throws an exception on registry loading. Otherwise, the exception will be thrown out.
-     * <p>This configuration doesn't throw if an entry loads correctly but gets a {@code null}, and doesn't guarantee non-null if false.
-     * <p>This configuration doesn't impact access attempts before register loading. In this case, it will still return null if exception happens.
-     */
-    public NFURegistry<T> setAllowsLoadingFailures(boolean value) {
-        this.allowsLoadingFailures = value;
         return this;
     }
 
@@ -344,7 +319,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         this.table.put(key, entry);
         // Handle case when the entry is registered after loading (not recommended)
         if (this.isLoaded()) {
-            entry.loadFinal();
+            entry.load();
             T value = entry.get();
             if (value != null) {
                 if (this.reverseMap.containsKey(value))
@@ -380,12 +355,9 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     static class Entry<T>
     {
         private final Supplier<T> supplier;
-        /** Volatile: safely published together with {@link #loaded}. */
         private volatile @Nullable T cachedValue;
         private final NFURegistry<? super T> registry;
         private final ResourceLocation key;
-        /** Volatile: the publication flag. A read of {@code true} happens-after the write of {@link #cachedValue}. */
-        private volatile boolean loaded = false;
 
         public Entry(@Nonnull NFURegistry<? super T> registry, @Nonnull Supplier<T> supplier, ResourceLocation key)
         {
@@ -410,19 +382,17 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                  loadFinal(), and tryLoad() will never be invoked */
                 if (this.registry.getLoadTiming().equals(LoadTiming.FIRST_ACCESS)) {
                     // registry load() will call Entry.get(), so load self first to prevent inf recursion
-                    this.loadFinal();
+                    this.load();
                     this.registry.load();
                     return this.cachedValue;
                 }
                 if (!registry.allowsAccessBeforeLoading())
                     return null;
-                if (this.cachedValue != null)
-                    throw new IllegalStateException("NFURegistry.Entry value is present but not labeled loaded.");
                 // Double-checked locking: keep the post-load read path lock-free while ensuring
                 // only one thread runs the supplier during concurrent pre-load access.
                 synchronized (this) {
                     if (!this.isLoaded())
-                        this.tryLoad();
+                        this.load();
                 }
                 return cachedValue;
             }
@@ -430,45 +400,28 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         }
 
         /**
-         * Not synchronized itself: must only be called from within {@code synchronized (this)} in {@link #get()}.
-         */
-        private void tryLoad() {
-            try {
-                cachedValue = supplier.get();
-                if (cachedValue != null) this.loaded = true;
-            } catch (RuntimeException e)
-            {
-                // If running supplier encountered error, don't crash but
-                // set the cache to null so that the supplier will rerun next time.
-                NFUDebugStatics.errorOnce(NFURegistry.Accessor.class,
-                    "Registry entry getting value failed. Registry=\"" + this.registry.getKeyOfRegistry()
-                        + "\", key=\"" + this.key + "\".");
-                cachedValue = null;
-            }
-        }
-
-        /**
          * Load the value, and label this entry as built. A built entry will never try loading again even if it's null.
          * <p>Synchronized so that the value write and the {@code loaded} flag are published atomically
          * w.r.t. concurrent {@link #get()} calls.
          */
-        public synchronized void loadFinal() {
+        public synchronized void load() {
             if (!this.isLoaded()) {
                 try {
                     this.cachedValue = this.supplier.get();
                 } catch (RuntimeException e) {
-                    if (this.registry.allowsLoadingFailures) {
-                        this.cachedValue = null;
-                    }
-                    else throw e;
+                    throw new RuntimeException("NFU registry entry loading failed. Entry: " + this.key +
+                        "; Registry: " + this.registry.getKeyOfRegistry());
                 }
+                if (this.cachedValue == null)
+                    throw new RuntimeException("NFU registry entry loading returned null. Entry: " + this.key +
+                        "; Registry: " + this.registry.getKeyOfRegistry());
             }
-            this.loaded = true;
         }
 
         public boolean isLoaded() {
-            return this.loaded;
+            return this.cachedValue != null;
         }
+
     }
 
     public static class Accessor<T> implements Supplier<T>
