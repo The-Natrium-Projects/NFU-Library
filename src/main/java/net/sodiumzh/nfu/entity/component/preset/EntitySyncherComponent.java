@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
@@ -25,6 +26,7 @@ import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.object.ClientOnly;
 import net.sodiumzh.nfu.object.HierarchyPath;
 import net.sodiumzh.nfu.object.ServerOnly;
+import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import net.sodiumzh.nfu.util.NFUNetworkStatics;
 import org.jetbrains.annotations.ApiStatus;
@@ -189,7 +191,6 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
      * <p>This is only used in synching process and should not be called elsewhere.
      * Safe to call on server as the cache on server will not be read.
      */
-    @DontCallManually
     @ApiStatus.Internal
     public void setSynchedGetterCachedValueOnSynchedSide(String key, @Nullable Object o) {
         if (!this.hasSynchedGetter(key, Object.class))
@@ -200,6 +201,12 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
             this.synchedGetters.get(key).setCachedValueUnchecked(o);
     }
 
+    /**
+     * Amount of {@code syncAll} actions each synchronization.
+     * Note that {@code syncAll} frequency is controlled by NFU Config "entitySyncherFrequency". This value is default 5.
+     * <p>For example, if "entitySyncherFrequency" value is 5, and this value is 5, then the component will be synched each
+     * 25 ticks.
+     */
     public int getSyncInterval() {
         return syncInterval;
     }
@@ -246,6 +253,11 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
 
     /**
      * Sync all entities of a level.
+     * @param ignoresSyncInterval If true, it will sync all entries and ignore sync interval settings.
+     *                            <b>Any manual sync-all operation should set this true</b>, and false value is only called
+     *                            in {@link net.sodiumzh.nfu.entity.component.EntityComponentEventListeners#onLevelTick(TickEvent.LevelTickEvent)}
+     *                            to do auto sync, and manual call will cause a failure. <b>Do not call {@code syncAll} with this value true
+     *                            on tick, or it will cause a performance issue!</b>
      */
     public static void syncAll(ServerLevel level, boolean ignoresSyncInterval) {
         ClientboundEntitySyncherComponentSyncAllPacket packet =
@@ -258,6 +270,14 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
                 .map(c -> (EntitySyncherComponent<?>)c)
                 .ifPresent(c -> c.changedDataKeys.clear());
         });
+    }
+
+    /**
+     * Sync all entities of a level.
+     * <p><b>Do not call {@code syncAll} with this value true on tick, or it will cause a performance issue!</b>
+     */
+    public static void syncAll(ServerLevel level) {
+        syncAll(level, true);
     }
 
     public boolean shouldSync() {
@@ -398,7 +418,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
      * Posted once each level tick, sync all entities in a level.
      */
     public static class ClientboundEntitySyncherComponentSyncAllPacket implements Packet<ClientGamePacketListener> {
-        private static final ServerOnly<Long> CURRENT_PACKET_ID = new ServerOnly<>(0L);
+        private static final ThreadLocal<Long> CURRENT_PACKET_ID = ThreadLocal.withInitial(() -> 0L);
         public final long packetId;
         public final ResourceLocation dimension;
         final Map<UUID, Map<HierarchyPath, SyncRecord>> allEntityData = new HashMap<>();
@@ -416,7 +436,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
                     .filter(entry ->
                         entry.getValue() instanceof EntitySyncherComponent<?> sc
                         && sc.shouldSync()
-                        && (ignoresSyncIntervals || sc.getEntity().tickCount % sc.getSyncInterval() == 0))
+                        && (ignoresSyncIntervals || CURRENT_PACKET_ID.get() % (long) sc.getSyncInterval() == 0))
                     .forEach(entry -> {
                         allEntityData.get(e.getUUID()).putIfAbsent(entry.getKey(), SyncRecord.byComponent((EntitySyncherComponent<?>)(entry.getValue())));
                         handledComponentPaths.put(e.getUUID(), entry.getKey());
