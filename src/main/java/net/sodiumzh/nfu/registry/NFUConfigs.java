@@ -14,7 +14,9 @@ public class NFUConfigs
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENTITY_COMPONENT_HIERARCHY_CHECK;
     public static final ForgeConfigSpec.BooleanValue SPEC_CRASHES_ON_ENTITY_LOAD_FAILS;
 
-	public static final ForgeConfigSpec.BooleanValue ENABLES_FLYING_SPEED_SCALING_FIX;
+	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_FLYING_SPEED_SCALING_FIX;
+
+	public static final ForgeConfigSpec.IntValue SPEC_ENTITY_SYNCHER_FREQUENCY;
 
 	static
 	{
@@ -22,9 +24,12 @@ public class NFUConfigs
 		SPEC_ENABLES_SAVE_DATA_PORTER = BUILDER.comment("If true, SaveDataLocationRedirector will take effect. Setting it false could improve the performance, "
 				+ "but it may cause game objects (entities, items, blocks etc.) to disappear if you're using save data from an old version.")
 				.define("enablesSaveDataPorter", true);
+		SPEC_ENTITY_SYNCHER_FREQUENCY = BUILDER.comment("Amount of ticks each entity synchronization action of NFU Entity Synchers. "
+				+ "Increasing this value (reducing the frequency) may improve the performance, but might cause synchronization issues.")
+				.defineInRange("entitySyncherFrequency", 5, 1, 100);
 		BUILDER.pop();
 		BUILDER.push("fixes");
-		ENABLES_FLYING_SPEED_SCALING_FIX = BUILDER.comment("Fix of a vanilla issue that some flying mobs' flying " +
+		SPEC_ENABLES_FLYING_SPEED_SCALING_FIX = BUILDER.comment("Fix of a vanilla issue that some flying mobs' flying " +
 				"speed is not multiplied by AI speed modifiers (MC-172801). If some mob's flying speed goes wrong, " +
 				"consider disabling this config entry.")
 			.define("enablesFlyingSpeedScalingFix", true);
@@ -46,6 +51,7 @@ public class NFUConfigs
 	}
 	
 	public static boolean CACHED_ENABLES_SAVE_DATA_PORTER = true;
+	public static int CACHED_ENTITY_SYNCHER_FREQUENCY = 5;
 	public static boolean CACHED_DEBUG_MSG_OUTPUT = false;
 	public static boolean CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK = false;
 	public static boolean CACHED_CRASHES_ON_ENTITY_LOAD_FAILS = false;
@@ -54,10 +60,11 @@ public class NFUConfigs
 	public static void refresh()
 	{
 		CACHED_ENABLES_SAVE_DATA_PORTER = SPEC_ENABLES_SAVE_DATA_PORTER.get();
+		CACHED_ENTITY_SYNCHER_FREQUENCY = SPEC_ENTITY_SYNCHER_FREQUENCY.get();
 		CACHED_DEBUG_MSG_OUTPUT = SPEC_DEBUG_MSG_OUTPUT.get();
 		CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK = SPEC_ENTITY_COMPONENT_HIERARCHY_CHECK.get();
         CACHED_CRASHES_ON_ENTITY_LOAD_FAILS = SPEC_CRASHES_ON_ENTITY_LOAD_FAILS.get();
-		CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = ENABLES_FLYING_SPEED_SCALING_FIX.get();
+		CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = SPEC_ENABLES_FLYING_SPEED_SCALING_FIX.get();
 	}
 	
 	@SubscribeEvent

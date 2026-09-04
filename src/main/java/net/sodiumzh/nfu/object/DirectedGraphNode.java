@@ -2,7 +2,6 @@ package net.sodiumzh.nfu.object;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Indicates the class is a node of some directed graph,
@@ -110,14 +109,32 @@ public interface DirectedGraphNode<T extends DirectedGraphNode<T>> {
      * and after all its upstream nodes. For nodes not having upstream/downstream relationships, the order is
      * not specified.
      */
-    public static <T extends DirectedGraphNode<T>> List<T> sortByOccurrenceOrder(Collection<T> nodes)
+    public static <T extends DirectedGraphNode<T>> List<T> topologicalSort(Collection<T> nodes)
     {
-        return nodes.stream().sorted(Comparator.comparing(n -> n, (n1, n2) -> {
-            if (n1.isUpstreamNodeOf(n2.self())) return -1;
-            else if (n2.isDownstreamNodeOf(n1.self())) return 1;
-            else return 0;
-        })).collect(Collectors.toList());
+        // Indegree = number of upstream edges within the input collection
+        Map<T, Integer> indegree = new HashMap<>();
+        nodes.forEach(n -> indegree.put(n, 0));
+        for (T n: nodes)
+            for (T child: n.children())
+                // Only count edges inside the input collection; external nodes don't constrain the order here
+                if (indegree.containsKey(child))
+                    indegree.merge(child, 1, Integer::sum);
+        // Kahn's algorithm: repeatedly emit nodes with no remaining upstream nodes
+        Queue<T> queue = new ArrayDeque<>();
+        indegree.forEach((n, deg) -> { if (deg == 0) queue.add(n); });
+        List<T> result = new ArrayList<>(nodes.size());
+        while (!queue.isEmpty()) {
+            T node = queue.poll();
+            result.add(node);
+            for (T child: node.children()) {
+                Integer deg = indegree.get(child);
+                if (deg == null) continue;  // Edge to a node outside the input collection
+                if (deg == 1) queue.add(child);
+                else indegree.put(child, deg - 1);
+            }
+        }
+        if (result.size() != nodes.size())
+            throw new IllegalArgumentException("DirectedGraphNode#sortByOccurrenceOrder: cyclic dependency detected.");
+        return result;
     }
-
-
 }
