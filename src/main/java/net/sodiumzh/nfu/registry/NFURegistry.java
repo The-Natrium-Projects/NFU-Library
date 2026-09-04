@@ -13,7 +13,6 @@ import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.object.DirectedGraphNode;
 import net.sodiumzh.nfu.object.LimitedMutable;
-import net.sodiumzh.nfu.util.NFUDebugStatics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -251,8 +250,10 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     /**
-     * Get the value from key. Note that if the supplier throws an exception,
-     * it will not crash but print stacktrace and return null.
+     * Get the value from key.
+     * @return The value, or {@code null} if the key is not present, or if accessed on the wrong side or
+     * before loading when {@link #allowsAccessBeforeLoading()} is false.
+     * @throws RuntimeException if the entry exists but loading its value fails or returns {@code null}.
      */
     @Nullable
     public T getValue(ResourceLocation key) {
@@ -400,9 +401,13 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         }
 
         /**
-         * Load the value, and label this entry as built. A built entry will never try loading again even if it's null.
-         * <p>Synchronized so that the value write and the {@code loaded} flag are published atomically
+         * Load the value. Throws if the supplier throws or returns {@code null}. A failed entry is NOT
+         * labeled loaded, so loading will be retried on the next call.
+         * <p>Synchronized so that the value write and the loaded state are published atomically
          * w.r.t. concurrent {@link #get()} calls.
+         * <p>Doesn't update the registry's reverse map: for entries registered before registry loading the map
+         * is built by {@link NFURegistry#load()}; for entries registered after loading it's updated by
+         * {@link NFURegistry#register} (under the registry lock, via copy-swap).
          */
         public synchronized void load() {
             if (!this.isLoaded()) {
@@ -410,13 +415,11 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                     this.cachedValue = this.supplier.get();
                 } catch (RuntimeException e) {
                     throw new RuntimeException("NFU registry entry loading failed. Entry: " + this.key +
-                        "; Registry: " + this.registry.getKeyOfRegistry());
+                        "; Registry: " + this.registry.getKeyOfRegistry(), e);
                 }
                 if (this.cachedValue == null)
                     throw new RuntimeException("NFU registry entry loading returned null. Entry: " + this.key +
                         "; Registry: " + this.registry.getKeyOfRegistry());
-                if (this.registry.isLoaded())
-                    this.registry.reverseMap.put(this.cachedValue, this.key);
             }
         }
 
