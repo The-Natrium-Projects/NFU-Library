@@ -17,6 +17,8 @@ public class NFUConfigs
 
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_FLYING_SPEED_SCALING_FIX;
 
+	public static final ForgeConfigSpec.IntValue SPEC_ENTITY_SYNCHER_FREQUENCY;
+
 	static
 	{
 		BUILDER.push("common");
@@ -53,6 +55,7 @@ public class NFUConfigs
 	}
 
 	public static boolean CACHED_ENABLES_SAVE_DATA_PORTER = true;
+	public static int CACHED_ENTITY_SYNCHER_FREQUENCY = 5;
 	public static boolean CACHED_DEBUG_MSG_OUTPUT = false;
 	public static boolean CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK = false;
 	public static boolean CACHED_CRASHES_ON_ENTITY_LOAD_FAILS = false;
@@ -62,6 +65,7 @@ public class NFUConfigs
 	public static void refresh()
 	{
 		CACHED_ENABLES_SAVE_DATA_PORTER = SPEC_ENABLES_SAVE_DATA_PORTER.get();
+		CACHED_ENTITY_SYNCHER_FREQUENCY = SPEC_ENTITY_SYNCHER_FREQUENCY.get();
 		CACHED_DEBUG_MSG_OUTPUT = SPEC_DEBUG_MSG_OUTPUT.get();
 		CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK = SPEC_ENTITY_COMPONENT_HIERARCHY_CHECK.get();
         CACHED_CRASHES_ON_ENTITY_LOAD_FAILS = SPEC_CRASHES_ON_ENTITY_LOAD_FAILS.get();

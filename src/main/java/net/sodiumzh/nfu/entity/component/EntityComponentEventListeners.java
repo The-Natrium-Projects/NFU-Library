@@ -58,8 +58,7 @@ public class EntityComponentEventListeners {
 
     @SubscribeEvent
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
-        // This frequency check controls packet sending frequency. Per-component frequency is further checked
-        // in
+        // This frequency check only controls packet sending frequency
         if (event.level.getGameTime() % NFUConfigs.CACHED_ENTITY_SYNCHER_FREQUENCY != 0)
             return;
         if (!event.level.isClientSide() && event.level instanceof ServerLevel sl) {
