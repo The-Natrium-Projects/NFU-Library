@@ -135,13 +135,14 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         this.table.forEach((k, v) -> {
             if (!v.isLoaded()) {
                 v.load();
-                T value = v.get();
-                if (value != null) {
-                    if (newReverseMap.containsKey(value))
-                        throw DuplicateRegistryEntryException.duplicateValue(newReverseMap.get(value).toString(), k.toString());
-                    newReverseMap.put(value, k);
-                }
             }
+            T value = v.get();
+            if (value != null) {
+                if (newReverseMap.containsKey(value))
+                    throw DuplicateRegistryEntryException.duplicateValue(newReverseMap.get(value).toString(), k.toString());
+                newReverseMap.put(value, k);
+            } else throw new IllegalStateException("NFU Registry: unexpected null value of entry " + k + " on registry " + this.getKeyOfRegistry()
+                + " after value loading.");
         });
         // Publish the fully-built map atomically. This volatile write happens-before any read that observes it.
         this.reverseMap = newReverseMap;
@@ -174,7 +175,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                 StringBuilder cycleInfo = new StringBuilder(cycle.get(0).getKeyOfRegistry().toString());
                 for (int i = 1; i < cycle.size(); ++i)
                     cycleInfo.append(" -> ").append(cycle.get(i).getKeyOfRegistry().toString());
-                throw new IllegalArgumentException("NaUtilsRegistry loading order error: cyclic dependency detected.\n" +
+                throw new IllegalArgumentException("NFU Registry loading order error: cyclic dependency detected on registry " + this.getKeyOfRegistry() + ".\n" +
                     "Cycle: " + cycleInfo);
             }
         }
@@ -317,7 +318,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         if (this.containsKey(key)) throw DuplicateRegistryEntryException.registeredTwice(key.toString());
         Entry<U> entry = new Entry<>(this, supplier, key);
         this.table.put(key, entry);
-        // Handle case when the entry is registered after loading (not recommended)
+        // If the registry has already been loaded, immediately load the value and update reverse map
         if (this.isLoaded()) {
             entry.load();
             T value = entry.get();
@@ -410,7 +411,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                     this.cachedValue = this.supplier.get();
                 } catch (RuntimeException e) {
                     throw new RuntimeException("NFU registry entry loading failed. Entry: " + this.key +
-                        "; Registry: " + this.registry.getKeyOfRegistry());
+                        "; Registry: " + this.registry.getKeyOfRegistry(), e);
                 }
                 if (this.cachedValue == null)
                     throw new RuntimeException("NFU registry entry loading returned null. Entry: " + this.key +
