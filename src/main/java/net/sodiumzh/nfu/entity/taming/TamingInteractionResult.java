@@ -110,7 +110,4 @@ public class TamingInteractionResult {
     @Deprecated
     public void setHandled() {this.setResult(InteractionResult.sidedSuccess(this.level.isClientSide));}
 
-    public void setTamed(InteractionResult result) {
-
-    }
 }

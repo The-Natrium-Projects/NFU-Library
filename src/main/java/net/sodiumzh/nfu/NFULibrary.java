@@ -92,12 +92,6 @@ public class NFULibrary {
 		public static void onServerStopped(ServerStoppedEvent event) {
 			server = null;
 		}
-
-        @SubscribeEvent
-        public static void test(EntityLoadEvent event) {
-            if (event.getEntity() instanceof Skeleton)
-                throw new RuntimeException("test");
-        }
 	}
 	
 }

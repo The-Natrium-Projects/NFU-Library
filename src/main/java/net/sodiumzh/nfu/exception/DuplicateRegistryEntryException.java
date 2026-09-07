@@ -19,6 +19,16 @@ public class DuplicateRegistryEntryException extends RuntimeException {
 		return new DuplicateRegistryEntryException(String.format("Key \"%s\" registered twice.", key));
 	}
 
+	public static String duplicateValueDesc(String newKey, String oldKey)
+	{
+		return String.format("Duplicate keys for the same value: \"%s\" and \"%s\".", newKey, oldKey);
+	}
+
+	public static String registeredTwiceDesc(String key)
+	{
+		return String.format("Key \"%s\" registered twice.", key);
+	}
+
 	private static final long serialVersionUID = -8840627795547230497L;
 	
 }
