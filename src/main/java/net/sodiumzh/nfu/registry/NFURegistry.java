@@ -473,7 +473,8 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         @Override
         public T get()
         {
-            if (!validated) return null;
+            if (!validated)
+                throw new IllegalStateException("Access of an invalid NFURegistry Accessor. The entry is not registered to the registry.");
             return entry.get();
         }
 
