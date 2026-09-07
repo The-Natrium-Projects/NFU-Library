@@ -49,9 +49,23 @@ public class NFURegistryEntryCollection<T>
         return this.table.containsKey(key);
     }
 
-    public void merge()
+    public synchronized void merge()
     {
         this.table.forEach((key, value) -> {
+            this.registry.registerRaw(key, value.getA());
+            value.getB().validate();
+        });
+    }
+
+    /**
+     * Merge each entry to the registry if it's not present in the registry.
+     * <p>WARNING: Before calling this, ensure <b>{@link NFURegistry.Accessor}s produced from
+     * {@link NFURegistryEntryCollection#register} are NOT assigned to static fields</b>! If an entry is present,
+     * the accessor will not be linked to the registry and thus invalid. This could produce issues hard to debug.
+     */
+    public synchronized void mergeIfAbsent() {
+        this.table.forEach((key, value) -> {
+            if (this.registry.containsKey(key)) return;
             this.registry.registerRaw(key, value.getA());
             value.getB().validate();
         });
