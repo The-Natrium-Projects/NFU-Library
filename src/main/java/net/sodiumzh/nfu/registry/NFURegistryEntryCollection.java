@@ -35,8 +35,9 @@ public class NFURegistryEntryCollection<T>
      * Register an object to the collection.
      * This is the same as {@code put}, but returns the input value itself
      * so that you can assign the value to a static field together with registering.
+     * <p>Synchronized: serializes with {@link #merge()}/{@link #mergeIfAbsent()} on the shared table.
      */
-    public <U extends T> NFURegistry.Accessor<U> register(@Nonnull String key, @Nonnull Supplier<U> value)
+    public synchronized <U extends T> NFURegistry.Accessor<U> register(@Nonnull String key, @Nonnull Supplier<U> value)
     {
         NFURegistry.Entry<U> entry = new NFURegistry.Entry<>(registry, value, new ResourceLocation(namespace, key));
         NFURegistry.Accessor<U> accessor = NFURegistry.Accessor.createInvalid(entry);
@@ -71,4 +72,3 @@ public class NFURegistryEntryCollection<T>
         });
     }
 }
-
