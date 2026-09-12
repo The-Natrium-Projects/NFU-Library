@@ -16,9 +16,11 @@ public final class HierarchyPath {
 
     private final String[] splitPath;
     private static final HierarchyPath EMPTY = new HierarchyPath();
+    private final int hashCode;
 
     private HierarchyPath(String... path) {
         this.splitPath = Arrays.copyOf(path, path.length);
+        this.hashCode = this.calcHashCode();
     }
 
     public static HierarchyPath byNameArray(String... nameArray) {
@@ -65,8 +67,10 @@ public final class HierarchyPath {
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof HierarchyPath cp)
+        if (other instanceof HierarchyPath cp) {
+            if (this.hashCode != cp.hashCode) return false;
             return Arrays.equals(this.splitPath, cp.splitPath);
+        }
         else return false;
     }
 
@@ -129,9 +133,13 @@ public final class HierarchyPath {
         return new HierarchyPath(Stream.of(relativeTo.splitPath, this.splitPath).flatMap(Arrays::stream).toArray(String[]::new));
     }
 
+    private int calcHashCode() {
+        return Arrays.hashCode(this.splitPath);
+    }
+
     @Override
     public int hashCode() {
-        return Objects.hash((Object[]) splitPath);
+        return this.hashCode;
     }
 
     @Override
