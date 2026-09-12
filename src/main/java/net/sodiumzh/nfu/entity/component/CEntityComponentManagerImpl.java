@@ -12,7 +12,6 @@ import net.sodiumzh.nfu.object.HierarchyPath;
 import net.sodiumzh.nfu.object.Validatable;
 import net.sodiumzh.nfu.registry.NFUConfigs;
 import net.sodiumzh.nfu.registry.NFURegistries;
-import net.sodiumzh.nfu.util.NFUDebugStatics;
 import net.sodiumzh.nfu.util.NFUNBTStatics;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +29,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     private static ThreadLocal<Long> CONSTRUCT_COUNT = ThreadLocal.withInitial(() -> 0L);
 
     private boolean constructionDone = false;
-    private final Validatable<Map<HierarchyPath, IEntityComponent<?>>> preConstructed = new Validatable<>(new HashMap<>());    // Valid only in construction. Invalidated after construction.
+    private final Validatable<Map<HierarchyPath, IEntityComponent<? extends Entity>>> preConstructed = new Validatable<>(new HashMap<>());    // Valid only in construction. Invalidated after construction.
     // Count tick/serialization errors, and throws if too many errors are encountered
     // Excessive error count indicates tickly errors which are not tolerated
     private int errorCount = 0;
@@ -100,10 +99,11 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
     public Map<String, IEntityComponent<? extends Entity>> getSubComponents() {
         if (!this.constructionDone) {
             Map<String, IEntityComponent<? extends Entity>> existing = super.getSubComponents();
-            var preConstructedComponents = this.preConstructed.get().entrySet().stream()
+            Stream<Map.Entry<String, IEntityComponent<? extends Entity>>> preConstructedComponents = this.preConstructed.get().entrySet().stream()
                 .filter(entry -> entry.getKey().length() == 1 && !existing.containsKey(entry.getKey().getAt(0)))
                 .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey().getAt(0), entry.getValue()));
-            return Stream.concat(existing.entrySet().stream(), preConstructedComponents).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+            return Stream.concat(existing.entrySet().stream(), preConstructedComponents)
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
         }
         else return super.getSubComponents();
     }
