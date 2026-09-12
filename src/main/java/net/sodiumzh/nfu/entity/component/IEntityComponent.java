@@ -132,10 +132,13 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     Map<String, IEntityComponent<? extends Entity>> getSubComponents();
 
     /**
-     * Take an action to each subcomponent. A resource-saving alternative for {@code getSubComponents().forEach(action)}
+     * Take an action to each subcomponent, as a proxy of {@code getSubComponents().forEach()}.
+     * <p>For components extending {@link EntityComponentBase}, it's a resource-saving alternative
      * as it can avoid new map allocation.
      */
-    void forEachSubcomponent(BiConsumer<String, IEntityComponent<? extends Entity>> action);
+    default void forEachSubcomponent(BiConsumer<String, IEntityComponent<? extends Entity>> action) {
+        this.getSubComponents().forEach(action);
+    }
 
     /**
      * Gets a direct subcomponent by name.

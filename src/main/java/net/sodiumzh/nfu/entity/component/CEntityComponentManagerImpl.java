@@ -142,7 +142,7 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
 
     private static void tickComponent(IEntityComponent<?> component) {
         try {
-            if (component.tickingSide().isCorrectSide() && component.shouldTick())
+            if (component.tickingSide().isCorrectSide(component.getEntity()) && component.shouldTick())
                 component.tick();
         } catch (Exception ex) {
             LogUtils.getLogger().error("NFU: Exception thrown on entity component tick");
