@@ -46,7 +46,7 @@ public interface CEntityComponentManager extends CEntityTickingCapability<Entity
 
     @Nonnull
     public static CEntityComponentManager getManager(Entity e) {
-        return e.getCapability(EntityComponentStatics.CAP_MANAGER).orElse(new CEntityComponentManagerImpl(e));
+        return e.getCapability(EntityComponentStatics.CAP_MANAGER).orElse(new EntityComponentManagerPlaceholder(e));
     }
 
     /**

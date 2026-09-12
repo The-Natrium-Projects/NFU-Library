@@ -12,6 +12,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 /**
  * Default base implementation of {@link IEntityComponent} for use in entity-component trees.
@@ -143,6 +144,11 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     @Override
     public Map<String, IEntityComponent<? extends Entity>> getSubComponents() {
         return Collections.unmodifiableMap(subComponents);
+    }
+
+    @Override
+    public void forEachSubcomponent(BiConsumer<String, IEntityComponent<? extends Entity>> action) {
+        subComponents.forEach(action);
     }
 
     @Override

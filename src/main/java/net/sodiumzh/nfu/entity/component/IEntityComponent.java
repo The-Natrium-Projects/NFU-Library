@@ -3,6 +3,7 @@ package net.sodiumzh.nfu.entity.component;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.util.INBTSerializable;
+import net.minecraftforge.energy.IEnergyStorage;
 import net.sodiumzh.nfu.annotation.DontOverride;
 import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.object.HierarchyPath;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -128,6 +130,12 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Gets an unmodifiable map of all direct subcomponents keyed by their local name.
      */
     Map<String, IEntityComponent<? extends Entity>> getSubComponents();
+
+    /**
+     * Take an action to each subcomponent. A resource-saving alternative for {@code getSubComponents().forEach(action)}
+     * as it can avoid new map allocation.
+     */
+    void forEachSubcomponent(BiConsumer<String, IEntityComponent<? extends Entity>> action);
 
     /**
      * Gets a direct subcomponent by name.

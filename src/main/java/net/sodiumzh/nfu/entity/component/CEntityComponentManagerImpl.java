@@ -17,6 +17,8 @@ import net.sodiumzh.nfu.util.NFUNBTStatics;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Default implementation for CEntityComponentManager.
@@ -96,13 +98,14 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
 
     @Override
     public Map<String, IEntityComponent<? extends Entity>> getSubComponents() {
-        var res = super.getSubComponents();
         if (!this.constructionDone) {
-            this.preConstructed.get().entrySet().stream()
-                .filter(entry -> entry.getKey().length() == 1 && !res.containsKey(entry.getKey().getAt(0)))
-                .forEach(entry -> res.put(entry.getKey().getAt(0), entry.getValue()));
+            Map<String, IEntityComponent<? extends Entity>> existing = super.getSubComponents();
+            var preConstructedComponents = this.preConstructed.get().entrySet().stream()
+                .filter(entry -> entry.getKey().length() == 1 && !existing.containsKey(entry.getKey().getAt(0)))
+                .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey().getAt(0), entry.getValue()));
+            return Stream.concat(existing.entrySet().stream(), preConstructedComponents).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
         }
-        return res;
+        else return super.getSubComponents();
     }
 
     @Override
@@ -130,24 +133,23 @@ final class CEntityComponentManagerImpl extends EntityComponentBase<Entity> impl
      */
     @Override
     public void tick() {
-        this.getDownstreamComponents().stream()
-            .filter(c -> c.tickingSide().isCorrectSide(this.getEntity()))
-            .filter(IEntityComponent::shouldTick)
-            .map(e -> Tuple2.of(e.pathDepth(), e))
-            .sorted(Comparator.comparingInt(Tuple2::getA))
-            .forEach(e -> {
-                try {
-                    e.getB().tick();
-                } catch (Exception ex) {
-                    LogUtils.getLogger().error("NFU: Exception thrown on entity component tick");
-                    LogUtils.getLogger().error("Entity: " + this.getEntity().getName().getString() + "; Component path: \"" + e.getB().getPathFromRoot() + "\"");
-                    throw ex;
-                }
-            });
+        this.forEachSubcomponent((k, c) -> tickComponent(c));
         // Check hierarchy if configured each 10s
         if (NFUConfigs.CACHED_ENTITY_COMPONENT_HIERARCHY_CHECK && this.getEntity().tickCount % 200 == 0) {
             this.checkHierarchyOfAllComponents();
         }
+    }
+
+    private static void tickComponent(IEntityComponent<?> component) {
+        try {
+            if (component.tickingSide().isCorrectSide() && component.shouldTick())
+                component.tick();
+        } catch (Exception ex) {
+            LogUtils.getLogger().error("NFU: Exception thrown on entity component tick");
+            LogUtils.getLogger().error("Entity: " + component.getEntity().getName().getString() + "; Component path: \"" + component.getPathFromRoot() + "\"");
+            throw ex;
+        }
+        component.forEachSubcomponent((k, c) -> tickComponent(c));
     }
 
     @Override
