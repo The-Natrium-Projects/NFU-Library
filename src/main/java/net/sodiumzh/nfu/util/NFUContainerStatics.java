@@ -699,4 +699,24 @@ public class NFUContainerStatics
 	public static <T> T[] concatArray(T[] a, T[] b, IntFunction<T[]> arrayGenerator) {
 		return Stream.concat(Arrays.stream(a), Arrays.stream(b)).toArray(arrayGenerator);
 	}
+
+	public static <T> T[] insertToArray(T[] array, T elementToAdd, int index, IntFunction<T[]> arrayGenerator) {
+		if (index < 0 || index > array.length)
+			throw new IllegalArgumentException("Array out of bound");
+		T[] res = arrayGenerator.apply(array.length + 1);
+		res[index] = elementToAdd;
+		for (int i = 0; i < array.length; ++i) {
+			if (i < index) res[i] = array[i];
+			else res[i + 1] = array[i];
+		}
+		return res;
+	}
+
+	public static <T> T[] insertToArrayStart(T[] array, T elementToAdd, IntFunction<T[]> arrayGenerator) {
+		return insertToArray(array, elementToAdd, 0, arrayGenerator);
+	}
+
+	public static <T> T[] insertToArrayEnd(T[] array, T elementToAdd, IntFunction<T[]> arrayGenerator) {
+		return insertToArray(array, elementToAdd, array.length, arrayGenerator);
+	}
 }
