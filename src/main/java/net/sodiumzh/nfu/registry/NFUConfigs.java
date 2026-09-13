@@ -25,9 +25,9 @@ public class NFUConfigs
 		SPEC_ENABLES_SAVE_DATA_PORTER = BUILDER.comment("If true, SaveDataLocationRedirector will take effect. Setting it false could improve the performance, "
 				+ "but it may cause game objects (entities, items, blocks etc.) to disappear if you're using save data from an old version.")
 				.define("enablesSaveDataPorter", true);
-		SPEC_ENTITY_SYNCHER_FREQUENCY = BUILDER.comment("Amount of ticks each entity synchronization action of NFU Entity Synchers. "
-				+ "Increasing this value (reducing the frequency) may improve the performance, but might cause synchronization issues.")
-				.defineInRange("entitySyncherFrequency", 5, 1, 100);
+		SPEC_ENTITY_SYNCHER_FREQUENCY = BUILDER.comment("Amount of ticks between two entity synchronization actions of NFU Entity Synchers. "
+				+ "Increasing this value (i.e. reducing the frequency) may improve the performance, but might cause synchronization issues.")
+				.defineInRange("entitySyncherInterval", 5, 1, 100);
 		BUILDER.pop();
 		BUILDER.push("fixes");
 		SPEC_ENABLES_FLYING_SPEED_SCALING_FIX = BUILDER.comment("Fix of a vanilla issue that some flying mobs' flying " +
