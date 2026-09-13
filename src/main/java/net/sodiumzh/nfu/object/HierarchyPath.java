@@ -4,6 +4,7 @@ import net.sodiumzh.nfu.annotation.NotYetImplemented;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -11,24 +12,27 @@ import java.util.stream.Stream;
 @NotYetImplemented
 public final class HierarchyPath {
 
+    private static final ConcurrentHashMap<String, HierarchyPath> CACHED_BY_LITERALS = new ConcurrentHashMap<>();
+
     private final String[] splitPath;
     private static final HierarchyPath EMPTY = new HierarchyPath();
     private final int hashCode;
 
-    /**
-     * Directly copy the input array to this. Private to avoid external reference of the internal array.
-     */
     private HierarchyPath(String... path) {
         this.splitPath = Arrays.copyOf(path, path.length);
         this.hashCode = this.calcHashCode();
     }
 
     public static HierarchyPath byNameArray(String... nameArray) {
-        return new HierarchyPath(Arrays.copyOf(nameArray, nameArray.length));
+        return new HierarchyPath(nameArray);
     }
 
     public static HierarchyPath byLiteral(String literalPath) {
-        return new HierarchyPath(splitLiteral(literalPath));
+        HierarchyPath cached = CACHED_BY_LITERALS.get(literalPath);
+        if (cached != null) return cached;
+        HierarchyPath created = new HierarchyPath(splitLiteral(literalPath));
+        HierarchyPath raced = CACHED_BY_LITERALS.putIfAbsent(literalPath, created);
+        return raced != null ? raced : created;
     }
 
     /**
