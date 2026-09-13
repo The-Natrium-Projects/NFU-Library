@@ -134,7 +134,14 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * @param name The local name of the subcomponent; may be empty.
      * @return The subcomponent or empty if not found.
      */
-    Optional<IEntityComponent<? extends Entity>> getSubComponent(String name);
+    default Optional<IEntityComponent<? extends Entity>> getSubComponent(String name) {
+        return Optional.ofNullable(getSubComponentNullable(name));
+    }
+
+    /**
+     * Gets a direct subcomponent by name, null if absent.
+     */
+    @Nullable IEntityComponent<? extends Entity> getSubComponentNullable(String name);
 
     /**
      * Gets a direct subcomponent by name.

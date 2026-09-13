@@ -146,8 +146,14 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     }
 
     @Override
-    public Optional<IEntityComponent<? extends Entity>> getSubComponent(String name) {
-        return Optional.ofNullable(this.subComponents.get(name));
+    public void forEachSubcomponent(BiConsumer<String, IEntityComponent<? extends Entity>> action) {
+        subComponents.forEach(action);
+    }
+
+    @Nullable
+    @Override
+    public IEntityComponent<? extends Entity> getSubComponentNullable(String name) {
+        return subComponents.get(name);
     }
 
     @Override
@@ -167,23 +173,31 @@ public abstract class EntityComponentBase<E extends Entity> implements IEntityCo
     @Override
     public Map<HierarchyPath, IEntityComponent<?>> getAllPathsAndDownstreamComponents() {
         Map<HierarchyPath, IEntityComponent<?>> res = new HashMap<>();
-        this.getSubComponents().forEach((k, v) -> {
-            res.put(HierarchyPath.byNameArray(k), v);
-            String[] thisKey = new String[]{k};
-            v.getAllPathsAndDownstreamComponents().forEach((k1, v1) -> {
-                res.put(HierarchyPath.byNameArray(NFUContainerStatics.concatArray(thisKey, k1.toStringArray(), String[]::new)), v1);
-            });
-        });
+        for (var entry: this.subComponents.entrySet()) {
+            collectPathsAndDownstreamComponentsOf(new String[]{entry.getKey()}, entry.getValue(), res);
+        }
         return res;
+    }
+
+    private static void collectPathsAndDownstreamComponentsOf(String[] selfPath, IEntityComponent<?> selfComponent,
+                                               Map<HierarchyPath, IEntityComponent<?>> out)
+    {
+        out.put(HierarchyPath.byNameArray(selfPath), selfComponent);
+        Map<String, IEntityComponent<? extends Entity>> subcomponents =
+            selfComponent instanceof EntityComponentBase<?> base ? base.subComponents : selfComponent.getSubComponents();
+        for (var entry: subcomponents.entrySet()) {
+            collectPathsAndDownstreamComponentsOf(NFUContainerStatics.insertToArrayEnd(selfPath, entry.getKey(), String[]::new), entry.getValue(), out);
+        }
     }
 
     @Override
     public Optional<IEntityComponent<? extends Entity>> getSubComponentByPath(HierarchyPath path) {
-        Optional<IEntityComponent<? extends Entity>> res = Optional.of(this);
+        IEntityComponent<? extends Entity> res = this;
         for (String name: path.toStringArray()) {
-            res = res.flatMap(c -> c.getSubComponent(name));
+            res = res.getSubComponentNullable(name);
+            if (res == null) return Optional.empty();
         }
-        return res;
+        return Optional.of(res);
     }
 
     /**
