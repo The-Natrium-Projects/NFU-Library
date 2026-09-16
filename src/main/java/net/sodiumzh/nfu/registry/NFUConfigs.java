@@ -14,10 +14,9 @@ public class NFUConfigs
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENTITY_COMPONENT_HIERARCHY_CHECK;
     public static final ForgeConfigSpec.BooleanValue SPEC_CRASHES_ON_ENTITY_LOAD_FAILS;
 	public static final ForgeConfigSpec.BooleanValue SPEC_BYPASSES_UNBOUND_KEY_CHECK;
+	public static final ForgeConfigSpec.IntValue SPEC_ENTITY_SYNCHER_FREQUENCY;
 
 	public static final ForgeConfigSpec.BooleanValue SPEC_ENABLES_FLYING_SPEED_SCALING_FIX;
-
-	public static final ForgeConfigSpec.IntValue SPEC_ENTITY_SYNCHER_FREQUENCY;
 
 	static
 	{
@@ -71,6 +70,7 @@ public class NFUConfigs
         CACHED_CRASHES_ON_ENTITY_LOAD_FAILS = SPEC_CRASHES_ON_ENTITY_LOAD_FAILS.get();
 		CACHED_ENABLES_FLYING_SPEED_SCALING_FIX = SPEC_ENABLES_FLYING_SPEED_SCALING_FIX.get();
 		CACHED_BYPASSES_UNBOUND_KEY_CHECK = SPEC_BYPASSES_UNBOUND_KEY_CHECK.get();
+		CACHED_ENTITY_SYNCHER_FREQUENCY = SPEC_ENTITY_SYNCHER_FREQUENCY.get();
 	}
 
 	@SubscribeEvent

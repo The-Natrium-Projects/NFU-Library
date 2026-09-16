@@ -57,11 +57,11 @@ public class EntityComponentEventListeners {
     }
 
     @SubscribeEvent
-    public static void onLevelTick(TickEvent.LevelTickEvent event) {
+    public static void onLevelTick(TickEvent.WorldTickEvent event) {
         // This frequency check only controls packet sending frequency
-        if (event.level.getGameTime() % NFUConfigs.CACHED_ENTITY_SYNCHER_FREQUENCY != 0)
+        if (event.world.getGameTime() % NFUConfigs.CACHED_ENTITY_SYNCHER_FREQUENCY != 0)
             return;
-        if (!event.level.isClientSide() && event.level instanceof ServerLevel sl) {
+        if (!event.world.isClientSide() && event.world instanceof ServerLevel sl) {
             if (event.phase.equals(TickEvent.Phase.START))
                 EntitySyncherComponent.syncAll(sl, false);
         }
