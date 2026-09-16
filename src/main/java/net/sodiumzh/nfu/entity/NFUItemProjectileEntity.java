@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class NFUItemProjectileEntity extends Projectile implements ItemSupplier, IChainModifiable<NFUItemProjectileEntity> {
 
@@ -252,7 +253,7 @@ public class NFUItemProjectileEntity extends Projectile implements ItemSupplier,
     }
 
     protected void tickHit() {
-        HitResult hitresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+        HitResult hitresult = ProjectileUtil.getHitResult(this, this::canHitEntity);
         boolean enteredPortal = false;
         if (hitresult.getType() == HitResult.Type.BLOCK) {
             BlockPos blockpos = ((BlockHitResult)hitresult).getBlockPos();
