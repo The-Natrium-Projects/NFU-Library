@@ -29,7 +29,6 @@
     "NFUMixinTagBuilder",
     "NFUMixinThrownTrident",
     "NFUMixinWorldCapabilityData",
-    "NFUPersistentEntitySectionManagerMixin",
     "NFUThrownPotionMixin"
   ],
   "client": [
