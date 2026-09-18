@@ -98,10 +98,13 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 		at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.tick()V"))
 	private void nfu_onRideTick(Entity instance, Operation<Void> original) {
 		NFUEntityStatics.notifyEntityTickStart(instance);
-		MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
-		original.call(instance);
-		MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
-		NFUEntityStatics.notifyEntityTickEnd(instance);
+		try {
+			MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
+			original.call(instance);
+			MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
+		} finally {
+			NFUEntityStatics.notifyEntityTickEnd(instance);
+		}
 	}
 
 	@Inject(method = "makeStuckInBlock(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/phys/Vec3;)V",
