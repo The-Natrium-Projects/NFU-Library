@@ -94,18 +94,14 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 		MinecraftForge.EVENT_BUS.post(new EntityDiscardEvent(caller()));
 	}
 
-	@Inject(method = "rideTick()V",
+	@WrapOperation(method = "rideTick()V",
 		at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.tick()V"))
-	private void nfu_beforeRideTick(CallbackInfo ci) {
-		NFUEntityStatics.notifyEntityTickStart(caller());
-		MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(caller()));
-	}
-
-	@Inject(method = "rideTick()V",
-	at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.tick()V", shift = At.Shift.AFTER))
-	private void nfu_afterRideTick(CallbackInfo ci) {
-		MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(caller()));
-		NFUEntityStatics.notifyEntityTickEnd(caller());
+	private void nfu_onRideTick(Entity instance, Operation<Void> original) {
+		NFUEntityStatics.notifyEntityTickStart(instance);
+		MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
+		original.call(instance);
+		MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
+		NFUEntityStatics.notifyEntityTickEnd(instance);
 	}
 
 	@Inject(method = "makeStuckInBlock(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/phys/Vec3;)V",

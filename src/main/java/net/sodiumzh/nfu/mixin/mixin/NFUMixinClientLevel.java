@@ -11,24 +11,19 @@ import net.sodiumzh.nfu.mixin.event.entity.EntityStartTickEvent;
 import net.sodiumzh.nfu.util.NFUEntityStatics;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientLevel.class)
 public class NFUMixinClientLevel implements NFUMixin<ClientLevel> {
 
-    @Inject(method = "tickNonPassenger(Lnet/minecraft/world/entity/Entity;)V",
+    @WrapOperation(method = "tickNonPassenger(Lnet/minecraft/world/entity/Entity;)V",
         at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.tick()V"))
-    private void nfu_beforeTick(Entity instance, CallbackInfo ci) {
+    private void onTickNonPassenger(Entity instance, Operation<Void> original) {
         NFUEntityStatics.notifyEntityTickStart(instance);
         MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
-    }
-
-    @Inject(method = "tickNonPassenger(Lnet/minecraft/world/entity/Entity;)V",
-        at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.tick()V", shift = At.Shift.AFTER))
-    private void nfu_afterTick(Entity instance, CallbackInfo ci) {
+        original.call(instance);
         MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
         NFUEntityStatics.notifyEntityTickEnd(instance);
     }
+
 
 }

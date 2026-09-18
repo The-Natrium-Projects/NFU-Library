@@ -3,7 +3,6 @@ package net.sodiumzh.nfu.mixin.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraftforge.common.MinecraftForge;
 import net.sodiumzh.nfu.mixin.NFUMixin;
@@ -14,8 +13,6 @@ import net.sodiumzh.nfu.util.NFUEntityStatics;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
@@ -41,17 +38,13 @@ public class NFUMixinServerPlayer implements NFUMixin<ServerPlayer>
 		return cancelled.getValue() == list.size();
 	}
 
-	@Inject(method = "doTick()V", at = @At(value = "INVOKE",
+	@WrapOperation(method = "doTick()V", at = @At(value = "INVOKE",
 		target = "net/minecraft/world/entity/player/Player.tick()V"))
-	private void nfu_beforeTick(CallbackInfo ci) {
-		NFUEntityStatics.notifyEntityTickStart(caller());
-		MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(caller()));
-	}
-
-	@Inject(method = "doTick()V", at = @At(value = "INVOKE",
-		target = "net/minecraft/world/entity/player/Player.tick()V", shift = At.Shift.AFTER))
-	private void nfu_afterTick(CallbackInfo ci) {
-		MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(caller()));
-		NFUEntityStatics.notifyEntityTickEnd(caller());
+	private void onDoTick(ServerPlayer instance, Operation<Void> original) {
+		NFUEntityStatics.notifyEntityTickStart(instance);
+		MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
+		original.call(instance);
+		MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
+		NFUEntityStatics.notifyEntityTickEnd(instance);
 	}
 }
