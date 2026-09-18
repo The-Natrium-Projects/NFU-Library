@@ -52,6 +52,6 @@ public class NFUMixinServerPlayer implements NFUMixin<ServerPlayer>
 		target = "net/minecraft/world/entity/player/Player.tick()V", shift = At.Shift.AFTER))
 	private void nfu_afterTick(CallbackInfo ci) {
 		MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(caller()));
-		NFUEntityStatics.notifyEntityTickEnd(caller());
+		NFUEntityStatics.notifyEntityTickEnd();
 	}
 }

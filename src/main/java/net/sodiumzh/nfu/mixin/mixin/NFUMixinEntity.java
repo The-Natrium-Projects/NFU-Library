@@ -105,7 +105,7 @@ public abstract class NFUMixinEntity implements NFUMixin<Entity> {
 	at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.tick()V", shift = At.Shift.AFTER))
 	private void nfu_afterRideTick(CallbackInfo ci) {
 		MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(caller()));
-		NFUEntityStatics.notifyEntityTickEnd(caller());
+		NFUEntityStatics.notifyEntityTickEnd();
 	}
 
 	@Inject(method = "makeStuckInBlock(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/phys/Vec3;)V",
