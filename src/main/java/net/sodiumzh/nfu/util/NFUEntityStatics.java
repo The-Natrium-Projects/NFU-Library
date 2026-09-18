@@ -75,7 +75,7 @@ import java.util.function.Predicate;
 public class NFUEntityStatics
 {
 	// Use as stack
-	private static final SideLocal<Deque<Entity>> TICKING_ENTITY = new SideLocal.withInitial(ArrayDeque::new);
+	private static final SideLocal<Deque<Entity>> TICKING_ENTITY = new SideLocal<>(ArrayDeque::new);
 
 	/**
 	 * Get the entities being ticked. Empty if it's not currently running in an entity ticking cycle.
@@ -89,6 +89,10 @@ public class NFUEntityStatics
 	 */
 	public static Deque<Entity> getEntityTickStack() {
 		return Optional.ofNullable(TICKING_ENTITY.get()).orElseGet(ArrayDeque::new);
+	}
+
+	public static Optional<Entity> getCurrentTickingEntity() {
+		return Optional.ofNullable(TICKING_ENTITY.get().peekFirst());
 	}
 
 	/**
