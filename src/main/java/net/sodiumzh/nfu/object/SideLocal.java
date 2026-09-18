@@ -3,6 +3,7 @@ package net.sodiumzh.nfu.object;
 import net.minecraftforge.fml.util.thread.EffectiveSide;
 
 import javax.annotation.Nullable;
+import java.util.function.Supplier;
 
 public class SideLocal<T> {
 
@@ -20,10 +21,6 @@ public class SideLocal<T> {
 
     public SideLocal() {
         this(() -> null);
-    }
-
-    public SideLocal(Supplier<T> initializer) {
-        this.initializer = initializer;
     }
 
     public T get() {
