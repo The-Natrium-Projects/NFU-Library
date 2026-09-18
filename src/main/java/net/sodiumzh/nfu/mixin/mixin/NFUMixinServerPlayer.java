@@ -42,9 +42,12 @@ public class NFUMixinServerPlayer implements NFUMixin<ServerPlayer>
 		target = "net/minecraft/world/entity/player/Player.tick()V"))
 	private void onDoTick(ServerPlayer instance, Operation<Void> original) {
 		NFUEntityStatics.notifyEntityTickStart(instance);
-		MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
-		original.call(instance);
-		MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
-		NFUEntityStatics.notifyEntityTickEnd(instance);
+		try {
+			MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
+			original.call(instance);
+			MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
+		} finally {
+			NFUEntityStatics.notifyEntityTickEnd(instance);
+		}
 	}
 }

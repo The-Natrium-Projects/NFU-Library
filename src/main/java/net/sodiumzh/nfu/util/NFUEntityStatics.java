@@ -63,6 +63,7 @@ import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;
 import net.sodiumzh.nfu.network.packet.ClientboundLivingSyncEquipmentPacket;
 import net.sodiumzh.nfu.object.ICastable;
+import net.sodiumzh.nfu.object.SideLocal;
 import net.sodiumzh.nfu.reflection.CachedMethodSearchers;
 
 import javax.annotation.Nonnull;
@@ -73,8 +74,7 @@ import java.util.function.Predicate;
 public class NFUEntityStatics
 {
 	// Use as stack
-	private static final ThreadLocal<Deque<Entity>> TICKING_ENTITY
-		= ThreadLocal.withInitial(ArrayDeque::new);
+	private static final SideLocal<Deque<Entity>> TICKING_ENTITY = new SideLocal.withInitial(ArrayDeque::new);
 
 	/**
 	 * Get the entities being ticked. Empty if it's not currently running in an entity ticking cycle.
