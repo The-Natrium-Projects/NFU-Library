@@ -19,10 +19,13 @@ public class NFUMixinServerLevel implements NFUMixin<ServerLevel> {
         at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.tick()V"))
     private void onTickNonPassenger(Entity instance, Operation<Void> original) {
         NFUEntityStatics.notifyEntityTickStart(instance);
-        MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
-        original.call(instance);
-        MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
-        NFUEntityStatics.notifyEntityTickEnd(instance);
+        try {
+            MinecraftForge.EVENT_BUS.post(new EntityStartTickEvent(instance));
+            original.call(instance);
+            MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
+        } finally {
+            NFUEntityStatics.notifyEntityTickEnd(instance);
+        }
     }
 
 
