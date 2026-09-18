@@ -28,7 +28,7 @@ public class NFUMixinClientLevel implements NFUMixin<ClientLevel> {
         at = @At(value = "INVOKE", target = "net/minecraft/world/entity/Entity.tick()V", shift = At.Shift.AFTER))
     private void nfu_afterTick(Entity instance, CallbackInfo ci) {
         MinecraftForge.EVENT_BUS.post(new EntityFinishTickEvent(instance));
-        NFUEntityStatics.notifyEntityTickEnd();
+        NFUEntityStatics.notifyEntityTickEnd(instance);
     }
 
 }

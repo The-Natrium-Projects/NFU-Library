@@ -1,5 +1,6 @@
 package net.sodiumzh.nfu.util;
 
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
@@ -10,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -42,17 +44,26 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.CapabilityDispatcher;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
+import net.sodiumzh.nfu.entity.component.preset.EntityDataComponent;
 import net.sodiumzh.nfu.eventhandler.NFUEntityEventHandlers;
+import net.sodiumzh.nfu.mixin.event.entity.EntityFinalizeLoadingEvent;
+import net.sodiumzh.nfu.mixin.event.entity.EntityFinishConstructionEvent;
+import net.sodiumzh.nfu.mixin.mixin.NFUMixinClientLevel;
+import net.sodiumzh.nfu.mixin.mixin.NFUMixinEntity;
+import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerLevel;
+import net.sodiumzh.nfu.mixin.mixin.NFUMixinServerPlayer;
 import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;
 import net.sodiumzh.nfu.network.packet.ClientboundLivingSyncEquipmentPacket;
 import net.sodiumzh.nfu.object.ICastable;
-import net.sodiumzh.nfu.object.SideLocal;
 import net.sodiumzh.nfu.reflection.CachedMethodSearchers;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -62,24 +73,27 @@ import java.util.function.Predicate;
 public class NFUEntityStatics
 {
 	// Use as stack
-	private static final SideLocal<Entity> TICKING_ENTITY = new SideLocal<>();
+	private static final ThreadLocal<Deque<Entity>> TICKING_ENTITY
+		= ThreadLocal.withInitial(ArrayDeque::new);
 
 	/**
-	 * @deprecated Use {@link NFUEntityStatics#getTickingEntity} instead
+	 * Get the entities being ticked. Empty if it's not currently running in an entity ticking cycle.
+	 * <p>The currently ticked entity is recorded through mixins at each call of {@link Entity#tick()} at:
+	 * {@link ClientLevel#tickNonPassenger}, {@link ServerLevel#tickNonPassenger},
+	 * {@link ServerPlayer#doTick()} and {@link Entity#rideTick()};
+	 * @see NFUMixinClientLevel
+	 * @see NFUMixinServerLevel
+	 * @see NFUMixinServerPlayer
+	 * @see NFUMixinEntity
 	 */
-	@Deprecated
 	public static Deque<Entity> getEntityTickStack() {
-		return new ArrayDeque<>(List.of(TICKING_ENTITY.get()));
-	}
-
-	public static Optional<Entity> getTickingEntity() {
-		return Optional.ofNullable(TICKING_ENTITY.get());
+		return Optional.ofNullable(TICKING_ENTITY.get()).orElseGet(ArrayDeque::new);
 	}
 
 	/**
 	 * Only called in mixins to record current ticking entity
 	 */
-	@ApiStatus.Internal
+	@DontCallManually
 	public static void notifyEntityTickStart(Entity e) {
 		if (e != null)
 			TICKING_ENTITY.get().push(e);
@@ -88,9 +102,11 @@ public class NFUEntityStatics
 	/**
 	 * Only called in mixins to record current ticking entity
 	 */
-	@ApiStatus.Internal
-	public static void notifyEntityTickEnd() {
-		TICKING_ENTITY.set(null);
+	@DontCallManually
+	public static void notifyEntityTickEnd(Entity e) {
+		while (e != null && TICKING_ENTITY.get().contains(e)) {
+			TICKING_ENTITY.get().pop();
+		}
 	}
 
 	/**
