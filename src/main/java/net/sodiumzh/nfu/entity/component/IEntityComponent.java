@@ -177,6 +177,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      *               creating multiple sets.
      */
     @ApiStatus.OverrideOnly
+    @SuppressWarnings("rawtypes")
     void collectDownstreamComponentsTo(@Nonnull Set<IEntityComponent> outSet);
 
     /**
@@ -184,10 +185,11 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Each upstream component is guaranteed to appear before any of its own downstream components
      * (i.e., preorder traversal). Order between branches is not defined. Not including self.
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     default Set<IEntityComponent<? extends Entity>> getDownstreamComponents() {
         HashSet<IEntityComponent> res = new HashSet<>();
         collectDownstreamComponentsTo(res);
-        return res.stream().map(c -> (IEntityComponent<? extends Entity>)c).collect(Collectors.toSet());
+        return Set.copyOf(res);
     }
 
     /**
@@ -195,11 +197,12 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
      * Each upstream component is guaranteed to appear before any of its own downstream components
      * (i.e., preorder traversal). Order between branches is not defined.
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     default Set<IEntityComponent<? extends Entity>> getSelfAndDownstreamComponents() {
         HashSet<IEntityComponent> res = new HashSet<>();
         collectDownstreamComponentsTo(res);
         res.add(this);
-        return res.stream().map(c -> (IEntityComponent<? extends Entity>)c).collect(Collectors.toSet());
+        return Set.copyOf(res);
     }
 
     /**
