@@ -1,5 +1,7 @@
 package net.sodiumzh.nfu.util;
 
+import com.mojang.blaze3d.shaders.Effect;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -48,7 +50,13 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.util.thread.EffectiveSide;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.entity.component.EntityComponentAPI;
 import net.sodiumzh.nfu.entity.component.preset.EntityDataComponent;
@@ -63,8 +71,10 @@ import net.sodiumzh.nfu.network.NFUNetworkChannels;
 import net.sodiumzh.nfu.network.packet.ClientboundEntityMotionUpdatePacket;
 import net.sodiumzh.nfu.network.packet.ClientboundLivingSyncEquipmentPacket;
 import net.sodiumzh.nfu.object.ICastable;
+import net.sodiumzh.nfu.object.ServerOnly;
 import net.sodiumzh.nfu.object.SideLocal;
 import net.sodiumzh.nfu.reflection.CachedMethodSearchers;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -73,8 +83,11 @@ import java.util.function.Predicate;
 
 public class NFUEntityStatics
 {
-	// Use as stack
+	// Use as stack. The stack top is the entity being ticked. Generally it should be only one element,
+	// but implement as a stack here to handle cases when someone is manually ticking an entity inside another entity's ticking cycle.
 	private static final SideLocal<Deque<Entity>> TICKING_ENTITY = new SideLocal<>(ArrayDeque::new);
+	// Records all player IDs and names that have ever logged in the server, no matter now online or not.
+	private static final ServerOnly<Map<UUID, Component>> ALL_KNOWN_PLAYERS = new ServerOnly<>(new HashMap<>());
 
 	/**
 	 * Get the entities being ticked. Empty if it's not currently running in an entity ticking cycle.
@@ -98,6 +111,7 @@ public class NFUEntityStatics
 	 * Only called in mixins to record current ticking entity
 	 */
 	@DontCallManually
+	@ApiStatus.Internal
 	public static void notifyEntityTickStart(Entity e) {
 		if (e != null)
 			TICKING_ENTITY.get().push(e);
@@ -107,10 +121,23 @@ public class NFUEntityStatics
 	 * Only called in mixins to record current ticking entity
 	 */
 	@DontCallManually
+	@ApiStatus.Internal
 	public static void notifyEntityTickEnd(Entity e) {
 		while (e != null && TICKING_ENTITY.get().contains(e)) {
 			TICKING_ENTITY.get().pop();
 		}
+	}
+
+	/**
+	 * Get the IDs and names of all known players who have ever logged in, no matter if they're now online.
+	 * <p>Avoid calling it on client. On client, it only returns the local player, or empty if no player is available.
+	 */
+	public static Map<UUID, Component> getAllKnownPlayers() {
+		if (EffectiveSide.get().isClient()) {
+			Player player = Minecraft.getInstance().player;
+			if (player != null) return Map.of(player.getUUID(), player.getName());
+			else return Map.of();
+		} else return Map.copyOf(ALL_KNOWN_PLAYERS.get());
 	}
 
 	/**
@@ -1066,5 +1093,20 @@ public class NFUEntityStatics
         }
         else return Optional.ofNullable(mob.getTarget());
     }
+
+	@Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+	public static class EventListener {
+
+		@SubscribeEvent
+		public static void recordKnownPlayersOnServerStart(ServerStartedEvent event) {
+
+		}
+
+		@SubscribeEvent
+		public static void recordPlayerOnLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+			ALL_KNOWN_PLAYERS.get().put(event.getEntity().getUUID(), event.getEntity().getName());
+		}
+
+	}
 
 }
