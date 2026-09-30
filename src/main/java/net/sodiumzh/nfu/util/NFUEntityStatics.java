@@ -1,6 +1,7 @@
 package net.sodiumzh.nfu.util;
 
 import com.mojang.blaze3d.shaders.Effect;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -8,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -36,6 +38,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.entity.LevelEntityGetter;
@@ -51,6 +55,7 @@ import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -78,6 +83,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.File;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -88,6 +94,69 @@ public class NFUEntityStatics
 	private static final SideLocal<Deque<Entity>> TICKING_ENTITY = new SideLocal<>(ArrayDeque::new);
 	// Records all player IDs and names that have ever logged in the server, no matter now online or not.
 	private static final ServerOnly<Map<UUID, Component>> ALL_KNOWN_PLAYERS = new ServerOnly<>(new HashMap<>());
+	private static MinecraftServer knownPlayersServer;
+	private static KnownPlayersSavedData knownPlayersData;
+
+	private static boolean hasKnownPlayerName(UUID uuid, Component name) {
+		return name != null && !name.getString().isBlank() && !name.getString().equalsIgnoreCase(uuid.toString());
+	}
+
+	private static void updateKnownPlayer(UUID uuid, Component name, boolean authoritative) {
+		Map<UUID, Component> players = ALL_KNOWN_PLAYERS.get();
+		Component current = players.get(uuid);
+		if (current == null || authoritative || (!hasKnownPlayerName(uuid, current) && hasKnownPlayerName(uuid, name))) {
+			players.put(uuid, name);
+		}
+	}
+
+	private static void saveKnownPlayersSnapshot() {
+		if (knownPlayersData != null && !knownPlayersData.players.equals(ALL_KNOWN_PLAYERS.get())) {
+			knownPlayersData.players.clear();
+			knownPlayersData.players.putAll(ALL_KNOWN_PLAYERS.get());
+			knownPlayersData.setDirty();
+		}
+	}
+
+	private static class KnownPlayersSavedData extends SavedData {
+		private static final String DATA_ID = "nfulib_known_players";
+		private final Map<UUID, Component> players = new HashMap<>();
+
+		private static KnownPlayersSavedData load(CompoundTag tag) {
+			KnownPlayersSavedData data = new KnownPlayersSavedData();
+			ListTag entries = tag.getList("Players", Tag.TAG_COMPOUND);
+			for (int i = 0; i < entries.size(); i++) {
+				CompoundTag entry = entries.getCompound(i);
+				if (!entry.hasUUID("UUID")) continue;
+				UUID uuid = entry.getUUID("UUID");
+				Component name = null;
+				if (entry.contains("Name", Tag.TAG_STRING)) {
+					try {
+						name = Component.Serializer.fromJson(entry.getString("Name"));
+						if (name == null && !entry.getString("Name").isBlank())
+							LogUtils.getLogger().warn("Invalid saved name for known player {}", uuid);
+					} catch (RuntimeException e) {
+						LogUtils.getLogger().warn("Invalid saved name for known player {}", uuid, e);
+					}
+				}
+				data.players.put(uuid, hasKnownPlayerName(uuid, name) ? name : Component.literal(uuid.toString()));
+			}
+			return data;
+		}
+
+		@Override
+		public CompoundTag save(CompoundTag tag) {
+			ListTag entries = new ListTag();
+			for (Map.Entry<UUID, Component> player : players.entrySet()) {
+				CompoundTag entry = new CompoundTag();
+				entry.putUUID("UUID", player.getKey());
+				if (hasKnownPlayerName(player.getKey(), player.getValue()))
+					entry.putString("Name", Component.Serializer.toJson(player.getValue()));
+				entries.add(entry);
+			}
+			tag.put("Players", entries);
+			return tag;
+		}
+	}
 
 	/**
 	 * Get the entities being ticked. Empty if it's not currently running in an entity ticking cycle.
@@ -1099,12 +1168,72 @@ public class NFUEntityStatics
 
 		@SubscribeEvent
 		public static void recordKnownPlayersOnServerStart(ServerStartedEvent event) {
+			MinecraftServer server = event.getServer();
+			knownPlayersServer = null;
+			knownPlayersData = null;
+			Map<UUID, Component> players = ALL_KNOWN_PLAYERS.get();
+			players.clear();
+			KnownPlayersSavedData data = server.overworld().getDataStorage().computeIfAbsent(
+				KnownPlayersSavedData::load, KnownPlayersSavedData::new, KnownPlayersSavedData.DATA_ID);
+			players.putAll(data.players);
+			knownPlayersData = data;
+			knownPlayersServer = server;
 
+			Set<UUID> discovered = new HashSet<>();
+			File[] files = server.getWorldPath(LevelResource.PLAYER_DATA_DIR).toFile()
+				.listFiles(file -> file.isFile() && file.getName().endsWith(".dat"));
+			if (files != null) {
+				for (File file : files) {
+					String filename = file.getName();
+					String uuidText = filename.substring(0, filename.length() - 4);
+					try {
+						UUID uuid = UUID.fromString(uuidText);
+						if (uuid.toString().equalsIgnoreCase(uuidText)) discovered.add(uuid);
+					} catch (IllegalArgumentException ignored) {
+					}
+				}
+			}
+			CompoundTag localPlayer = server.getWorldData().getLoadedPlayerTag();
+			if (localPlayer != null && localPlayer.hasUUID("UUID")) discovered.add(localPlayer.getUUID("UUID"));
+
+			var owner = server.getSingleplayerProfile();
+			var cache = server.getProfileCache();
+			for (UUID uuid : discovered) {
+				if (hasKnownPlayerName(uuid, players.get(uuid))) continue;
+				String name = owner != null && uuid.equals(owner.getId()) ? owner.getName() : null;
+				if ((name == null || name.isBlank()) && cache != null)
+					name = cache.get(uuid).map(com.mojang.authlib.GameProfile::getName).orElse(null);
+				updateKnownPlayer(uuid, Component.literal(name == null || name.isBlank() ? uuid.toString() : name), false);
+			}
+			for (ServerPlayer player : server.getPlayerList().getPlayers())
+				updateKnownPlayer(player.getUUID(), player.getName(), false);
+			saveKnownPlayersSnapshot();
 		}
 
 		@SubscribeEvent
 		public static void recordPlayerOnLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-			ALL_KNOWN_PLAYERS.get().put(event.getEntity().getUUID(), event.getEntity().getName());
+			if (event.getEntity() instanceof ServerPlayer player) {
+				updateKnownPlayer(player.getUUID(), player.getName(), true);
+				if (knownPlayersServer == player.getServer()) saveKnownPlayersSnapshot();
+			}
+		}
+
+		@SubscribeEvent
+		public static void saveKnownPlayers(LevelEvent.Save event) {
+			if (event.getLevel() instanceof ServerLevel level && level.getServer() == knownPlayersServer
+				&& level == knownPlayersServer.overworld()) {
+				saveKnownPlayersSnapshot();
+				level.getDataStorage().save();
+			}
+		}
+
+		@SubscribeEvent
+		public static void clearKnownPlayersOnServerStop(net.minecraftforge.event.server.ServerStoppedEvent event) {
+			if (event.getServer() == knownPlayersServer) {
+				knownPlayersServer = null;
+				knownPlayersData = null;
+				ALL_KNOWN_PLAYERS.get().clear();
+			}
 		}
 
 	}
