@@ -40,6 +40,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -78,6 +79,8 @@ import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -87,7 +90,7 @@ public class NFUEntityStatics
 	// but implement as a stack here to handle cases when someone is manually ticking an entity inside another entity's ticking cycle.
 	private static final SideLocal<Deque<Entity>> TICKING_ENTITY = new SideLocal<>(ArrayDeque::new);
 	// Records all player IDs and names that have ever logged in the server, no matter now online or not.
-	private static final ServerOnly<Map<UUID, Component>> ALL_KNOWN_PLAYERS = new ServerOnly<>(new HashMap<>());
+	private static final ServerOnly<Set<UUID>> ALL_KNOWN_PLAYERS = new ServerOnly<>(new HashSet<>());
 
 	/**
 	 * Get the entities being ticked. Empty if it's not currently running in an entity ticking cycle.
@@ -1099,12 +1102,53 @@ public class NFUEntityStatics
 
 		@SubscribeEvent
 		public static void recordKnownPlayersOnServerStart(ServerStartedEvent event) {
-
+			ALL_KNOWN_PLAYERS.get().addAll(getSavedPlayerUUIDs(event.getServer()));
 		}
 
 		@SubscribeEvent
 		public static void recordPlayerOnLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-			ALL_KNOWN_PLAYERS.get().put(event.getEntity().getUUID(), event.getEntity().getName());
+			ALL_KNOWN_PLAYERS.get().add(event.getEntity().getUUID());
+		}
+
+		/**
+		 * Returns UUIDs represented by .dat files in this world's playerdata folder.
+		 * Missing directory: empty set.
+		 * Other directory-reading errors: IOException.
+		 */
+		private static Set<UUID> getSavedPlayerUUIDs(MinecraftServer server) {
+
+			if (server == null) return Set.of();
+
+			Path directory = server.getWorldPath(LevelResource.PLAYER_DATA_DIR);
+			Set<UUID> uuids = new HashSet<>();
+
+			try (DirectoryStream<Path> files =
+					 Files.newDirectoryStream(directory, "*.dat")) {
+				for (Path file : files) {
+					if (!Files.isRegularFile(file)) {
+						continue;
+					}
+
+					String filename = file.getFileName().toString();
+					String basename = filename.substring(0, filename.length() - 4);
+
+					try {
+						UUID uuid = UUID.fromString(basename);
+
+						// Require a complete, canonical UUID (case-insensitive).
+						if (uuid.toString().equalsIgnoreCase(basename)) {
+							uuids.add(uuid);
+						}
+					} catch (IllegalArgumentException ignored) {
+						// Ignore files whose names are not valid UUIDs.
+					}
+				}
+			} catch (NoSuchFileException ignored) {
+				// No playerdata directory yet.
+			} catch (DirectoryIteratorException | IOException e) {
+				throw new RuntimeException(e);
+			}
+			return uuids;
 		}
 
 	}
