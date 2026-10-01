@@ -46,6 +46,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityDispatcher;
@@ -137,9 +139,8 @@ public class NFUEntityStatics
 	 */
 	public static Set<UUID> getAllKnownPlayers() {
 		if (EffectiveSide.get().isClient()) {
-			Player player = Minecraft.getInstance().player;
-			if (player != null) return Set.of(player.getUUID());
-			else return Set.of();
+			UUID playerId = ClientAccess.getPlayerUUID();
+			return playerId == null ? Set.of() : Set.of(playerId);
 		} else return Set.copyOf(ALL_KNOWN_PLAYERS.get());
 	}
 
@@ -1150,7 +1151,17 @@ public class NFUEntityStatics
 			}
 			return uuids;
 		}
+	}
 
+	/**
+	 * For bypassing the side check on the dedicated server.
+	 */
+	private static class ClientAccess {
+		@OnlyIn(Dist.CLIENT)
+		@Nullable
+		private static UUID getPlayerUUID() {
+			return Minecraft.getInstance().player != null ? Minecraft.getInstance().player.getUUID() : null;
+		}
 	}
 
 }
