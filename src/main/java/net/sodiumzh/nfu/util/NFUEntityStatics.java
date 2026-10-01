@@ -135,12 +135,12 @@ public class NFUEntityStatics
 	 * Get the IDs and names of all known players who have ever logged in, no matter if they're now online.
 	 * <p>Avoid calling it on client. On client, it only returns the local player, or empty if no player is available.
 	 */
-	public static Map<UUID, Component> getAllKnownPlayers() {
+	public static Set<UUID> getAllKnownPlayers() {
 		if (EffectiveSide.get().isClient()) {
 			Player player = Minecraft.getInstance().player;
-			if (player != null) return Map.of(player.getUUID(), player.getName());
-			else return Map.of();
-		} else return Map.copyOf(ALL_KNOWN_PLAYERS.get());
+			if (player != null) return Set.of(player.getUUID());
+			else return Set.of();
+		} else return Set.copyOf(ALL_KNOWN_PLAYERS.get());
 	}
 
 	/**

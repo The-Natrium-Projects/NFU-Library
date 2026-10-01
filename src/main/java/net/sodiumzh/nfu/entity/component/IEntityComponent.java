@@ -189,7 +189,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
     default Set<IEntityComponent<? extends Entity>> getDownstreamComponents() {
         HashSet<IEntityComponent> res = new HashSet<>();
         collectDownstreamComponentsTo(res);
-        return Set.copyOf(res);
+        return Set.copyOf((Set<IEntityComponent<? extends Entity>>)(Object)res);
     }
 
     /**
@@ -202,7 +202,7 @@ public interface IEntityComponent<E extends Entity> extends INBTSerializable<Com
         HashSet<IEntityComponent> res = new HashSet<>();
         collectDownstreamComponentsTo(res);
         res.add(this);
-        return Set.copyOf(res);
+        return Set.copyOf((Set<IEntityComponent<? extends Entity>>)(Object)res);
     }
 
     /**

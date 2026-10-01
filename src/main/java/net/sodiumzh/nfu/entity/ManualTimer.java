@@ -2,6 +2,7 @@ package net.sodiumzh.nfu.entity;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
+import net.sodiumzh.nfu.entity.component.preset.EntityTimerComponent;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -12,7 +13,9 @@ import java.util.function.Function;
 
 /**
  * A simple manually-updated timer attached to an entity.
+ * @deprecated Use {@link EntityTimerComponent} instead.
  */
+@Deprecated(forRemoval = true)
 public class ManualTimer<T> {
 
     private Map<T, Integer> timer = new HashMap<>();
