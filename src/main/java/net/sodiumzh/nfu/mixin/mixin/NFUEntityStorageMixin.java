@@ -19,7 +19,7 @@ public class NFUEntityStorageMixin implements NFUMixin<EntityStorage> {
         at = @At(value = "INVOKE", target = "org/slf4j/Logger.error(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V", remap = false))
     private static void nfu_throwsOnSaveFailure(ListTag listtag, Entity p_156567_, CallbackInfo ci, @Local Exception e) {
         if (NFUConfigs.CACHED_CRASHES_ON_ENTITY_LOAD_FAILS) {
-            LogUtils.getLogger().error("Entity " + p_156567_ + " saving failed. To disable crash and remove the wrong entity instead, set config \"crashesOnEntityLoadFails\" in nfulib-common.toml to false.");
+            LogUtils.getLogger().error("Entity {} saving failed. To disable crash and remove the wrong entity instead, set config \"crashesOnEntityLoadFails\" in nfulib-common.toml to false.", p_156567_.getName().getString());
             throw new RuntimeException(e);
         }
     }
