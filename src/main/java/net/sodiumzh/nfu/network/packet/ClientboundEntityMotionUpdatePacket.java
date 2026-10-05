@@ -23,15 +23,15 @@ public class ClientboundEntityMotionUpdatePacket implements Packet<ClientGamePac
 
     public ClientboundEntityMotionUpdatePacket(FriendlyByteBuf buf) {
         this.id = buf.readInt();
-        this.deltaPos = NFUDataSerializers.VEC3.read(buf);
-        this.deltaVelocity = NFUDataSerializers.VEC3.read(buf);
+        this.deltaPos = NFUDataSerializers.VEC3.get().read(buf);
+        this.deltaVelocity = NFUDataSerializers.VEC3.get().read(buf);
     }
 
     @Override
     public void write(FriendlyByteBuf buf) {
         buf.writeInt(id);
-        NFUDataSerializers.VEC3.write(buf, deltaPos);
-        NFUDataSerializers.VEC3.write(buf, deltaVelocity);
+        NFUDataSerializers.VEC3.get().write(buf, deltaPos);
+        NFUDataSerializers.VEC3.get().write(buf, deltaVelocity);
     }
 
     @Override
