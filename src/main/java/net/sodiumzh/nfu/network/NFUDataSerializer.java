@@ -103,7 +103,7 @@ public interface NFUDataSerializer<T>
 			@Override
 			public ResourceLocation getKey()
 			{
-				return getRegistry().getKey(this);
+				return getRegistry().assertGetKey(this);
 			}
 			@Override
 			public void write(FriendlyByteBuf buf, O obj)

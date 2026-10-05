@@ -9,12 +9,14 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import net.sodiumzh.nfu.annotation.NotYetImplemented;
 import net.sodiumzh.nfu.exception.DuplicateRegistryEntryException;
+import net.sodiumzh.nfu.exception.MissingRegistryEntryException;
 import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.object.DirectedGraphNode;
 import net.sodiumzh.nfu.object.LimitedMutable;
 import net.sodiumzh.nfu.util.NFUDebugStatics;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
@@ -273,6 +275,17 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         return Optional.ofNullable(getValue(key));
     }
 
+    /**
+     * Get the value of a key, and throw an exception if absent.
+     */
+    @Nonnull
+    public T assertGetValue(ResourceLocation key) {
+        T value = this.getValue(key);
+        if (value == null)
+            throw new MissingRegistryEntryException("Missing registry entry for key " + key.toString() + ". Registry: " + this.getKeyOfRegistry().toString());
+        return value;
+    }
+
     @Nullable
     public ResourceLocation getKey(T value) {
         if (!this.isLoaded()) {
@@ -286,6 +299,17 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
 
     public Optional<ResourceLocation> getOptionalKey(T value) {
         return Optional.ofNullable(this.getKey(value));
+    }
+
+    /**
+     * Get the registry key for a value, and throw an exception if absent.
+     */
+    @Nonnull
+    public ResourceLocation assertGetKey(T value) {
+        ResourceLocation key = this.getKey(value);
+        if (key == null)
+            throw new MissingRegistryEntryException("Missing registry key in registry " + this.getKeyOfRegistry() + " for object: " + value.toString());
+        return key;
     }
 
     public Set<ResourceLocation> keySet() {
@@ -307,7 +331,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
             }
             else return Set.of();
         }
-        return this.reverseMap.keySet();
+        return Set.copyOf(this.reverseMap.keySet());
     }
 
     /**
