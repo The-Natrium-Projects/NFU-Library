@@ -46,7 +46,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     /** Reverse map for key getting. A {@code null} reference indicates the registry hasn't been built.
      * Volatile for safe publication: the fully-built map is published atomically on loading and never
      * mutated afterwards (late registration replaces it with a copied map). */
-    private volatile @Nullable HashMap<T, ResourceLocation> reverseMap = null;
+    private volatile @Nullable Map<T, ResourceLocation> reverseMap = null;
     /** Indicates this registry should be loaded before the listed registries. */
     private final List<NFURegistry<?>> shouldLoadBefore = new ArrayList<>();
     /** If false, access will never be allowed before loading and will always return null. */
@@ -151,7 +151,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
             }
         });
         // Publish the fully-built map atomically. This volatile write happens-before any read that observes it.
-        this.reverseMap = newReverseMap;
+        this.reverseMap = Map.copyOf(newReverseMap);
     }
 
     public boolean isLoaded() {
@@ -355,9 +355,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                     throw DuplicateRegistryEntryException.duplicateValue(this.reverseMap.get(value).toString(), key.toString());
                 }
                 // Never mutate the published map; atomically replace it with an updated copy.
-                HashMap<T, ResourceLocation> updated = new HashMap<>(this.reverseMap);
-                updated.put(value, key);
-                this.reverseMap = updated;
+                this.updateReverseMap(m -> m.put(value, key));
             } else if (this.isCorrectSide()) {
                 throw new IllegalStateException("NFU Registry: unexpected null value of entry " + key + " on registry " + this.getKeyOfRegistry()
                     + " after value loading.");
@@ -392,9 +390,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                     throw DuplicateRegistryEntryException.duplicateValue(this.reverseMap.get(value).toString(), key.toString());
                 }
                 // Never mutate the published map; atomically replace it with an updated copy.
-                HashMap<T, ResourceLocation> updated = new HashMap<>(this.reverseMap);
-                updated.put(value, key);
-                this.reverseMap = updated;
+                this.updateReverseMap(m -> m.put(value, key));
             } else if (this.isCorrectSide()) {
                 throw new IllegalStateException("NFU Registry: unexpected null value of entry " + key + " on registry " + this.getKeyOfRegistry()
                     + " after value loading.");
@@ -466,7 +462,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                     throw new RuntimeException("NFU registry entry loading returned null. Entry: " + this.key +
                         "; Registry: " + this.registry.getKeyOfRegistry());
                 if (this.registry.isLoaded())
-                    this.registry.reverseMap.put(this.cachedValue, this.key);
+                    this.registry.updateReverseMap(m -> m.put(this.cachedValue, this.key));
             }
         }
 
@@ -474,6 +470,18 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
             return this.cachedValue != null;
         }
 
+    }
+
+    /**
+     * Update reverse map thread-safely.
+     */
+    private synchronized void updateReverseMap(Consumer<Map<T, ResourceLocation>> action) {
+        if (!this.isLoaded()) {
+            throw new IllegalStateException("Registry is not loaded.");
+        }
+        HashMap<T, ResourceLocation> newMap = new HashMap<>(this.reverseMap);
+        action.accept(newMap);
+        this.reverseMap = Map.copyOf(newMap);
     }
 
     public static class Accessor<T> implements Supplier<T>
