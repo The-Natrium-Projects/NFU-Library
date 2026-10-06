@@ -46,33 +46,6 @@ public class TamingInteractionResult {
     }
 
     /**
-     * Indicates that interaction is already handled and should not be passed to the next step, but the mob isn't tamed.
-     * @deprecated Use of() instead.
-     */
-    @Deprecated
-    public static TamingInteractionResult handled(Level level) {
-        return of(level, InteractionResult.sidedSuccess(level.isClientSide()), null);
-    }
-
-    /**
-     * Indicates that interaction is already handled and should not be passed to the next step, but the mob isn't tamed.
-     * @deprecated Use of() instead.
-     */
-    @Deprecated
-    public static TamingInteractionResult handled(Entity context) {
-        return of(context.level(), InteractionResult.sidedSuccess(context.level().isClientSide()), null);
-    }
-
-    /**
-     * Indicates that interaction is already handled and finally tamed the mob.
-     * @deprecated Use of() instead.
-     */
-    @Deprecated
-    public static TamingInteractionResult mobTamed(@Nonnull Mob tamedMob) {
-        return of(tamedMob.level(), InteractionResult.sidedSuccess(tamedMob.level().isClientSide()), tamedMob);
-    }
-
-    /**
      * Get the interaction result. {@link InteractionResult#PASS} means unhandled and the interaction should be passed to the next step.
      * {@link InteractionResult#sidedSuccess} means handled and the interaction should stop here.
      */
@@ -96,18 +69,5 @@ public class TamingInteractionResult {
     public Level getLevel() {
         return level;
     }
-
-    /**
-     * @deprecated Check the result of {@code getResult} instead.
-     */
-    public boolean isHandled() {
-        return !this.result.equals(InteractionResult.PASS);
-    }
-
-    /**
-     * @deprecated Use {@code setResult} instead.
-     */
-    @Deprecated
-    public void setHandled() {this.setResult(InteractionResult.sidedSuccess(this.level.isClientSide));}
 
 }

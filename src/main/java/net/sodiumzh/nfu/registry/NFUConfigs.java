@@ -42,7 +42,7 @@ public class NFUConfigs
 		SPEC_ENTITY_COMPONENT_HIERARCHY_CHECK = BUILDER.comment("If true, the NFU Entity Component system will check hierarchy validity in runtime. Setting this " +
 				"true will throw exception if the hierarchy is wrong, but will cause extra resource cost. Recommended to open only when in a debug environment.")
 				.define("entityComponentHierarchyCheck", false);
-        SPEC_CRASHES_ON_ENTITY_LOAD_FAILS = BUILDER.comment("If true, when an exception is thrown on entity loading from " +
+        SPEC_CRASHES_ON_ENTITY_LOAD_FAILS = BUILDER.comment("If true, when an exception is thrown on entity saving to or loading from " +
             "save data, the game will crash instead of skipping the entity.")
                 .define("crashesOnEntityLoadFails", false);
 		BUILDER.pop();

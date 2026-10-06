@@ -42,7 +42,7 @@ public class NFURegistryEntryCollection<T>
         NFURegistry.Entry<U> entry = new NFURegistry.Entry<>(registry, value, new ResourceLocation(namespace, key));
         NFURegistry.Accessor<U> accessor = NFURegistry.Accessor.createInvalid(entry);
         this.table.put(new ResourceLocation(namespace, key), new Tuple2<>(entry, accessor));
-        return new NFURegistry.Accessor<>(entry);
+        return accessor;
     }
 
     public boolean hasKey(ResourceLocation key)

@@ -586,7 +586,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
             super(entity);
             if (entity instanceof Player) {
                 // For NFULevelStatics#getMouseFocus
-                this.createSynchedGetter("mouseFocus", NFUDataSerializers.HIT_RESULT_INFO, null,
+                this.createSynchedGetter("mouseFocus", NFUDataSerializers.HIT_RESULT_INFO.get(), null,
                     SynchedGetter.Direction.CLIENT_TO_SERVER,
                     e -> Optional.ofNullable(Minecraft.getInstance().hitResult)
                         .map(HitResultInfo::byHitResult)
@@ -594,7 +594,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
             }
             // For NFUEntityStatics#getMobAttackTarget
             if (entity instanceof Mob mob) {
-                this.createSynchedGetter("attackTarget", NFUDataSerializers.UUID, new UUID(0L, 0L),
+                this.createSynchedGetter("attackTarget", NFUDataSerializers.UUID.get(), new UUID(0L, 0L),
                     e -> Optional.ofNullable(((Mob)e).getTarget()).map(Entity::getUUID).orElseGet(() -> new UUID(0, 0)));
             }
         }

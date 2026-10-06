@@ -106,26 +106,26 @@ public class HitResultInfo {
         }
         else {
             buf.writeUUID(this.entityUUID);
-            NFUDataSerializers.VEC3.write(buf, this.location);
+            NFUDataSerializers.VEC3.get().write(buf, this.location);
         }
     }
 
     public static HitResultInfo readBuf(FriendlyByteBuf buf) {
         boolean isBlock = buf.readBoolean();
         if (isBlock) return HitResultInfo.byHitResult(buf.readBlockHitResult());
-        else return HitResultInfo.byEntityUUID(buf.readUUID(), NFUDataSerializers.VEC3.read(buf));
+        else return HitResultInfo.byEntityUUID(buf.readUUID(), NFUDataSerializers.VEC3.get().read(buf));
     }
 
     public CompoundTag toNBT() {
         CompoundTag nbt = new CompoundTag();
         nbt.putBoolean("isBlock", !this.type.equals(HitResult.Type.ENTITY));
-        nbt.put("location", NFUDataSerializers.VEC3.toTag(this.location));
+        nbt.put("location", NFUDataSerializers.VEC3.get().toTag(this.location));
         if (this.type.equals(HitResult.Type.ENTITY)) {
             nbt.putUUID("entityUUID", this.entityUUID);
         } else {
             nbt.putBoolean("isMiss", this.type.equals(HitResult.Type.MISS));
             nbt.putString("direction", this.direction.getName());
-            nbt.put("blockPos", NFUDataSerializers.BLOCK_POS.toTag(this.blockPos));
+            nbt.put("blockPos", NFUDataSerializers.BLOCK_POS.get().toTag(this.blockPos));
             nbt.putBoolean("inside", this.inside);
         }
         return nbt;
@@ -133,12 +133,12 @@ public class HitResultInfo {
 
     public static HitResultInfo fromNBT(CompoundTag nbt) {
         boolean isBlock = nbt.getBoolean("isBlock");
-        Vec3 location = NFUDataSerializers.VEC3.fromTag(nbt.get("location"));
+        Vec3 location = NFUDataSerializers.VEC3.get().fromTag(nbt.get("location"));
         if (isBlock) {
             boolean isMiss = nbt.getBoolean("isMiss");
             Direction direction = Direction.byName(nbt.getString("direction"));
             boolean inside = nbt.getBoolean("inside");
-            BlockPos blockPos = NFUDataSerializers.BLOCK_POS.fromTag(nbt.get("blockPos"));
+            BlockPos blockPos = NFUDataSerializers.BLOCK_POS.get().fromTag(nbt.get("blockPos"));
             BlockHitResult blockHitResult;
             if (isMiss) blockHitResult = BlockHitResult.miss(location, direction, blockPos);
             else blockHitResult = new BlockHitResult(location, direction, blockPos, inside);

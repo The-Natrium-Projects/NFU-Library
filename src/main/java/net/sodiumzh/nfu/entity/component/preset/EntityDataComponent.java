@@ -6,7 +6,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.sodiumzh.nfu.entity.component.EntityComponentBase;
+import net.sodiumzh.nfu.exception.MissingRegistryEntryException;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
+import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.util.NFUNBTStatics;
 
 import javax.annotation.Nonnull;
@@ -98,6 +100,8 @@ public class EntityDataComponent<E extends Entity> extends EntityComponentBase<E
     }
 
     public void putPermanentVariable(String key, @Nullable Object value, @Nonnull NFUDataSerializer<?> serializer) {
+        if (!NFURegistries.DATA_SERIALIZERS.containsValue(serializer))
+            throw new MissingRegistryEntryException("Missing registry entry of NFU data serializer: " + serializer.toString());
         if (variableTable.get(key) != null) {
             if (!variableTable.get(key).isPermanent()) {
                 throw new IllegalStateException("Entity data component \"" + this.getPathFromRoot() + "\" illegal variable operation: "
@@ -122,6 +126,10 @@ public class EntityDataComponent<E extends Entity> extends EntityComponentBase<E
         if (!variableTable.containsKey(key)) {
             throw new IllegalStateException("Entity data component \"" + this.getPathFromRoot() + "\" illegal variable operation: "
                 + "attempting to put a permanent variable to key \"" + key + "\" without specifying the serializer, but the serializer is absent. Call serializer-specific version at least once.");
+        }
+        if (!variableTable.get(key).isPermanent()) {
+            throw new IllegalStateException("Entity data component \"" + this.getPathFromRoot() + "\" illegal variable operation: "
+                + "attempting to put a permanent variable to key \"" + key + "\", but the key is used as transient.");
         }
         this.putPermanentVariable(key, value, variableTable.get(key).serializer());
     }
