@@ -331,7 +331,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
             }
             else return Set.of();
         }
-        return Set.copyOf(this.reverseMap.keySet());
+        return Collections.unmodifiableSet(this.reverseMap.keySet());
     }
 
     /**
