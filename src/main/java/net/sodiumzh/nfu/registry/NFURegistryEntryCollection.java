@@ -40,7 +40,8 @@ public class NFURegistryEntryCollection<T>
     public synchronized <U extends T> NFURegistry.Accessor<U> register(@Nonnull String key, @Nonnull Supplier<U> value)
     {
         NFURegistry.Entry<U> entry = new NFURegistry.Entry<>(registry, value, new ResourceLocation(namespace, key));
-        NFURegistry.Accessor<U> accessor = NFURegistry.Accessor.createInvalid(entry);
+        NFURegistry.Accessor<U> accessor = new NFURegistry.Accessor<>(entry);
+        accessor.validated = false;
         this.table.put(new ResourceLocation(namespace, key), new Tuple2<>(entry, accessor));
         return accessor;
     }
@@ -53,8 +54,9 @@ public class NFURegistryEntryCollection<T>
     public synchronized void merge()
     {
         this.table.forEach((key, value) -> {
+            var acc = value.getB();
+            acc.validated = true;
             this.registry.registerRaw(key, value.getA());
-            value.getB().validate();
         });
     }
 
@@ -66,9 +68,9 @@ public class NFURegistryEntryCollection<T>
      */
     public synchronized void mergeIfAbsent() {
         this.table.forEach((key, value) -> {
-            if (this.registry.containsKey(key)) return;
+            var acc = value.getB();
+            acc.validated = true;
             this.registry.registerRaw(key, value.getA());
-            value.getB().validate();
         });
     }
 }

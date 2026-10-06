@@ -37,6 +37,11 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
 
     /** Collection of all declared registries. */
     private static final HashBiMap<ResourceLocation, NFURegistry<?>> REGISTRIES = HashBiMap.create();
+    private static final Object REGISTRIES_LOCK = new Object(); // For concurrent registry addition
+    private final ResourceLocation registryKey;
+
+
+
     /** Internal map. Access must be synchronized on {@code this}. */
     private final HashMap<ResourceLocation, Entry<? extends T>> table = new HashMap<>();
     /** Indicates when the registry should be built. */
@@ -54,35 +59,40 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
 
     // Methods below //
 
-    /**
-     * @param registryKey Key of this registry in the table of all registries.
-     */
-    public NFURegistry(ResourceLocation registryKey)
+    public NFURegistry(@Nonnull ResourceLocation registryKey)
     {
-        REGISTRIES.put(registryKey, this);
+        if (registryKey == null)
+            throw new IllegalArgumentException("Null key for registry.");
+        this.registryKey = registryKey;
+        synchronized (REGISTRIES_LOCK) {
+            if (REGISTRIES.containsKey(this.registryKey)) {
+                throw new IllegalArgumentException(
+                    "Duplicate NFU registry key: " + this.registryKey);
+            }
+            REGISTRIES.put(this.registryKey, this);
+        }
     }
 
-
-    // Registry of registries related //
-
-    /**  Collection of all registries */
     public static Map<ResourceLocation, NFURegistry<?>> allRegistries()
     {
-        return Map.copyOf(REGISTRIES);
+        synchronized (REGISTRIES_LOCK) {
+            return Map.copyOf(REGISTRIES);
+        }
     }
-
-
     public static NFURegistry<?> registryByKey(ResourceLocation key)
     {
-        return REGISTRIES.get(key);
+        synchronized (REGISTRIES_LOCK) {
+            return REGISTRIES.get(key);
+        }
     }
 
-    /**
-     * Get this registry's key in the registry of all {@code NFURegsitry} instances.
-     */
     public ResourceLocation getKeyOfRegistry()
     {
-        return REGISTRIES.inverse().get(this);
+        synchronized (REGISTRIES_LOCK) {
+            if (!REGISTRIES.containsKey(this.registryKey))
+                throw new IllegalStateException("NFU Registry " + this.registryKey + " is missing in the registry of NFU Registries.");
+            return this.registryKey;
+        }
     }
 
     // Accessibility policies //
@@ -487,18 +497,11 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     public static class Accessor<T> implements Supplier<T>
     {
         private final Entry<T> entry;
-        private volatile boolean validated;  // Labels whether this entry has been registered into a registry. If it's false, the get() will always return null.
+        volatile boolean validated;  // Labels whether this entry has been registered into a registry. If it's false, the get() will always return null.
 
         Accessor(Entry<T> entry) {
             this.entry = entry;
             this.validated = true;
-        }
-
-        static <U> Accessor<U> createInvalid(Entry<U> entry)
-        {
-            Accessor<U> res = new Accessor<>(entry);
-            res.validated = false;
-            return res;
         }
 
         @Override
@@ -508,8 +511,6 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                 throw new IllegalStateException("Access of an invalid NFURegistry Accessor. The entry is not registered to the registry.");
             return entry.get();
         }
-
-        Accessor<T> validate() {this.validated = true; return this;}
     }
 
     public static enum LoadTiming {
