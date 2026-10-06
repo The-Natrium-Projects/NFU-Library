@@ -258,8 +258,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     /**
-     * Get the value from key. Note that if the supplier throws an exception,
-     * it will not crash but print stacktrace and return null.
+     * Get the value from key. Null if absent.
      */
     @Nullable
     public T getValue(ResourceLocation key) {
