@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class NFUEntityStorageMixin implements NFUMixin<EntityStorage> {
 
     @Inject(method = "lambda$storeEntities$1(Lnet/minecraft/nbt/ListTag;Lnet/minecraft/world/entity/Entity;)V",
+        require = 1,
         at = @At(value = "INVOKE", target = "org/slf4j/Logger.error(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V", remap = false))
     private static void nfu_throwsOnSaveFailure(ListTag listtag, Entity p_156567_, CallbackInfo ci, @Local Exception e) {
         if (NFUConfigs.CACHED_CRASHES_ON_ENTITY_LOAD_FAILS) {
