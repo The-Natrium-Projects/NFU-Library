@@ -348,14 +348,14 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         this.table.put(key, entry);
         // If the registry has already been loaded, immediately load the value and update reverse map
         if (this.isLoaded()) {
+            var reverseMapCopy = Map.copyOf(reverseMap);    // Get a snapshot of current reverse map, for duplication check
             entry.load();
             T value = entry.get();
             if (value != null) {
-                if (this.reverseMap.containsKey(value) && !this.reverseMap.get(value).equals(key)) {
-                    throw DuplicateRegistryEntryException.duplicateValue(this.reverseMap.get(value).toString(), key.toString());
+                if (reverseMapCopy.containsKey(value) && !reverseMapCopy.get(value).equals(key)) {
+                    throw DuplicateRegisttryEntryException.duplicateValue(this.reverseMap.get(value).toString(), key.toString());
                 }
-                // Never mutate the published map; atomically replace it with an updated copy.
-                this.updateReverseMap(m -> m.put(value, key));
+                // Reverse map is updated in entry.load(), so no update here
             } else if (this.isCorrectSide()) {
                 throw new IllegalStateException("NFU Registry: unexpected null value of entry " + key + " on registry " + this.getKeyOfRegistry()
                     + " after value loading.");
