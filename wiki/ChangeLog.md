@@ -2,6 +2,10 @@
 
 Implemented config `crashesOnEntityLoadFails`.
 
+Optimized the performance of NFU-ECS. Added config `entitySyncherInterval` to configure syncher frequency.
+
+Optimized NFU Registry and reduced the possibility of random missing-entry crashes (thread safety issue).
+
 ### 0.2.33.2
 
 Fixed Item Displayer Entity getting on fire.
