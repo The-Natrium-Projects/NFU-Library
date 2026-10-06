@@ -68,7 +68,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     /**  Collection of all registries */
     public static Map<ResourceLocation, NFURegistry<?>> allRegistries()
     {
-        return REGISTRIES;
+        return Map.copyOf(REGISTRIES);
     }
 
 
@@ -353,7 +353,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
             T value = entry.get();
             if (value != null) {
                 if (reverseMapCopy.containsKey(value) && !reverseMapCopy.get(value).equals(key)) {
-                    throw DuplicateRegisttryEntryException.duplicateValue(this.reverseMap.get(value).toString(), key.toString());
+                    throw DuplicateRegistryEntryException.duplicateValue(this.reverseMap.get(value).toString(), key.toString());
                 }
                 // Reverse map is updated in entry.load(), so no update here
             } else if (this.isCorrectSide()) {
