@@ -40,7 +40,7 @@ public class NFUServerEventHandlers {
 	{
 		NFURegistry.SERVER_SETUP_DONE.trySet(true);
 		List<NFURegistry<?>> shouldGenerate = NFURegistry.allRegistries().values().stream()
-				.filter(reg -> reg.isAvailableOnServer() && reg.getLoadTiming().equals(NFURegistry.LoadTiming.SIDE_SETUP))
+				.filter(reg -> reg.isAvailableOnServer() && reg.getLoadTiming().equals(NFURegistry.LoadTiming.SIDE_SETUP) && !reg.isLoaded())
 				.toList();
 		shouldGenerate = NFURegistry.sortByLoadingOrder(shouldGenerate);
 		shouldGenerate.forEach(reg -> MinecraftForge.EVENT_BUS.post(new NFURegistryGenerateValuesEvent.ServerBefore(reg, event.getServer())));
