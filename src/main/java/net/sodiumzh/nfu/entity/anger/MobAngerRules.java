@@ -23,7 +23,7 @@ public class MobAngerRules {
     public static final NFURegistry.Accessor<MobAngerRules> NO_ANGER = RULES.register("no_anger", MobAngerRules::new);
 
     /**
-     * This mob will be angry with whom attacked it even without actual damage (defined in {@link CMobAngerHandler#getDamageThreshold()}),
+     * This mob will be angry with whom attacked it even without actual damage (defined in {@link MobAngerHandlerComponent#getDamageThreshold()}),
      * with forgiving time 5 min.
      */
     public static final NFURegistry.Accessor<MobAngerRules> ATTACKER = RULES.register("attacker",
@@ -32,7 +32,7 @@ public class MobAngerRules {
                     .forReason(MobAngerReason.HIT.get()));
 
     /**
-     * This mob will be angry with whom attacked it only with actual damage (defined in {@link CMobAngerHandler#getDamageThreshold()}),
+     * This mob will be angry with whom attacked it only with actual damage (defined in {@link MobAngerHandlerComponent#getDamageThreshold()}),
      * with forgiving time 5 min.
      */
     public static final NFURegistry.Accessor<MobAngerRules> ATTACKER_DAMAGED = RULES.register("attacked_damaged",
@@ -40,7 +40,7 @@ public class MobAngerRules {
                     .forReason(MobAngerReason.ATTACKED.get()));
 
     /**
-     * This mob will be angry with whom attacked it with or without damage (defined in {@link CMobAngerHandler#getDamageThreshold()}),
+     * This mob will be angry with whom attacked it with or without damage (defined in {@link MobAngerHandlerComponent#getDamageThreshold()}),
      * and whom it attacked (with or without damage), with forgiving time 5 min.
      */
     public static final NFURegistry.Accessor<MobAngerRules> ATTACKER_AND_ATTACKING = RULES.register("attacker_and_attacking",
@@ -51,7 +51,7 @@ public class MobAngerRules {
                     .forReason(MobAngerReason.HITTING.get()));
 
     /**
-     * This mob will be angry with whom attacked it with damage (defined in {@link CMobAngerHandler#getDamageThreshold()}),
+     * This mob will be angry with whom attacked it with damage (defined in {@link MobAngerHandlerComponent#getDamageThreshold()}),
      * and whom it attacked (with or without damage), with forgiving time 5 min.
      */
     public static final NFURegistry.Accessor<MobAngerRules> ATTACKER_DAMAGED_AND_ATTACKING = RULES.register("attacker_and_attacking",
@@ -108,7 +108,7 @@ public class MobAngerRules {
     }
 
     /**
-     * Get how long in ticks the mob should forgive the player. -1 means never forgive (until {@link CMobAngerHandler#}). 0 means the mob should not
+     * Get how long in ticks the mob should forgive the player. -1 means never forgive (until manual removal). 0 means the mob should not
      * be angry with the target for this reason.
      */
     public int getForgivingTicks(MobAngerReason reason, Mob mob, LivingEntity target)

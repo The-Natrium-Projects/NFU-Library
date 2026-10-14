@@ -19,6 +19,7 @@ import java.util.UUID;
  * <p>Note: {@code AttributeModifier}s added by this object is always transient. The actual modifier uuids inside this object
  * are random, permanent attribute modifiers will cause duplicate applying on restarting the game.
  */
+@Deprecated
 public class RepeatableAttributeModifier
 {
 	protected double value;

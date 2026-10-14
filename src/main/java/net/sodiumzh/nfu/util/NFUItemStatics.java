@@ -1,10 +1,12 @@
 package net.sodiumzh.nfu.util;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class NFUItemStatics
@@ -148,10 +150,13 @@ public class NFUItemStatics
 	/**
 	 * Get enchantment level. This is for unifying 1.18 and 1.20 API.
 	 */
-	public int getItemEnchantmentLevel(Enchantment enc, ItemStack stack)
+	public static int getItemEnchantmentLevel(Enchantment enc, ItemStack stack)
 	{
 		return stack.getEnchantmentLevel(enc);
 	}
-	
-	
+
+	/**
+	 * Block the given player's item usage (via {@link Item#use} and Item#) in this tick cycle. Auto-reset on tick end.
+	 */
+	public static void blockServerItemUsage()
 }

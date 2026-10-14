@@ -77,13 +77,14 @@ public class NFURegistries {
 
     public static final NFURegistry<MobAngerReason> MOB_ANGER_REASONS =
         new NFURegistry<MobAngerReason>(new ResourceLocation(NFULibrary.MOD_ID, "mob_anger_reasons"))
-            .setSide(AvailableSide.SERVER);
+            .setSide(AvailableSide.SERVER)
+            .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP);
 
     public static final NFURegistry<MobAngerRules> MOB_ANGER_RULES =
         new NFURegistry<MobAngerRules>(new ResourceLocation(NFULibrary.MOD_ID, "mob_anger_rules"))
             .setLoadAfter(MOB_ANGER_REASONS)
             .setSide(AvailableSide.SERVER)
-            .setLoadTiming(NFURegistry.LoadTiming.COMMON_SETUP);
+            .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP);
 
     public static final NFURegistry<EntityAttributeProvider> ENTITY_ATTRIBUTE_PROVIDERS =
             new NFURegistry<EntityAttributeProvider>(new ResourceLocation(NFULibrary.MOD_ID, "entity_attribute_providers"));

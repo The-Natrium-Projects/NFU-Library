@@ -114,12 +114,19 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         return this.availableSide.equals(AvailableSide.BOTH) || this.availableSide.equals(AvailableSide.SERVER);
     }
 
+    public AvailableSide getAvailableSide() {
+        return this.availableSide;
+    }
+
     /**
      * Set this registry should be only available on a given logical side. If {@link Accessor#get()} is called on the
      * wrong side, it will always return {@code null}.
      */
     public NFURegistry<T> setSide(AvailableSide side) {
         this.availableSide = side;
+        // Sided registries are not allowed to load on the common setup phase
+        if ((side == AvailableSide.CLIENT || side == AvailableSide.SERVER) && this.getLoadTiming() == LoadTiming.COMMON_SETUP)
+            this.setLoadTiming(LoadTiming.SIDE_SETUP);
         return this;
     }
 
@@ -144,6 +151,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     {
         // For those available on both sides and loaded on side setup, it may be loaded twice, and the first wins
         if (this.isLoaded()) return;
+        if (!this.isCorrectSide()) return;
         HashMap<T, ResourceLocation> newReverseMap = new HashMap<>();
         this.table.forEach((k, v) -> {
             if (!v.isLoaded()) {
@@ -155,7 +163,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
                     throw new DuplicateRegistryEntryException("Duplicate registry value +\""
                         + newReverseMap.get(value) + "\" and \"" + k.toString() + "\" on registry " + this.getKeyOfRegistry() + ".");
                 newReverseMap.put(value, k);
-            } else if (this.isCorrectSide()) {  // If on another side, get() will still return null
+            } else {  // If on another side, get() will still return null
                 throw new IllegalStateException("NFU Registry: unexpected null value of entry " + k + " on registry " + this.getKeyOfRegistry()
                     + " after value loading.");
             }
@@ -177,6 +185,9 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         this.loadTiming = phase;
         return this;
     }
+
+
+
 
     /**
      * Set that this registry should be loaded before the following registries.
@@ -433,9 +444,6 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
             if (!registry.isCorrectSide())
                 return null;
             if (!this.isLoaded()) {
-                /* this.load() will be invoked on registry loading. If not accessible before load,
-                 any access before this.loaded is set will be illegal, and this.loaded will be set true only
-                 loadFinal(), and tryLoad() will never be invoked */
                 if (this.registry.getLoadTiming().equals(LoadTiming.FIRST_ACCESS)) {
                     // registry load() will call Entry.get(), so load self first to prevent inf recursion
                     this.load();

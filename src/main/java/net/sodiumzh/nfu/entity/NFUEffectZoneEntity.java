@@ -18,6 +18,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.TriPredicate;
@@ -38,10 +39,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.Optional;
-import java.util.function.BiConsumer;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
+import java.util.function.*;
 
 public class NFUEffectZoneEntity extends Projectile implements IChainModifiable<NFUEffectZoneEntity> {
 
@@ -91,6 +89,7 @@ public class NFUEffectZoneEntity extends Projectile implements IChainModifiable<
     private TriConsumer<NFUEffectZoneEntity, BlockPos, BlockState> onOverlapBlock = null;
     private final Multimap<Integer, Consumer<NFUEffectZoneEntity>> scheduledServerActions = HashMultimap.create();
     private boolean overlapIgnoresOwner = true;
+    private boolean isAffectedByFluid = false;
 
     public NFUEffectZoneEntity(EntityType<? extends NFUEffectZoneEntity> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -356,6 +355,21 @@ public class NFUEffectZoneEntity extends Projectile implements IChainModifiable<
     @Override
     public boolean fireImmune() {
         return true;
+    }
+
+    public boolean isAffectedByFluid() {
+        return isAffectedByFluid;
+    }
+
+    public NFUEffectZoneEntity setAffectedByFluid() {
+        isAffectedByFluid = true;
+        return this;
+    }
+
+    @Override
+    public void updateFluidHeightAndDoFluidPushing(Predicate<FluidState> shouldUpdate) {
+        if (isAffectedByFluid())
+            super.updateFluidHeightAndDoFluidPushing(shouldUpdate);
     }
 
     /**

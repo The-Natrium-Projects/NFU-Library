@@ -9,6 +9,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.entity.DeferredEntityAttributeRegisterEvent;
+import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.registry.NFURegistries;
 import net.sodiumzh.nfu.registry.NFURegistry;
@@ -34,6 +35,14 @@ public class NFUSetupEventHandlers {
                     .filter(reg -> reg.getLoadTiming().equals(NFURegistry.LoadTiming.COMMON_SETUP))
                     .toList();
             shouldGenerate = NFURegistry.sortByLoadingOrder(shouldGenerate);
+            // Single-sided registries should not be registered on common setup.
+            shouldGenerate.forEach(reg -> {
+                if (reg.getAvailableSide() == AvailableSide.CLIENT || reg.getAvailableSide() == AvailableSide.SERVER) {
+                    throw new UnsupportedOperationException("NFU Registry " + reg.getKeyOfRegistry() + " is "
+                        + (reg.getAvailableSide() == AvailableSide.CLIENT ? "client" : "server")
+                        + "-only, but loaded on common-setup. One-sided registries should be loaded on sided setup (or first access).");
+                }
+            });
             shouldGenerate.forEach(reg -> ModLoader.get().postEvent(new NFURegistryGenerateValuesEvent.CommonBefore(reg)));
             shouldGenerate.forEach(NFURegistry::load);
             shouldGenerate.forEach(reg -> ModLoader.get().postEvent(new NFURegistryGenerateValuesEvent.CommonAfter(reg)));
@@ -48,9 +57,6 @@ public class NFUSetupEventHandlers {
 
     @SubscribeEvent
     public static void onGenerateRegistries(NFURegistryGenerateValuesEvent.CommonAfter event) {
-        /**
-         * Auto register existing
-         */
         if (event.registry.equals(NFURegistries.DATA_SERIALIZERS)) {
             NFURegistry<NFUDataSerializer<?>> reg = NFURegistries.DATA_SERIALIZERS;
             // First check if maunally-registered list and optional serializers have valid types
