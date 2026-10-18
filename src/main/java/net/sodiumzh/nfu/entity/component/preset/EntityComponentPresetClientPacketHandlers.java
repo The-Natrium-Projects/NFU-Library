@@ -27,17 +27,8 @@ public class EntityComponentPresetClientPacketHandlers {
         ClientLevel level = mc.level;
         if (level == null) return;
         Entity e = level.getEntity(packet.entityID);
-        if (e == null || !e.getUUID().equals(packet.entityUUID)) {  // Not find or wrong uuid, search from uuid
-            if (e == null)
-                NFUDebugStatics.warnOnce("Failed to find entity id " + packet.entityID + ", searching from UUID.");
-            else {
-                NFUDebugStatics.warnOnce("Found wrong entity " + e.getUUID() + " by ID " + packet.entityID + ", expected " + packet.entityUUID + " . Searching from UUID.");
-                e = null;
-            }
-            e = NFUEntityStatics.getEntityByUUID(level, packet.entityUUID);
-        }
-        if (e == null) {
-            NFUDebugStatics.warnOnce("Failed to find entity id " + packet.entityID + " and UUID " + packet.entityUUID + " . Skipped.");
+        if (e == null) {  // Not find or wrong uuid, search from uuid
+            NFUDebugStatics.warnOnce("Failed to find entity id " + packet.entityID + ", searching from UUID.");
             return;
         }
         EntityComponentAPI.getComponentByPath(e, HierarchyPath.byLiteral(packet.componentPath))
@@ -60,7 +51,7 @@ public class EntityComponentPresetClientPacketHandlers {
 
         for (Entity e: NFUEntityStatics.getLevelEntityGetter(level).getAll()) {
             CEntityComponentManager mgr = EntityComponentAPI.getComponentManager(e);
-            Optional.ofNullable(packet.allEntityData.get(e.getUUID()))
+            Optional.ofNullable(packet.allEntityData.get(e.getId()))
                 .ifPresent(map -> map.forEach((path, rec) -> {
                     mgr.getSubComponentByPath(path).filter(c -> c instanceof EntitySyncherComponent<? extends Entity>)
                         .map(c -> (EntitySyncherComponent<? extends Entity>)c)

@@ -1,3 +1,15 @@
+### 0.2.34
+
+Added entity type tag: `nfulib:wither_attackable_undead`. Undead mobs with this tag can damaged and be damaged by Wither.
+
+Added `NFUEntityStatics#getAllKnownPlayers` to access offline players.
+
+Fixed `NFUDataSerializer` registry causing entity saving failure. 
+
+Fixed `EntitySyncherComponent` synching failure when the server and client copies of the entity have different UUID.
+
+Fixed `NFUEffectZoneEntity` performance issue when in water.
+
 ### 0.2.33.3
 
 Implemented config `crashesOnEntityLoadFails`.

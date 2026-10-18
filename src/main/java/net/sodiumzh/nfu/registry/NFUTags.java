@@ -15,5 +15,9 @@ public class NFUTags {
     public static final TagKey<EntityType<?>> EXPLOSION_NOT_BREAKING_ITEMS =
         NFUTagStatics.createEntityTypeTag(NFULibrary.MOD_ID, "explosion_not_breaking_items");
 
-
+    /**
+     * Undead mobs with this tag can damage and be damaged by Wither boss.
+     */
+    public static final TagKey<EntityType<?>> WITHER_ATTACKABLE_UNDEAD =
+        NFUTagStatics.createEntityTypeTag(NFULibrary.MOD_ID, "wither_attackable_undead");
 }

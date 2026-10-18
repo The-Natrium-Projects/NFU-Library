@@ -155,8 +155,4 @@ public class NFUItemStatics
 		return stack.getEnchantmentLevel(enc);
 	}
 
-	/**
-	 * Block the given player's item usage (via {@link Item#use} and Item#) in this tick cycle. Auto-reset on tick end.
-	 */
-	public static void blockServerItemUsage()
 }

@@ -421,7 +421,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         private static final ThreadLocal<Long> CURRENT_PACKET_ID = ThreadLocal.withInitial(() -> 0L);
         public final long packetId;
         public final ResourceLocation dimension;
-        final Map<UUID, Map<HierarchyPath, SyncRecord>> allEntityData = new HashMap<>();
+        final Map<Integer, Map<HierarchyPath, SyncRecord>> allEntityData = new HashMap<>();
         // Cache components handled so we know which components to clear changed data list
         final Multimap<UUID, HierarchyPath> handledComponentPaths = HashMultimap.create();
 
@@ -430,7 +430,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
             CURRENT_PACKET_ID.set(CURRENT_PACKET_ID.get() + 1);
             this.dimension = level.dimensionTypeId().location();
             for (Entity e: level.getEntities().getAll()) {
-                allEntityData.putIfAbsent(e.getUUID(), new HashMap<>());
+                allEntityData.putIfAbsent(e.getId(), new HashMap<>());
                 EntityComponentAPI.getComponentManager(e).getAllPathsAndDownstreamComponents()
                     .entrySet().stream()
                     .filter(entry ->
@@ -438,7 +438,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
                         && sc.shouldSync()
                         && (ignoresSyncIntervals || CURRENT_PACKET_ID.get() % (long) sc.getSyncInterval() == 0))
                     .forEach(entry -> {
-                        allEntityData.get(e.getUUID()).putIfAbsent(entry.getKey(), SyncRecord.byComponent((EntitySyncherComponent<?>)(entry.getValue())));
+                        allEntityData.get(e.getId()).putIfAbsent(entry.getKey(), SyncRecord.byComponent((EntitySyncherComponent<?>)(entry.getValue())));
                         handledComponentPaths.put(e.getUUID(), entry.getKey());
                     });
             }
@@ -448,7 +448,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         public ClientboundEntitySyncherComponentSyncAllPacket(FriendlyByteBuf buf) {
             this.packetId = buf.readLong();
             this.dimension = buf.readResourceLocation();
-            this.allEntityData.putAll(buf.readMap(FriendlyByteBuf::readUUID,
+            this.allEntityData.putAll(buf.readMap(FriendlyByteBuf::readInt,
                  buf1 -> buf1.readMap(buf2 -> HierarchyPath.byLiteral(buf2.readUtf()), SyncRecord::fromBuf)));
         }
 
@@ -456,7 +456,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         public void write(FriendlyByteBuf buf) {
             buf.writeLong(this.packetId);
             buf.writeResourceLocation(this.dimension);
-            buf.writeMap(this.allEntityData, FriendlyByteBuf::writeUUID,
+            buf.writeMap(this.allEntityData, FriendlyByteBuf::writeInt,
                 (buf1, map) -> buf1.writeMap(map, (buf2, path) -> buf2.writeUtf(path.toString()),
                     (buf2, rec) -> rec.writeBuf(buf2)));
         }
@@ -473,7 +473,6 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         @Nullable   // Non-null on server, null on client
         public final EntitySyncherComponent<? extends Entity> syncher;
         public final int entityID;
-        public final UUID entityUUID;
         public final String componentPath;
         public final SyncRecord syncRecord;
 
@@ -482,7 +481,6 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
             CURRENT_PACKET_ID.set(CURRENT_PACKET_ID.get() + 1);
             this.syncher = syncher;
             this.entityID = syncher.getEntity().getId();
-            this.entityUUID = syncher.getEntity().getUUID();
             this.componentPath = syncher.getPathFromRoot().toLiteral();
             this.syncRecord = SyncRecord.byComponent(syncher);
         }
@@ -491,7 +489,6 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
             this.packetId = buf.readLong();
             this.syncher = null;
             this.entityID = buf.readInt();
-            this.entityUUID = buf.readUUID();
             this.componentPath = buf.readUtf();
             this.syncRecord = SyncRecord.fromBuf(buf);
         }
@@ -500,8 +497,7 @@ public class EntitySyncherComponent<E extends Entity> extends EntityComponentBas
         public void write(FriendlyByteBuf buf) {
             buf.writeLong(this.packetId);
             buf.writeInt(entityID);
-            buf.writeUUID(entityUUID);
-            buf.writeUtf(componentPath.toString());
+            buf.writeUtf(componentPath);
             syncRecord.writeBuf(buf);
         }
 
