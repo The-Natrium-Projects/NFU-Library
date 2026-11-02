@@ -20,6 +20,13 @@ description="${nfu_description}"
     side="BOTH"
 
 [[dependencies.${nfu_mod_id}]]
+    modId="jeresources"
+    mandatory=false
+    versionRange="[1.4,1.5)"
+    ordering="AFTER"
+    side="CLIENT"
+
+[[dependencies.${nfu_mod_id}]]
     modId="minecraft"
     mandatory=true
     versionRange="${minecraft_version_range}"
