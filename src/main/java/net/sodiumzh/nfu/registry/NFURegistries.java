@@ -12,13 +12,13 @@ import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListingCollection;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeRegistry;
 import net.sodiumzh.nfu.function.RegistrableFunction;
 import net.sodiumzh.nfu.function.RegistrablePredicate;
+import net.sodiumzh.nfu.function.DataDrivenVarargOperator;
+import net.sodiumzh.nfu.object.NFUJsonParser;
 import net.sodiumzh.nfu.item.bauble.IBaubleRegistryEntry;
 import net.sodiumzh.nfu.math.IFieldPattern3D;
 import net.sodiumzh.nfu.math.IInequalityPattern3D;
 import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
-
-import java.util.function.Function;
 
 public class NFURegistries {
 
@@ -41,15 +41,12 @@ public class NFURegistries {
                     .setSide(AvailableSide.SERVER)
                     .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP);
 
-    /**
-     * Registry for generic {@link Function}s. Note that the functions' input/output types are generic, and will not do
-     * any type check before running. Ensure the types match before running.
-     */
-    public static final NFURegistry<RegistrableFunction<?, ?>> FUNCTIONS =
-            new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "functions"));
+    public static final NFURegistry<NFUJsonParser<?>> JSON_PARSERS =
+        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "json_parsers"));
 
-    public static final NFURegistry<RegistrablePredicate<?>> PREDICATES =
-        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "predicates"));
+    public static final NFURegistry<DataDrivenVarargOperator<?, ?>> OPERATORS =
+        new NFURegistry<DataDrivenVarargOperator<?, ?>>(new ResourceLocation(NFULibrary.MOD_ID, "operators"))
+            .setLoadAfter(JSON_PARSERS);
 
     /**
      * Registry for trade listing (from vanilla trade system). A trade listing is a generator for providing random trade offers
