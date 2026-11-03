@@ -65,7 +65,8 @@ public class NFUOperator<S, R> implements BiFunction<S, Map<String, Object>, R> 
         // For operators with only one argument, allow to directly use primitive
         if (argParserMap.size() == 1 && data.isJsonPrimitive()) {
             var onlyEntry = argParserMap.entrySet().stream().findAny().get();
-            return Map.of(onlyEntry.getKey(), onlyEntry.getValue().parse(data));
+            var value = onlyEntry.getValue().parse(data);
+            return value != null ? Map.of(onlyEntry.getKey(), value) : Map.of();
         }
         // Otherwise a json object is required
         else if (!data.isJsonObject()) return Map.of();
@@ -141,9 +142,9 @@ public class NFUOperator<S, R> implements BiFunction<S, Map<String, Object>, R> 
         return isSimpleFunction() && isPredicate();
     }
 
-    public BiPredicate<S, Map<String, Object>> asSimplePredicate() {
+    public Predicate<S> asSimplePredicate() {
         if (this.isSimplePredicate())
-            return (s, map) -> (Boolean) (this.function.apply(s, map));
+            return (s) -> (Boolean) (this.function.apply(s, Map.of()));
         else throw new IllegalCallerException("Operator " + this.getRegistryKeyString()
             + " is not a simple predicate.");
     }
@@ -157,14 +158,17 @@ public class NFUOperator<S, R> implements BiFunction<S, Map<String, Object>, R> 
                 return operator.applyUnsafe(subject, Map.of());
             } else if (json.isJsonObject()) {
                 JsonObject jo = json.getAsJsonObject();
-                String operatorKeyString = jo.get("operator").getAsString();
-                if (operatorKeyString == null)
+                // Get operator
+                String operatorKeyString = null;
+                if (jo.has("operator"))
+                    operatorKeyString = jo.get("operator").getAsString();
+                else if (jo.has("function"))
                     operatorKeyString = jo.get("function").getAsString();
-                if (operatorKeyString == null)
-                    throw new IllegalArgumentException("Missing operator");
+                else throw new IllegalArgumentException("Missing operator");
                 ResourceLocation operatorKey = NFUResourceLocation.of(operatorKeyString);
                 NFUOperator<?, ?> operator = NFURegistries.OPERATORS.getValue(operatorKey);
                 if (operator == null) throw new IllegalArgumentException("Missing operator");
+                // Then invoke
                 return operator.applyByDataUnsafe(subject, json);
             } else throw new IllegalArgumentException("Illegal json format for operator invocation.");
         } catch (RuntimeException e) {

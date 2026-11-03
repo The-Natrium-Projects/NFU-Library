@@ -38,9 +38,9 @@ class BaubleEquippableMobRegistries
 	 */
 	static <T extends Mob> void registerMob(EntityType<? extends T> mobType, Class<T> mobClass)
 	{
+		MOB_TYPE_TO_CLASS_MAPPING.put(mobType, mobClass);
 		if (!BAUBLE_EQUIPPABLE_MOBS.containsKey(mobType)) {
 			BAUBLE_EQUIPPABLE_MOBS.put(mobType, new HashMap<>());
-			MOB_TYPE_TO_CLASS_MAPPING.put(mobType, mobClass);
 		}
 	}
 	
@@ -51,6 +51,7 @@ class BaubleEquippableMobRegistries
 														String slotKey, Predicate<Mob> condition,
 														Function<Mob, ItemStack> accessor)
 	{
+		MOB_TYPE_TO_CLASS_MAPPING.put(mobType, mobClass);
 		if (!BAUBLE_EQUIPPABLE_MOBS.containsKey(mobType))
 			BAUBLE_EQUIPPABLE_MOBS.put(mobType, new HashMap<>());
 		if (BAUBLE_EQUIPPABLE_MOBS.get(mobType).containsKey(slotKey))
@@ -78,6 +79,7 @@ class BaubleEquippableMobRegistries
 	static <T extends Mob> void registerConditionalSpecialSlot(EntityType<? extends T> mobType, Class<T> mobClass,
 											   String slotKey, Predicate<Mob> condition, Function<Mob, ItemStack> accessor)
 	{
+		MOB_TYPE_TO_CLASS_MAPPING.put(mobType, mobClass);
 		if (!BAUBLE_EQUIPPABLE_MOBS.containsKey(mobType))
 			BAUBLE_EQUIPPABLE_MOBS.put(mobType, new HashMap<>());
 		if (BAUBLE_EQUIPPABLE_MOBS.get(mobType).containsKey(slotKey))
