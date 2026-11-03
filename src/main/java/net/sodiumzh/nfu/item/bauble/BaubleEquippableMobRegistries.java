@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobType;
 import net.minecraft.world.item.ItemStack;
 import net.sodiumzh.nfu.container.Tuple4;
 
@@ -38,7 +39,7 @@ class BaubleEquippableMobRegistries
 	 */
 	static <T extends Mob> void registerMob(EntityType<? extends T> mobType, Class<T> mobClass)
 	{
-		MOB_TYPE_TO_CLASS_MAPPING.put(mobType, mobClass);
+		updateTypeClassMapping(mobType, mobClass);
 		if (!BAUBLE_EQUIPPABLE_MOBS.containsKey(mobType)) {
 			BAUBLE_EQUIPPABLE_MOBS.put(mobType, new HashMap<>());
 		}
@@ -51,7 +52,7 @@ class BaubleEquippableMobRegistries
 														String slotKey, Predicate<Mob> condition,
 														Function<Mob, ItemStack> accessor)
 	{
-		MOB_TYPE_TO_CLASS_MAPPING.put(mobType, mobClass);
+		updateTypeClassMapping(mobType, mobClass);
 		if (!BAUBLE_EQUIPPABLE_MOBS.containsKey(mobType))
 			BAUBLE_EQUIPPABLE_MOBS.put(mobType, new HashMap<>());
 		if (BAUBLE_EQUIPPABLE_MOBS.get(mobType).containsKey(slotKey))
@@ -79,7 +80,7 @@ class BaubleEquippableMobRegistries
 	static <T extends Mob> void registerConditionalSpecialSlot(EntityType<? extends T> mobType, Class<T> mobClass,
 											   String slotKey, Predicate<Mob> condition, Function<Mob, ItemStack> accessor)
 	{
-		MOB_TYPE_TO_CLASS_MAPPING.put(mobType, mobClass);
+		updateTypeClassMapping(mobType, mobClass);
 		if (!BAUBLE_EQUIPPABLE_MOBS.containsKey(mobType))
 			BAUBLE_EQUIPPABLE_MOBS.put(mobType, new HashMap<>());
 		if (BAUBLE_EQUIPPABLE_MOBS.get(mobType).containsKey(slotKey))
@@ -235,4 +236,14 @@ class BaubleEquippableMobRegistries
 	static Class<? extends Mob> getEquippableMobClassByType(EntityType<? extends Mob> type) {
 		return MOB_TYPE_TO_CLASS_MAPPING.get(type);
 	}
+
+	private static <T extends Mob> void updateTypeClassMapping(EntityType<? extends T> type, Class<T> clazz) {
+		if (MOB_TYPE_TO_CLASS_MAPPING.get(type) == null) {
+			MOB_TYPE_TO_CLASS_MAPPING.put(type, clazz);
+		} else {
+			if (MOB_TYPE_TO_CLASS_MAPPING.get(type).isAssignableFrom(clazz))
+				MOB_TYPE_TO_CLASS_MAPPING.put(type, clazz);
+		}
+	}
+
 }
