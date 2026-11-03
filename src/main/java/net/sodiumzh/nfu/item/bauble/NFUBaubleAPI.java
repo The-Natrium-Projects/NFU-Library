@@ -1,6 +1,7 @@
 package net.sodiumzh.nfu.item.bauble;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.sodiumzh.nfu.NFULibrary;
@@ -104,5 +105,12 @@ public class NFUBaubleAPI
 	public static boolean canEquipOn(ItemStack itemstack, Mob mob, String slot)
 	{
 		return BaubleRegistries.canEquipOn(itemstack, mob, slot);
+	}
+
+	/**
+	 * Find a mob's Java class from type if it's bauble-equippable. Empty if not bauble-equippable.
+	 */
+	public static Optional<Class<? extends Mob>> getBaubleEquippableMobType(EntityType<? extends Mob> mobType) {
+		return Optional.ofNullable(BaubleEquippableMobRegistries.getEquippableMobClassByType(mobType));
 	}
 }

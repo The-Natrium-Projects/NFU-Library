@@ -16,14 +16,12 @@ import net.sodiumzh.nfu.mixin.event.entity.EntityLoadEvent;
 class BaubleSystemEventListeners
 {
 
-	@SuppressWarnings("unchecked")
-	@DontCallManually
 	@SubscribeEvent
 	public static void attachLivingEntityCapabilities(AttachCapabilitiesEvent<Entity> event)
 	{
 		if (event.getObject() instanceof Mob mob)
 		{
-			if (BaubleEquippableMobRegistries.containsMobType(mob.getClass()))
+			if (BaubleEquippableMobRegistries.containsMobType(mob.getType()))
 			{
 				CBaubleEquippableMobPrvd prvd = new CBaubleEquippableMobPrvd(mob);
 				event.addCapability(new ResourceLocation(NFULibrary.MOD_ID, "cap_bauble_equippable_mob"), prvd);
