@@ -19,6 +19,7 @@ public class RegisterBaubleEquippableMobsEvent extends Event implements IModBusE
 	 */
 	public <T extends Mob> SlotRegisterer<T> register(EntityType<? extends T> type, Class<T> clazz)
 	{
+		BaubleEquippableMobRegistries.updateTypeClassMapping(type, clazz);
 		if (!BaubleEquippableMobRegistries.containsMobType(type))
 			BaubleEquippableMobRegistries.registerMob(type, clazz);
 		return new SlotRegisterer<>(type, clazz);

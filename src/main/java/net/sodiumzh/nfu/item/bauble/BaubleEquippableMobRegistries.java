@@ -237,7 +237,7 @@ class BaubleEquippableMobRegistries
 		return MOB_TYPE_TO_CLASS_MAPPING.get(type);
 	}
 
-	private static <T extends Mob> void updateTypeClassMapping(EntityType<? extends T> type, Class<T> clazz) {
+	static <T extends Mob> void updateTypeClassMapping(EntityType<? extends T> type, Class<T> clazz) {
 		if (MOB_TYPE_TO_CLASS_MAPPING.get(type) == null) {
 			MOB_TYPE_TO_CLASS_MAPPING.put(type, clazz);
 		} else {
