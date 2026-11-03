@@ -14,10 +14,10 @@ import net.minecraft.world.item.Items;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.container.Tuple2;
-import net.sodiumzh.nfu.function.RegistrableFunction;
-import net.sodiumzh.nfu.function.RegistrablePredicate;
+import net.sodiumzh.nfu.function.NFUOperator;
 import net.sodiumzh.nfu.math.RandomSelection;
 import net.sodiumzh.nfu.math.RangedRandomDouble;
 import net.sodiumzh.nfu.math.RangedRandomInt;
@@ -105,7 +105,7 @@ public class MobApplicableItemTable
 
 	public static class Builder
 	{
-		private HashMap<ItemStackCriteria, OutcomeProvider> entries = new HashMap<>();
+		private final HashMap<ItemStackCriteria, OutcomeProvider> entries = new HashMap<>();
 		private DataReader reader = null;
 
         public MobApplicableItemTable.Builder create() {
@@ -167,8 +167,8 @@ public class MobApplicableItemTable
 
 
     /**
-     * Criteria to match input {@link ItemStack}s. It has an item list and a tag list to match, and a
-     * {@link RegistrablePredicate} and a generic (unparseable) {@link Predicate} for additional checks.
+     * Criteria to match input {@link ItemStack}s. It has an item list and a tag list to match, and a predicate
+     * {@link NFUOperator} and a generic (unparseable) {@link Predicate} for additional checks.
      * <p>The item must be included in <i>either the item or the tag list</i>, and passes <i>both predicates</i>
      * (if present). If the item and tag lists are both empty, the item needs to only pass predicates.
      */
@@ -176,17 +176,22 @@ public class MobApplicableItemTable
 
         private final List<Item> items = new ArrayList<>();
         private final List<TagKey<Item>> tags = new ArrayList<>();
-        private Tuple2<ResourceLocation, RegistrablePredicate<ItemStack>> registeredPredicate;
+        private @Nullable Tuple2<ResourceLocation, NFUOperator<ItemStack, Boolean>> registeredPredicate;
         private Predicate<ItemStack> unparseablePredicate;
         private List<Item> allItemsCache = null;
 
+        /**
+         * @param predicateKey Registry key of the predicate. Note that the predicate will be browsed in the integrated
+         *                     "OPERATOR" registry, and please ensure the operator of this key is a simple predicate (boolean-return, no varargs).
+         * @param unparseable An unregistered predicate.
+         */
         private ItemStackCriteria(
             @Nullable ResourceLocation predicateKey,
             @Nullable Predicate<ItemStack> unparseable) {
             this.registeredPredicate = Optional.ofNullable(predicateKey)
-                .map(k -> Tuple2.of(k,
-                    Optional.ofNullable(NFURegistries.PREDICATES.getValue(k)).flatMap(p -> p.castInputType(ItemStack.class))
-                        .orElse(null)))
+                .map(key -> new Tuple2<>(key, NFURegistries.OPERATORS.getValue(key)))
+                .filter(pair -> pair.getB() != null && pair.getB().isSimplePredicate())
+                .map(pair -> new Tuple2<>(pair.getA(), pair.getB().castSubjectAndResultClasses(ItemStack.class, Boolean.class)))
                 .filter(pair -> pair.getB() != null)
                 .orElse(null);
             this.unparseablePredicate = unparseable;
@@ -292,9 +297,9 @@ public class MobApplicableItemTable
 
         public ItemStackCriteria setRegistrablePredicate(@Nullable ResourceLocation key) {
             this.registeredPredicate = Optional.ofNullable(key)
-                .map(k -> Tuple2.of(k,
-                    Optional.ofNullable(NFURegistries.PREDICATES.getValue(k)).flatMap(p -> p.castInputType(ItemStack.class))
-                        .orElse(null)))
+                .map(k -> new Tuple2<>(k, NFURegistries.OPERATORS.getValue(k)))
+                .filter(pair -> pair.getB() != null && pair.getB().isSimplePredicate())
+                .map(pair -> new Tuple2<>(pair.getA(), pair.getB().castSubjectAndResultClasses(ItemStack.class, Boolean.class)))
                 .filter(pair -> pair.getB() != null)
                 .orElse(null);
             return this;
@@ -320,14 +325,14 @@ public class MobApplicableItemTable
             res = res || this.tags.stream().anyMatch(itemStack::is);
             // The item must meet both criteria defined by predicates if present
             if (registeredPredicate != null)
-                res = res && registeredPredicate.getB().test(itemStack);
+                res = res && registeredPredicate.getB().applySimple(itemStack);
             if (unparseablePredicate != null)
                 res = res && unparseablePredicate.test(itemStack);
             return res;
         }
 
-        public void setRegisteredPredicate(Tuple2<ResourceLocation, RegistrablePredicate<ItemStack>> registeredPredicate) {
-            this.registeredPredicate = registeredPredicate;
+        public void setRegisteredPredicate(@Nonnull ResourceLocation key, @Nonnull NFUOperator<ItemStack, Boolean> registeredPredicate) {
+            this.registeredPredicate = new Tuple2<>(key, registeredPredicate);
         }
 
         public List<Item> getAllUsableItems() {
@@ -339,7 +344,7 @@ public class MobApplicableItemTable
             Collection<Item> allItemsToTest = this.items.isEmpty() && this.tags.isEmpty() ?
                 ForgeRegistries.ITEMS.getValues() : getAllItemsAndTags();
             this.allItemsCache = allItemsToTest.stream().filter(i -> {
-                if (registeredPredicate != null && !registeredPredicate.getB().test(i.getDefaultInstance()))
+                if (registeredPredicate != null && !registeredPredicate.getB().applySimple(i.getDefaultInstance()))
                     return false;
                 else if (unparseablePredicate != null && !unparseablePredicate.test(i.getDefaultInstance()))
                     return false;
@@ -356,7 +361,7 @@ public class MobApplicableItemTable
             return this.tags.stream().toList();
         }
 
-        public Optional<Tuple2<ResourceLocation, RegistrablePredicate<ItemStack>>> getRegistrablePredicateCriterion() {
+        public Optional<Tuple2<ResourceLocation, NFUOperator<ItemStack, Boolean>>> getRegistrablePredicateCriterion() {
             return Optional.ofNullable(this.registeredPredicate);
         }
 
@@ -516,7 +521,7 @@ public class MobApplicableItemTable
 		public void read()
 		{
 			if (builder == null || location == null) return;
-			MinecraftServer server = NFULibrary.getServer();
+			MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
 			if (server == null) return;
 			ResourceManager mgr = server.getResourceManager();
 			List<Resource> resources = mgr.getResourceStack(location);
@@ -544,7 +549,7 @@ public class MobApplicableItemTable
 		private final double singleNumber;  // If invalid, use NaN.
 		private final RangedRandomDouble range;
 		private final RandomSelection<Double> randomSelection;
-		private final Tuple2<ResourceLocation, RegistrableFunction<Mob, Double>> registered;
+		private final Tuple2<ResourceLocation, NFUOperator<Mob, Double>> registered;
 		private final Function<Mob, Double> unparseableFunction;
 
 		private DoubleValueProvider(
@@ -558,10 +563,12 @@ public class MobApplicableItemTable
 			this.range = range;
 			this.randomSelection = randomSelection;
 			this.registered = Optional.ofNullable(functionKey)
-				.flatMap(k -> NFURegistries.FUNCTIONS.getOptionalValue(k)
-					.flatMap(f -> f.castTypes(Mob.class, Double.class))
+				.flatMap(k -> NFURegistries.OPERATORS.getOptionalValue(k)
+					.map(f -> f.castSubjectAndResultClasses(Mob.class, Double.class))
 					.map(f -> Tuple2.of(k, f)))
 				.orElse(null);
+            if (this.registered != null && this.registered.getB() != null && !this.registered.getB().isSimpleFunction())
+                throw new IllegalArgumentException(functionKey + " is not a simple function.");
 			this.unparseableFunction = unparseableFunction;
 		}
 
@@ -609,7 +616,7 @@ public class MobApplicableItemTable
 			return Optional.ofNullable(randomSelection);
 		}
 
-		public Optional<Tuple2<ResourceLocation, RegistrableFunction<Mob, Double>>> getAsRegisteredFunction() {
+		public Optional<Tuple2<ResourceLocation, NFUOperator<Mob, Double>>> getAsRegisteredFunction() {
 			if (!isValid()) return Optional.empty();
 			return Optional.ofNullable(registered);
 		}
@@ -625,7 +632,7 @@ public class MobApplicableItemTable
 			if (!Double.isNaN(this.singleNumber)) return this.singleNumber;
 			if (range != null) return range.getValue(mob.getRandom());
 			if (randomSelection != null) return randomSelection.select(mob.getRandom());
-			if (registered != null) return registered.getB().apply(mob);
+			if (registered != null) return registered.getB().applySimple(mob);
 			if (unparseableFunction != null) return unparseableFunction.apply(mob);
 			return 0d;
 		}
@@ -640,7 +647,7 @@ public class MobApplicableItemTable
 		private final Optional<Integer> singleNumber;
 		private final RangedRandomInt range;
 		private final RandomSelection<Integer> randomSelection;
-		private final Tuple2<ResourceLocation, RegistrableFunction<Mob, Integer>> registered;
+		private final Tuple2<ResourceLocation, NFUOperator<Mob, Integer>> registered;
 		private final Function<Mob, Integer> unparseableFunction;
 
 		private IntValueProvider(
@@ -654,10 +661,12 @@ public class MobApplicableItemTable
 			this.range = range;
 			this.randomSelection = randomSelection;
 			this.registered = Optional.ofNullable(functionKey)
-				.flatMap(k -> NFURegistries.FUNCTIONS.getOptionalValue(k)
-					.flatMap(f -> f.castTypes(Mob.class, Integer.class))
+				.flatMap(k -> NFURegistries.OPERATORS.getOptionalValue(k)
+					.map(f -> f.castSubjectAndResultClasses(Mob.class, Integer.class))
 					.map(f -> Tuple2.of(k, f)))
 				.orElse(null);
+            if (this.registered != null && this.registered.getB() != null && !this.registered.getB().isSimpleFunction())
+                throw new IllegalArgumentException(functionKey + " is not a simple function.");
 			this.unparseableFunction = unparseableFunction;
 		}
 
@@ -705,7 +714,7 @@ public class MobApplicableItemTable
 			return Optional.ofNullable(randomSelection);
 		}
 
-		public Optional<Tuple2<ResourceLocation, RegistrableFunction<Mob, Integer>>> getAsRegisteredFunction() {
+		public Optional<Tuple2<ResourceLocation, NFUOperator<Mob, Integer>>> getAsRegisteredFunction() {
 			if (!isValid()) return Optional.empty();
 			return Optional.ofNullable(registered);
 		}
@@ -721,7 +730,7 @@ public class MobApplicableItemTable
 			if (this.singleNumber.isPresent()) return this.singleNumber.get();
 			if (range != null) return range.getValue(mob.getRandom());
 			if (randomSelection != null) return randomSelection.select(mob.getRandom());
-			if (registered != null) return registered.getB().apply(mob);
+			if (registered != null) return registered.getB().applySimple(mob);
 			if (unparseableFunction != null) return unparseableFunction.apply(mob);
 			return 0;
 		}

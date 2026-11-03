@@ -10,9 +10,7 @@ import net.sodiumzh.nfu.entity.component.EntityComponentType;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListing;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListingCollection;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeRegistry;
-import net.sodiumzh.nfu.function.RegistrableFunction;
-import net.sodiumzh.nfu.function.RegistrablePredicate;
-import net.sodiumzh.nfu.function.DataDrivenVarargOperator;
+import net.sodiumzh.nfu.function.NFUOperator;
 import net.sodiumzh.nfu.object.NFUJsonParser;
 import net.sodiumzh.nfu.item.bauble.IBaubleRegistryEntry;
 import net.sodiumzh.nfu.math.IFieldPattern3D;
@@ -44,8 +42,8 @@ public class NFURegistries {
     public static final NFURegistry<NFUJsonParser<?>> JSON_PARSERS =
         new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "json_parsers"));
 
-    public static final NFURegistry<DataDrivenVarargOperator<?, ?>> OPERATORS =
-        new NFURegistry<DataDrivenVarargOperator<?, ?>>(new ResourceLocation(NFULibrary.MOD_ID, "operators"))
+    public static final NFURegistry<NFUOperator<?, ?>> OPERATORS =
+        new NFURegistry<NFUOperator<?, ?>>(new ResourceLocation(NFULibrary.MOD_ID, "operators"))
             .setLoadAfter(JSON_PARSERS);
 
     /**

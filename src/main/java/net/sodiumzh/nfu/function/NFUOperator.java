@@ -21,15 +21,15 @@ import java.util.function.Predicate;
  * @param <S> Operator subject type.
  * @param <R> Operator result type.
  */
-public class DataDrivenVarargOperator<S, R> implements BiFunction<S, Map<String, Object>, R> {
+public class NFUOperator<S, R> implements BiFunction<S, Map<String, Object>, R> {
 
     private final BiFunction<S, Map<String, Object>, R> function;
     private final Map<String, NFUJsonParser<?>> argParserMap;
     private final Class<S> subjectClass;
     private final Class<R> resultClass;
 
-    public DataDrivenVarargOperator(Class<S> subjectClass, Class<R> resultClass, Map<String, NFUJsonParser<?>> argParserMap,
-                                    BiFunction<S, Map<String, Object>, R> function) {
+    public NFUOperator(Class<S> subjectClass, Class<R> resultClass, Map<String, NFUJsonParser<?>> argParserMap,
+                       BiFunction<S, Map<String, Object>, R> function) {
         this.subjectClass = subjectClass;
         this.resultClass = resultClass;
         this.argParserMap = Map.copyOf(argParserMap);
@@ -38,17 +38,26 @@ public class DataDrivenVarargOperator<S, R> implements BiFunction<S, Map<String,
             throw new IllegalArgumentException("\"operator\" are \"function\" are reserved keywords, and cannot be used as an argument name.");
     }
 
-    public static <S, T> DataDrivenVarargOperator<S, T> simpleFunction(Class<S> subjectClass, Class<T> resultClass, Function<S, T> function) {
-        return new DataDrivenVarargOperator<>(subjectClass, resultClass, Map.of(), (s, m) -> function.apply(s));
+    /**
+     * Create a simple function without args.
+     */
+    public static <S, T> NFUOperator<S, T> simpleFunction(Class<S> subjectClass, Class<T> resultClass, Function<S, T> function) {
+        return new NFUOperator<>(subjectClass, resultClass, Map.of(), (s, m) -> function.apply(s));
     }
 
-    public static <S> DataDrivenVarargOperator<S, Boolean> predicate(Class<S> subjectClass, Map<String, NFUJsonParser<?>> argParserMap,
-                                                                     BiPredicate<S, Map<String, Object>> predicate) {
-        return new DataDrivenVarargOperator<>(subjectClass, Boolean.class, argParserMap, predicate::test);
+    /**
+     * Create a predicate (boolean-valued function) with varargs.
+     */
+    public static <S> NFUOperator<S, Boolean> predicate(Class<S> subjectClass, Map<String, NFUJsonParser<?>> argParserMap,
+                                                        BiPredicate<S, Map<String, Object>> predicate) {
+        return new NFUOperator<>(subjectClass, Boolean.class, argParserMap, predicate::test);
     }
 
-    public static <S> DataDrivenVarargOperator<S, Boolean> simplePredicate(Class<S> subjectClass, Predicate<S> predicate) {
-        return new DataDrivenVarargOperator<>(subjectClass, Boolean.class, Map.of(), (s, map) -> predicate.test(s));
+    /**
+     * Create a simple predicate without args.
+     */
+    public static <S> NFUOperator<S, Boolean> simplePredicate(Class<S> subjectClass, Predicate<S> predicate) {
+        return new NFUOperator<>(subjectClass, Boolean.class, Map.of(), (s, map) -> predicate.test(s));
     }
 
     private Map<String, Object> parseArgs(JsonElement data) {
@@ -72,6 +81,9 @@ public class DataDrivenVarargOperator<S, R> implements BiFunction<S, Map<String,
         return res;
     }
 
+    /**
+     * Apply the operator with an argument map.
+     */
     @Override
     public R apply(S subject, Map<String, Object> args) {
         try {
@@ -82,6 +94,13 @@ public class DataDrivenVarargOperator<S, R> implements BiFunction<S, Map<String,
             LogUtils.getLogger().error("Data-driven operator " + this.getRegistryKeyString() + " invocation failed. Return null.", e);
             return null;
         }
+    }
+
+    /**
+     * Apply the operator with all arguments null. Mainly for invoking simple functions.
+     */
+    public R applySimple(S subject) {
+        return this.apply(subject, Map.of());
     }
 
     private R applyUnsafe(Object subject, Map<String, Object> args) {
@@ -133,7 +152,7 @@ public class DataDrivenVarargOperator<S, R> implements BiFunction<S, Map<String,
         try {
             if (json.isJsonPrimitive()) {
                 ResourceLocation operatorKey = NFUResourceLocation.of(json.getAsString());
-                DataDrivenVarargOperator<?, ?> operator = NFURegistries.OPERATORS.getOptionalValue(operatorKey)
+                NFUOperator<?, ?> operator = NFURegistries.OPERATORS.getOptionalValue(operatorKey)
                     .orElseThrow(() -> new IllegalArgumentException("Missing operator"));
                 return operator.applyUnsafe(subject, Map.of());
             } else if (json.isJsonObject()) {
@@ -144,7 +163,7 @@ public class DataDrivenVarargOperator<S, R> implements BiFunction<S, Map<String,
                 if (operatorKeyString == null)
                     throw new IllegalArgumentException("Missing operator");
                 ResourceLocation operatorKey = NFUResourceLocation.of(operatorKeyString);
-                DataDrivenVarargOperator<?, ?> operator = NFURegistries.OPERATORS.getValue(operatorKey);
+                NFUOperator<?, ?> operator = NFURegistries.OPERATORS.getValue(operatorKey);
                 if (operator == null) throw new IllegalArgumentException("Missing operator");
                 return operator.applyByDataUnsafe(subject, json);
             } else throw new IllegalArgumentException("Illegal json format for operator invocation.");
@@ -165,4 +184,32 @@ public class DataDrivenVarargOperator<S, R> implements BiFunction<S, Map<String,
     private String getRegistryKeyString() {
         return NFURegistries.OPERATORS.getOptionalKey(this).map(ResourceLocation::toString).orElse("(MISSING)");
     }
+
+    /**
+     * Cast the subject generic class to the given if compatible. Null if not compatible.
+     */
+    public <S1> NFUOperator<S1, R> castSubjectClass(Class<S1> castSubjectClass) {
+        if (this.subjectClass.isAssignableFrom(castSubjectClass))
+            return (NFUOperator<S1, R>)this;
+        else return null;
+    }
+
+    /**
+     * Cast the result generic class to the given if compatible. Null if not compatible.
+     */
+    public <R1> NFUOperator<S, R1> castResultClass(Class<R1> castResultClass) {
+        if (this.resultClass.isAssignableFrom(castResultClass))
+            return (NFUOperator<S, R1>)this;
+        else return null;
+    }
+
+    /**
+     * Cast the subject and result generic class to the given if compatible. Null if not compatible.
+     */
+    public <S1, R1> NFUOperator<S1, R1> castSubjectAndResultClasses(Class<S1> castSubjectClass, Class<R1> castResultClass) {
+        if (this.subjectClass.isAssignableFrom(castSubjectClass) && this.resultClass.isAssignableFrom(castResultClass))
+            return (NFUOperator<S1, R1>)this;
+        else return null;
+    }
+
 }
