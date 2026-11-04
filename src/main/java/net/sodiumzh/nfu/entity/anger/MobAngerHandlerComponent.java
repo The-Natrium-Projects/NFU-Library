@@ -114,7 +114,7 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
         if (!angerList.containsKey(target.getUUID())) {
             angerList.put(target.getUUID(), forgivingTicks);
             return true;
-        } else if (forgivingTicks < 0 || forgivingTicks > angerList.get(target.getUUID())) {
+        } else if (forgivingTicks < 0 || (forgivingTicks > angerList.get(target.getUUID()) && angerList.get(target.getUUID()) >= 0)) {
             angerList.put(target.getUUID(), forgivingTicks);
             return true;
         }
