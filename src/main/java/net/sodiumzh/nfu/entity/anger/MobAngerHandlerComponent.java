@@ -41,9 +41,10 @@ public class MobAngerHandlerComponent extends EntityComponentBase<Mob> {
     @Override
     public void tick() {
         angerList.entrySet().stream().toList().forEach(entry -> {
-            if (entry.getValue() <= 0)
+            if (entry.getValue() == 0)
                 this.tempRemoval.add(entry.getKey());
-            else angerList.put(entry.getKey(), entry.getValue() - 1);
+            else if (entry.getValue() > 0)
+                angerList.put(entry.getKey(), entry.getValue() - 1);
         });
         this.tempRemoval.forEach(k -> {
             angerList.remove(k);

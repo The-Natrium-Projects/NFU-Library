@@ -36,9 +36,14 @@ public class MobAngerEventListeners {
                     }
                     else {
                         c.setAngryAt(src, event.getAmount() > c.getDamageThreshold() ? MobAngerReason.ATTACKED.get() : MobAngerReason.HIT.get());
-                        c.setAngryAt(event.getEntity(), event.getAmount() > c.getDamageThreshold() ? MobAngerReason.ATTACKING.get() : MobAngerReason.HITTING.get());
                     }
                 });
+            if (!event.getSource().is(DamageTypes.THORNS) && event.getSource().getEntity() != null) {
+                MobAngerHandlerComponent.getAllAngerHandlers(event.getEntity())
+                    .forEach(c -> {
+                        c.setAngryAt(event.getEntity(), event.getAmount() > c.getDamageThreshold() ? MobAngerReason.ATTACKING.get() : MobAngerReason.HITTING.get());
+                    });
+            }
         }
     }
 }
