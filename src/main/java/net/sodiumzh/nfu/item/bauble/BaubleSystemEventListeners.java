@@ -3,10 +3,15 @@ package net.sodiumzh.nfu.item.bauble;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.annotation.DontCallManually;
 import net.sodiumzh.nfu.mixin.event.entity.EntityCapabilityFinishLoadingEvent;
@@ -15,6 +20,20 @@ import net.sodiumzh.nfu.mixin.event.entity.EntityLoadEvent;
 @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 class BaubleSystemEventListeners
 {
+
+	@SubscribeEvent
+	public static void baubleSystemSetup(ServerStartingEvent event)
+	{
+		BaubleRegistries.clearAll();
+		MinecraftForge.EVENT_BUS.post(new RegisterBaublesEvent());
+		BaubleRegistries.clearAndFillRegistries();
+		MinecraftForge.EVENT_BUS.post(new ModifyBaubleRegistriesEvent());
+		BaubleRegistries.sortSingleRegistry();
+		MinecraftForge.EVENT_BUS.post(new RegisterBaubleEquippableMobsEvent());
+		MinecraftForge.EVENT_BUS.post(new ModifyBaubleEquippableMobsEvent());
+		BaubleRegistries.sortSingleRegistry();
+		MinecraftForge.EVENT_BUS.post(new FinalizeBaubleRegisterEvent());
+	}
 
 	@SubscribeEvent
 	public static void attachLivingEntityCapabilities(AttachCapabilitiesEvent<Entity> event)

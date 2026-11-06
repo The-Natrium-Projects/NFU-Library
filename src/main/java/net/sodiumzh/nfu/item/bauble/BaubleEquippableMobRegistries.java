@@ -23,7 +23,7 @@ class BaubleEquippableMobRegistries
 
 	/**
 	 * Values: 
-	 * <p>predicate - mob condition for having this slot; 
+	 * <p>predicate - mob equippingCondition for having this slot;
 	 * <p>function - ItemStack accessor; 
 	 * <p>boolean - is special; 
 	 * <p>set - only if special, items that can be equipped in. For non-special, it's null
@@ -46,7 +46,7 @@ class BaubleEquippableMobRegistries
 	}
 	
 	/**
-	 * Register a mob bauble slot with a condition for the mob instance. 
+	 * Register a mob bauble slot with a equippingCondition for the mob instance.
 	 */
 	static <T extends Mob> void registerConditionalSlot(EntityType<? extends T> mobType, Class<T> mobClass,
 														String slotKey, Predicate<Mob> condition,
@@ -65,7 +65,7 @@ class BaubleEquippableMobRegistries
 	}
 	
 	/**
-	 * Register a mob bauble slot without condition for the mob instance i.e. for all instances of this mob class. 
+	 * Register a mob bauble slot without equippingCondition for the mob instance i.e. for all instances of this mob class.
 	 */
 	static <T extends Mob> void registerGeneralSlot(EntityType<? extends T> mobType, Class<T> mobClass,
 													String slotKey, Function<Mob, ItemStack> accessor)
@@ -74,7 +74,7 @@ class BaubleEquippableMobRegistries
 	}
 	
 	/**
-	 * Register a mob special bauble slot with a condition for the mob instance. 
+	 * Register a mob special bauble slot with a equippingCondition for the mob instance.
 	 * (Special slot: a slot that's unable to equip anything unless Bauble registry entries are manually registered)
 	 */
 	static <T extends Mob> void registerConditionalSpecialSlot(EntityType<? extends T> mobType, Class<T> mobClass,
@@ -93,7 +93,7 @@ class BaubleEquippableMobRegistries
 	}
 	
 	/**
-	 * Register a mob special bauble slot without condition for the mob instance i.e. for all instances of this mob class.
+	 * Register a mob special bauble slot without equippingCondition for the mob instance i.e. for all instances of this mob class.
 	 * (Special slot: a slot that's unable to equip anything unless Bauble registry entries are manually registered) 
 	 */
 	static <T extends Mob> void registerGeneralSpecialSlot(EntityType<? extends T> mobType, Class<T> mobClass,

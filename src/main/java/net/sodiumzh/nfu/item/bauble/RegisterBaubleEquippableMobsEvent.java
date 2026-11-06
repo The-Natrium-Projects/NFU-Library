@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class RegisterBaubleEquippableMobsEvent extends Event implements IModBusEvent
+public class RegisterBaubleEquippableMobsEvent extends Event
 {
 
 	/**
@@ -37,7 +37,7 @@ public class RegisterBaubleEquippableMobsEvent extends Event implements IModBusE
 		}
 		
 		/**
-		 * Add a slot only for mobs satisfying the condition in the class.
+		 * Add a slot only for mobs satisfying the equippingCondition in the class.
 		 * @param condition Condition for the mob to have this slot.
 		 */
 		public SlotRegisterer<T> addConditionalSlot(String key, Predicate<Mob> condition, Function<Mob, ItemStack> accessor)
@@ -56,7 +56,7 @@ public class RegisterBaubleEquippableMobsEvent extends Event implements IModBusE
 		}
 		
 		/**
-		 * Add a special slot only for mobs satisfying the condition in the class. A special slot is a slot that doesn't accept any baubles unless manually registered.
+		 * Add a special slot only for mobs satisfying the equippingCondition in the class. A special slot is a slot that doesn't accept any baubles unless manually registered.
 		 * @param condition Condition for the mob to have this slot.
 		 */
 		public SpecialSlotRegisterer<T> addConditionalSpecialSlot(String key, Predicate<Mob> condition, Function<Mob, ItemStack> accessor)

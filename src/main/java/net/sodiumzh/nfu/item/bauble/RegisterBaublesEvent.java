@@ -6,7 +6,7 @@ import net.minecraftforge.fml.event.IModBusEvent;
 /**
  * Fired on registering bauble items. Bauble items are only allowed to register here.
  */
-public class RegisterBaublesEvent extends Event implements IModBusEvent
+public class RegisterBaublesEvent extends Event
 {
 	public void register(IBaubleRegistryEntry entry)
 	{

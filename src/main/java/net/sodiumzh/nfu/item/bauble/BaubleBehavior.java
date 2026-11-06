@@ -28,7 +28,7 @@ public abstract class BaubleBehavior implements IBaubleRegistryEntry
 			BaubleEquippingCondition equippingCondition)
 	{
 		if ((item == null && multiItemCondition == null) || (item != null && multiItemCondition != null))
-			throw new IllegalArgumentException("BaubleBehavior: item and multi-item condition must be either but not both non-null.");
+			throw new IllegalArgumentException("BaubleBehavior: item and multi-item equippingCondition must be either but not both non-null.");
 		this.item = item;
 		this.multiItemCondition = multiItemCondition;
 		this.key = key;

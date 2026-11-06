@@ -30,7 +30,7 @@ public interface IBaubleRegistryEntry
 
 	/**
 	 * Modify this <b>ONLY</b> when trying to add a series of items (defined by predicate, e.g. all pickaxes) as bauble.
-	 * <p>Every such entry will increase the resource cost <b>on tick</b> because the condition check must be performed every tick on every item,
+	 * <p>Every such entry will increase the resource cost <b>on tick</b> because the equippingCondition check must be performed every tick on every item,
 	 * so keep it null unless necessary.
 	 */
 	@Nullable
@@ -61,7 +61,7 @@ public interface IBaubleRegistryEntry
 	}
 	
 	/**
-	 * The overall condition if this bauble should be equippable and apply effect.
+	 * The overall equippingCondition if this bauble should be equippable and apply effect.
 	 */
 	@Nonnull
 	public BaubleEquippingCondition getEquippingCondition();

@@ -11,7 +11,7 @@ import java.util.function.BiPredicate;
 
 /**
  * A {@code ClonedBaubleBehavior} is a {@link BaubleBehavior} of which all behaviors are copied from another {@link IBaubleRegistryEntry},
- * but having its own {@code Item} target, equipping condition and registry key.
+ * but having its own {@code Item} target, equipping equippingCondition and registry key.
  * It's used to copy a registry entry behavior to other baubles, or extend a registry entry for other type of equippers that cannot 
  * be defined by extending its {@code BaubleEquippingCondition}.
  */

@@ -18,7 +18,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 {
 
 	/**
-	 * Predicate for directly checking the condition.
+	 * Predicate for directly checking the equippingCondition.
 	 */
 	private Predicate<BaubleProcessingArgs> conditionPredicate;
 	// A string name for display in debug page. Optional.
@@ -34,7 +34,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Create a condition with an existing predicate. 
+	 * Create a equippingCondition with an existing predicate.
 	 */
 	public static BaubleEquippingCondition of(Predicate<BaubleProcessingArgs> predicate)
 	{
@@ -42,7 +42,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 
 	/**
-	 * Create a new condition that is always true.
+	 * Create a new equippingCondition that is always true.
 	 */
 	private static BaubleEquippingCondition always()
 	{
@@ -50,7 +50,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 
 	/**
-	 * Create a condition only for a given mob type.
+	 * Create a equippingCondition only for a given mob type.
 	 */
 	public static BaubleEquippingCondition forMob(EntityType<? extends Mob> type)
 	{
@@ -58,7 +58,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Create a condition only for a given mob type.
+	 * Create a equippingCondition only for a given mob type.
 	 */
 	@SafeVarargs
 	public static BaubleEquippingCondition forMobs(EntityType<? extends Mob>... types)
@@ -67,7 +67,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Create a condition only for subclass of a given class/interface.
+	 * Create a equippingCondition only for subclass of a given class/interface.
 	 */
 	public static BaubleEquippingCondition forSubclassOf(Class<?> clazz)
 	{
@@ -75,9 +75,9 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Create a depending copy of given condition without direct access of the internal predicate.
-	 * <p>Note: If this condition is modified, the created dependent will also change;
-	 * but modifying the dependent will not affect this condition.
+	 * Create a depending copy of given equippingCondition without direct access of the internal predicate.
+	 * <p>Note: If this equippingCondition is modified, the created dependent will also change;
+	 * but modifying the dependent will not affect this equippingCondition.
 	 */
 	public BaubleEquippingCondition createDependent()
 	{
@@ -85,9 +85,9 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Create a depending copy of given condition without direct access of the internal predicate.
-	 * <p>Note: If the source condition is modified, the created dependent will also change;
-	 * but modifying the dependent will not affect the source condition.
+	 * Create a depending copy of given equippingCondition without direct access of the internal predicate.
+	 * <p>Note: If the source equippingCondition is modified, the created dependent will also change;
+	 * but modifying the dependent will not affect the source equippingCondition.
 	 */
 	public static BaubleEquippingCondition createDependent(BaubleEquippingCondition from)
 	{
@@ -95,8 +95,8 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Add an AND condition to THIS condition instance.
-	 * <p>Note: this will modify current predicate. To make OR condition, create a new condition instance.
+	 * Add an AND equippingCondition to THIS equippingCondition instance.
+	 * <p>Note: this will modify current predicate. To make OR equippingCondition, create a new equippingCondition instance.
 	 */
 	public BaubleEquippingCondition setAnd(Predicate<BaubleProcessingArgs> other)
 	{
@@ -106,7 +106,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 
 	/**
-	 * Create a NEW condition instance with AND operation of this and input conditions.
+	 * Create a NEW equippingCondition instance with AND operation of this and input conditions.
 	 */
 	@Nonnull
 	@Override
@@ -115,7 +115,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 
 	/**
-	 * Create a NEW condition instance with OR operation of this and input conditions.
+	 * Create a NEW equippingCondition instance with OR operation of this and input conditions.
 	 */
 	@Nonnull
 	@Override
@@ -124,7 +124,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 
 	/**
-	 * Create a NEW condition instance negating this condition.
+	 * Create a NEW equippingCondition instance negating this equippingCondition.
 	 */
 	@Nonnull
 	@Override
@@ -133,7 +133,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 
 	/**
-	 * Create a NEW condition instance with XOR operation of this and input conditions.
+	 * Create a NEW equippingCondition instance with XOR operation of this and input conditions.
 	 */
 	@Nonnull
 	public BaubleEquippingCondition xor(Predicate<? super BaubleProcessingArgs> other) {
@@ -173,7 +173,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Add a condition only checked for a specific type but skipped for other types.
+	 * Add a equippingCondition only checked for a specific type but skipped for other types.
 	 */
 	public BaubleEquippingCondition addConditonForType(EntityType<? extends Mob> type, Predicate<BaubleProcessingArgs> condition)
 	{
@@ -189,7 +189,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Make this condition only allow given type.
+	 * Make this equippingCondition only allow given type.
 	 */
 	public BaubleEquippingCondition onlyForType(EntityType<? extends Mob> type)
 	{
@@ -197,7 +197,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Make this condition only allow given types.
+	 * Make this equippingCondition only allow given types.
 	 */
 	public BaubleEquippingCondition onlyForTypes(EntityType<? extends Mob>... types)
 	{
@@ -205,7 +205,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Make this condition only allow subclasses of given class.
+	 * Make this equippingCondition only allow subclasses of given class.
 	 */
 	public BaubleEquippingCondition onlyForSubclassOf(Class<?> clazz)
 	{
@@ -213,7 +213,7 @@ public class BaubleEquippingCondition implements Predicate<BaubleProcessingArgs>
 	}
 	
 	/**
-	 * Make this condition only allow a given slot of a given type.
+	 * Make this equippingCondition only allow a given slot of a given type.
 	 */
 	public BaubleEquippingCondition onlyForSlotOfType(EntityType<? extends Mob> type, String key)
 	{

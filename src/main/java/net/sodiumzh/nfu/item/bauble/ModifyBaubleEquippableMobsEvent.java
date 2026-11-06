@@ -7,7 +7,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.event.IModBusEvent;
 
-public class ModifyBaubleEquippableMobsEvent extends Event implements IModBusEvent
+public class ModifyBaubleEquippableMobsEvent extends Event
 {
 
 	/**

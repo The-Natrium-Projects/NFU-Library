@@ -84,10 +84,6 @@ public class NFURegistries {
     public static final NFURegistry<EntityAttributeProvider> ENTITY_ATTRIBUTE_PROVIDERS =
             new NFURegistry<EntityAttributeProvider>(new ResourceLocation(NFULibrary.MOD_ID, "entity_attribute_providers"));
 
-    public static final NFURegistry<IBaubleRegistryEntry> BAUBLES =
-        new NFURegistry<IBaubleRegistryEntry>(new ResourceLocation(NFULibrary.MOD_ID, "baubles"))
-            .setLoadAfter(ENTITY_ATTRIBUTE_PROVIDERS);
-
     /**
      * A shortcut to {@link IInequalityPattern3D#REGISTRY}.
      */

@@ -29,7 +29,7 @@ public class BaubleAttributeModifier
 	/** Attribute to modify. */
 	private final Attribute attribute;
 	
-	/** Additional condition to apply this modifier. Null = always true. */
+	/** Additional equippingCondition to apply this modifier. Null = always true. */
 	@Nullable
 	private Predicate<BaubleProcessingArgs> additionalCondition = null;
 
@@ -37,7 +37,7 @@ public class BaubleAttributeModifier
 	 * This optional additional ID is for checking identity on handling unrepeatable modifiers. Modifiers
 	 * with the same identifier will be applied only once, even if they are from different types of
 	 * baubles. Ignored in repeatable modifiers.
-	 * <p>Note: Modifiers sharing the same ID must be of the same type (same attribute, operation and condition,
+	 * <p>Note: Modifiers sharing the same ID must be of the same type (same attribute, operation and equippingCondition,
 	 * and only varying on amount)
 	 */
 	@Nullable
