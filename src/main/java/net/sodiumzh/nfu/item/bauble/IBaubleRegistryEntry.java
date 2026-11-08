@@ -5,9 +5,12 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.sodiumzh.nfu.annotation.DontOverride;
+import net.sodiumzh.nfu.container.CastableMap;
+import net.sodiumzh.nfu.object.CastableObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Map;
 import java.util.function.BiPredicate;
 
 /**
@@ -111,7 +114,14 @@ public interface IBaubleRegistryEntry
 	 */
 	@Nullable
 	public BaubleAttributeModifier[] getRepeatableModifiers(BaubleProcessingArgs args);
-	
+
+	/**
+	 * Gets additional metadata map for this entry.
+	 * <p>The returned map must be <b>modifiable</b>. {@code getMetaDataMap().put(...)} should be a valid syntax.
+	 */
+	@Nonnull
+	public CastableMap<String, Object> getMetaDataMap();
+
 	// Utilities
 	
 	/**
