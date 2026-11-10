@@ -31,11 +31,9 @@ public class ModifyBaubleRegistriesEvent extends Event
 	
 	/** Get entry from the Multiple Bauble Registry (i.e. baubles defined by predicates). Null if not found. */
 	@Nullable
-	private static BaubleRegistries.MultiItemBaubleEntry getMultipleEntry(ResourceLocation key)
+	private static BaubleRecord.MultiItem getMultipleEntry(ResourceLocation key)
 	{
-		return BaubleRegistries.MULTIPLE_REGISTRY.stream()
-			.filter(entry -> entry.key().equals(key))
-			.findAny().orElse(null);
+		return BaubleRegistries.MULTIPLE_REGISTRY.get(key);
 	}
 	
 	/**
@@ -92,7 +90,8 @@ public class ModifyBaubleRegistriesEvent extends Event
 		if (multipleEntry != null)
 		{
 			var old = multipleEntry.predicate();
-			BaubleRegistries.MultiItemBaubleEntry newEntry = new BaubleRegistries.MultiItemBaubleEntry(old.or(extendedDefinition), multipleEntry.key(), multipleEntry.bauble(), multipleEntry.equippingCondition());
+			BaubleRecord.MultiItem newEntry = new BaubleRecord.MultiItem (old.or(extendedDefinition), multipleEntry.bauble(), multipleEntry.equippingCondition());
+			BaubleRegistries.MULTIPLE_REGISTRY.put(entryKey, newEntry);
 		}
 		else
 		{
@@ -109,7 +108,8 @@ public class ModifyBaubleRegistriesEvent extends Event
 		if (multipleEntry != null)
 		{
 			var old = multipleEntry.predicate();
-			BaubleRegistries.MultiItemBaubleEntry newEntry = new BaubleRegistries.MultiItemBaubleEntry(old.and(additionalDefinitionCheck), multipleEntry.key(), multipleEntry.bauble(), multipleEntry.equippingCondition());
+			BaubleRecord.MultiItem newEntry = new BaubleRecord.MultiItem(old.and(additionalDefinitionCheck), multipleEntry.bauble(), multipleEntry.equippingCondition());
+			BaubleRegistries.MULTIPLE_REGISTRY.put(entryKey, newEntry);
 		}
 		else
 		{

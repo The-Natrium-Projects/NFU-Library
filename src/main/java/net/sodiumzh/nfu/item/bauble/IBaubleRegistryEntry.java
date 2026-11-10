@@ -6,7 +6,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.sodiumzh.nfu.annotation.DontOverride;
 import net.sodiumzh.nfu.container.CastableMap;
-import net.sodiumzh.nfu.object.CastableObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -20,10 +19,10 @@ public interface IBaubleRegistryEntry
 {
 
 	/**
-	 * ResourceLocation as a unique identifier of this entry.
+	 * ResourceLocation as a unique identifier of this entry. On registration, this key will be the registry key.
 	 */
 	public ResourceLocation getBaubleRegistryKey();
-	
+
 	/**
 	 * The item used as the bauble.
 	 * <p> If using {@code getMultiItemCondition}, set this null, otherwise it won't work.

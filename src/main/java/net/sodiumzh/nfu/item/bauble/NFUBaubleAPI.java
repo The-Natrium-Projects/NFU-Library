@@ -3,16 +3,15 @@ package net.sodiumzh.nfu.item.bauble;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.registry.NFURegistry;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * NFFServices - BaubleSystem is a system for equipping "bauble" items on <b>mobs</b> just like for players in Curios API.
@@ -113,4 +112,32 @@ public class NFUBaubleAPI
 	public static Optional<Class<? extends Mob>> getBaubleEquippableMobType(EntityType<? extends Mob> mobType) {
 		return Optional.ofNullable(BaubleEquippableMobRegistries.getEquippableMobClassByType(mobType));
 	}
+
+	/**
+	 * Get all single-item baubles (i.e. bauble records defined for specific items).
+	 * <p>Note: costly, don't call on tick. To access on tick, use {@link NFUBaubleAPI#getItemKeyedSingleItemBaubles}.
+	 */
+	public static Map<ResourceLocation, BaubleRecord.SingleItem> getSingleItemBaubles() {
+		Map<ResourceLocation, BaubleRecord.SingleItem> res = new HashMap<>();
+		BaubleRegistries.SINGLE_REGISTRY.forEach((item, entryList) -> {
+			entryList.forEach(entry -> res.put(entry.key(), new BaubleRecord.SingleItem(item, entry.priority(), entry.bauble(), entry.equippingCondition())));
+		});
+		return Collections.unmodifiableMap(res);
+	}
+
+	/**
+	 * Get a mapping for single item baubles from each item to its associated bauble entries. This operation is
+	 * faster than {@link NFUBaubleAPI#getSingleItemBaubles} and is preferred for calling on tick.
+	 */
+	public static Map<Item, List<BaubleRegistries.SingleItemBaubleEntry>> getItemKeyedSingleItemBaubles() {
+		return Collections.unmodifiableMap(BaubleRegistries.SINGLE_REGISTRY);
+	}
+
+	/**
+	 * Get all multi-item baubles (i.e. bauble records for multiple items defied by predicates).
+	 */
+	public static Map<ResourceLocation, BaubleRecord.MultiItem> getMultiItemBaubles() {
+		return Collections.unmodifiableMap(BaubleRegistries.MULTIPLE_REGISTRY);
+	}
+
 }

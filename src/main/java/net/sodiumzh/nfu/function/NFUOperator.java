@@ -2,6 +2,7 @@ package net.sodiumzh.nfu.function;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.sodiumzh.nfu.object.NFUJsonParser;
@@ -36,7 +37,7 @@ public class NFUOperator<S, R> implements BiFunction<S, Map<String, Object>, R> 
         this.argParserMap = Map.copyOf(argParserMap);
         this.function = function;
         if (argParserMap.containsKey("operator") || argParserMap.containsKey("function"))
-            throw new IllegalArgumentException("\"operator\" are \"function\" are reserved keywords, and cannot be used as an argument name.");
+            throw new IllegalArgumentException("\"operator\" and \"function\" are reserved keywords, and cannot be used as an argument name.");
     }
 
     /**
@@ -152,15 +153,18 @@ public class NFUOperator<S, R> implements BiFunction<S, Map<String, Object>, R> 
 
     /**
      * Parse a json element describing an operator and its argument map, and output as a function.
+     * <p>The operator's input and output classes must be subclasses of the argument classes. Mismatching = return null.
      */
     @Nullable
-    public static Function<Object, Object> getOperatorAsFunctionByData(JsonElement json) {
+    public static <T, R> Function<T, R> getOperatorAsFunctionByData(JsonElement json, Class<T> inClass, Class<R> resultClass) {
         try {
             if (json.isJsonPrimitive()) {
                 ResourceLocation operatorKey = NFUResourceLocation.of(json.getAsString());
                 NFUOperator<?, ?> operator = NFURegistries.OPERATORS.getOptionalValue(operatorKey)
-                    .orElseThrow(() -> new IllegalArgumentException("Missing operator"));
-                return subject -> operator.applyUnsafe(subject, Map.of());
+                    .orElseThrow(() -> new JsonParseException("Missing operator " + operatorKey));
+                if (inClass.isAssignableFrom(operator.subjectClass) && resultClass.isAssignableFrom(operator.resultClass))
+                    return subject -> (R)(operator.applyUnsafe(subject, Map.of()));
+                else return null;
             } else if (json.isJsonObject()) {
                 JsonObject jo = json.getAsJsonObject();
                 // Get operator
@@ -169,12 +173,14 @@ public class NFUOperator<S, R> implements BiFunction<S, Map<String, Object>, R> 
                     operatorKeyString = jo.get("operator").getAsString();
                 else if (jo.has("function"))
                     operatorKeyString = jo.get("function").getAsString();
-                else throw new IllegalArgumentException("Missing operator");
+                else throw new IllegalArgumentException("Missing operator " + operatorKeyString);
                 ResourceLocation operatorKey = NFUResourceLocation.of(operatorKeyString);
                 NFUOperator<?, ?> operator = NFURegistries.OPERATORS.getValue(operatorKey);
-                if (operator == null) throw new IllegalArgumentException("Missing operator");
-                // Then invoke
-                return subject -> operator.applyByDataUnsafe(subject, json);
+                if (operator == null) throw new IllegalArgumentException("Missing operator" + operatorKey);
+                // Then create function
+                if (inClass.isAssignableFrom(operator.subjectClass) && resultClass.isAssignableFrom(operator.resultClass))
+                    return subject -> (R)(operator.applyUnsafe(subject, Map.of()));
+                else return null;
             } else throw new IllegalArgumentException("Illegal json format for operator parse.");
         } catch (RuntimeException e) {
             LogUtils.getLogger().error("Data-driven operator parse failed. Return null.", e);
@@ -182,17 +188,33 @@ public class NFUOperator<S, R> implements BiFunction<S, Map<String, Object>, R> 
         }
     }
 
+
+    /**
+     * Parse a json element describing an operator and its argument map, and output as a function.
+     */
+    @Nullable
+    public static Function<Object, Object> getOperatorAsFunctionByData(JsonElement json) {
+        return getOperatorAsFunctionByData(json, Object.class, Object.class);
+    }
+
     /**
      * Parse an operator and its argument map from a json, then apply it to a given subject.
      */
-    public static Object invokeOperatorByData(Object subject, JsonElement json) {
-        Function<Object, Object> function = getOperatorAsFunctionByData(json);
+    public static <T, R> R invokeOperatorByData(T subject, JsonElement json, Class<R> resultClass) {
+        Function<T, R> function = getOperatorAsFunctionByData(json, (Class<T>)(subject.getClass()), resultClass);
         try {
             return function != null ? function.apply(subject) : null;
         } catch (RuntimeException e) {
             LogUtils.getLogger().error("Data-driven operator invocation failed. Return null.", e);
             return null;
         }
+    }
+
+    /**
+     * Parse an operator and its argument map from a json, then apply it to a given subject.
+     */
+    public static Object invokeOperatorByData(Object subject, JsonElement json){
+        return invokeOperatorByData(subject, json, Object.class);
     }
 
     public Class<S> getSubjectClass() {
