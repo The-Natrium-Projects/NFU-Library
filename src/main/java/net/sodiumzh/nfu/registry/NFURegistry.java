@@ -3,10 +3,14 @@ package net.sodiumzh.nfu.registry;
 import com.google.common.collect.HashBiMap;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.util.thread.EffectiveSide;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
+import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.annotation.NotYetImplemented;
 import net.sodiumzh.nfu.exception.DuplicateRegistryEntryException;
 import net.sodiumzh.nfu.exception.MissingRegistryEntryException;
@@ -31,10 +35,6 @@ import java.util.function.Supplier;
  */
 public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
 {
-    public static final LimitedMutable<Boolean> COMMON_SETUP_DONE = new LimitedMutable<>(false, 1);
-    public static final LimitedMutable<Boolean> CLIENT_SETUP_DONE = new LimitedMutable<>(false, 1);
-    public static final LimitedMutable<Boolean> SERVER_SETUP_DONE = new LimitedMutable<>(false, 1);
-
     /** Collection of all declared registries. */
     private static final HashBiMap<ResourceLocation, NFURegistry<?>> REGISTRIES = HashBiMap.create();
     private static final Object REGISTRIES_LOCK = new Object(); // For concurrent registry addition
@@ -419,6 +419,19 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         }
     }
 
+    /**
+     * Invoked only on server stop, invalid cached objects, so that they can re-load on next server startup.
+     */
+    @ApiStatus.Internal
+    private synchronized void resetOnServerStop() {
+        if (this.availableSide != AvailableSide.SERVER)
+            throw new UnsupportedOperationException("Non-server-only NFU registries are not allowed to invalidate and reset. Registry: " + this.getKeyOfRegistry());
+        for (Entry<? extends T> entry: this.table.values()) {
+            entry.cachedValue = null;
+        }
+        this.reverseMap = null;
+    }
+
     static class Entry<T>
     {
         private final Supplier<T> supplier;
@@ -577,5 +590,21 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
         }
 
     }
+
+    @Mod.EventBusSubscriber(modid = NFULibrary.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    public static class EventListeners {
+
+        @SubscribeEvent
+        public static void clearOnServerStop(ServerStoppedEvent event) {
+            NFURegistry.allRegistries().values().stream()
+                .filter(reg -> reg.getAvailableSide() == AvailableSide.SERVER)
+                .forEach(NFURegistry::resetOnServerStop);
+        }
+
+
+    }
+
+
+
 
 }

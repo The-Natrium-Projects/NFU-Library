@@ -5,6 +5,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.event.TickEvent.ServerTickEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.sodiumzh.nfu.NFULibrary;
@@ -13,7 +14,9 @@ import net.sodiumzh.nfu.entity.ConditionalAttributeModifier;
 import net.sodiumzh.nfu.mixin.event.entity.EntityStartBaseTickEvent;
 import net.sodiumzh.nfu.mixin.event.entity.EntityStartTickEvent;
 import net.sodiumzh.nfu.mixin.mixin.NFUMixinEntityType;
+import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.object.ServerOnly;
+import net.sodiumzh.nfu.reflection.CachedMethodSearchers;
 import net.sodiumzh.nfu.registry.NFURegistry;
 import net.sodiumzh.nfu.registry.NFURegistryGenerateValuesEvent;
 
@@ -38,7 +41,6 @@ public class NFUServerEventHandlers {
 	@SubscribeEvent
 	public static void onServerStart(ServerStartingEvent event)
 	{
-		NFURegistry.SERVER_SETUP_DONE.trySet(true);
 		List<NFURegistry<?>> shouldGenerate = NFURegistry.allRegistries().values().stream()
 				.filter(reg -> reg.isAvailableOnServer() && reg.getLoadTiming().equals(NFURegistry.LoadTiming.SIDE_SETUP) && !reg.isLoaded())
 				.toList();

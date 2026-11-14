@@ -20,7 +20,6 @@ public class NFUClientSetupEventListeners {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event)
     {
-        NFURegistry.CLIENT_SETUP_DONE.trySet(true);
         List<NFURegistry<?>> shouldGenerate = NFURegistry.allRegistries().values().stream()
                 .filter(reg -> reg.isAvailableOnClient() && reg.getLoadTiming().equals(NFURegistry.LoadTiming.SIDE_SETUP))
                 .toList();

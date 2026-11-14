@@ -30,7 +30,6 @@ public class NFUSetupEventHandlers {
     public static void generateRegistries(FMLCommonSetupEvent event)
     {
         event.enqueueWork(() -> {
-            NFURegistry.COMMON_SETUP_DONE.trySet(true);
             List<NFURegistry<?>> shouldGenerate = NFURegistry.allRegistries().values().stream()
                     .filter(reg -> reg.getLoadTiming().equals(NFURegistry.LoadTiming.COMMON_SETUP))
                     .toList();
