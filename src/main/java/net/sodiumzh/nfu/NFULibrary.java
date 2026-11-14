@@ -21,7 +21,6 @@ import net.sodiumzh.nfu.item.bauble.BaubleEquippingConditions;
 import net.sodiumzh.nfu.item.bauble.NFUBaubleAPI;
 import net.sodiumzh.nfu.mixin.event.entity.EntityLoadEvent;
 import net.sodiumzh.nfu.network.NFUDataSerializers;
-import net.sodiumzh.nfu.object.NFUJsonParser;
 import net.sodiumzh.nfu.registry.*;
 import net.sodiumzh.nfu.savedata.redirector.SaveDataLocationRedirector;
 
@@ -45,7 +44,6 @@ public class NFULibrary {
 		NFULootModifiers.REGISTRY.register(modEventBus);
 		EntityComponentTypes.COLLECTION.merge();
 		NFUEntityComponents.COLLECTION.merge();
-		NFUJsonParser.REG.merge();
 
 		// Custom registry related
 		NFURegistries.init();
