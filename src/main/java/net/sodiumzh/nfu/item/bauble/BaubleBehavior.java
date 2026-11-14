@@ -4,6 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.sodiumzh.nfu.container.CastableMap;
+import net.sodiumzh.nfu.function.NFUOperator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -22,14 +23,14 @@ public abstract class BaubleBehavior implements IBaubleRegistryEntry
 
 	protected final ResourceLocation key;
 	@Nullable protected final Item item;
-	@Nullable protected final BiPredicate<Item, ItemStack> multiItemCondition;
+	@Nullable protected final NFUOperator<ItemStack, Boolean> multiItemCondition;
 	protected final BaubleEquippingCondition equippingCondition;
 	protected double priority = 1d;
 	protected boolean blockLowerPriorities = false;
 	protected final CastableMap<String, Object> metaData = new CastableMap<>();
 	
 	protected BaubleBehavior(ResourceLocation key, 
-			@Nullable Item item, @Nullable BiPredicate<Item, ItemStack> multiItemCondition, 
+			@Nullable Item item, @Nullable NFUOperator<ItemStack, Boolean> multiItemCondition,
 			BaubleEquippingCondition equippingCondition)
 	{
 		if ((item == null && multiItemCondition == null) || (item != null && multiItemCondition != null))
@@ -56,7 +57,7 @@ public abstract class BaubleBehavior implements IBaubleRegistryEntry
 	 * @param key Key in registry. Must be unique.
 	 * @param equippingCondition Condition if a slot for a mob can equip this bauble.
 	 */
-	public BaubleBehavior(@Nonnull BiPredicate<Item, ItemStack> condition, 
+	public BaubleBehavior(@Nonnull NFUOperator<ItemStack, Boolean> condition,
 			ResourceLocation key, BaubleEquippingCondition equippingCondition)
 	{
 		this(key, null, condition, equippingCondition);
@@ -113,7 +114,7 @@ public abstract class BaubleBehavior implements IBaubleRegistryEntry
 
 	@Nullable
 	@Override
-	public final BiPredicate<Item, ItemStack> getMultiItemCondition() {
+	public final NFUOperator<ItemStack, Boolean> getMultiItemCondition() {
 		return multiItemCondition;
 	}
 
