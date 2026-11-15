@@ -58,12 +58,10 @@ class BaubleRegistries {
 	 * Bauble effects for multiple bauble items that are defined by predicates.
 	 * <p>Values: definition equippingCondition, key, entry, equipping equippingCondition (can be modified).
 	 */
-	static final Map<ResourceLocation, BaubleRecord.MultiItem> MULTIPLE_REGISTRY = new HashMap<>();
+	static final Set<MultiItemBaubleEntry> MULTIPLE_REGISTRY = new HashSet<>();
 
 	static void clearAll() {
-		RAW_REGISTRY.clear();
-		SINGLE_REGISTRY.clear();
-		MULTIPLE_REGISTRY.clear();
+
 	}
 
 	/**
@@ -84,7 +82,7 @@ class BaubleRegistries {
 			}
 			else
 			{
-				MULTIPLE_REGISTRY.put(key, new BaubleRecord.MultiItem(RAW_REGISTRY.get(key).bauble().getMultiItemCondition(), entry, RAW_REGISTRY.get(key).equippingCondition().createDependent()));
+				MULTIPLE_REGISTRY.add(new MultiItemBaubleEntry(RAW_REGISTRY.get(key).bauble().getMultiItemCondition(), key, entry, RAW_REGISTRY.get(key).equippingCondition().createDependent()));
 			}
 		}
 		sortSingleRegistry();
@@ -102,8 +100,6 @@ class BaubleRegistries {
 				.sorted(Comparator.comparingDouble(SingleItemBaubleEntry::priority).reversed()).collect(Collectors.toList());
 			newMap.put(item, sorted);
 		}
-		SINGLE_REGISTRY.clear();
-		SINGLE_REGISTRY.putAll(newMap);
 	}
 	
 	// ======= Registry browsing =================================
@@ -145,7 +141,7 @@ class BaubleRegistries {
 				}
 
 		}
-		for (var entry: MULTIPLE_REGISTRY.values())
+		for (var entry: MULTIPLE_REGISTRY)
 		{
 			if (entry.predicate().test(stack.getItem(), stack) && entry.equippingCondition().test(new BaubleProcessingArgs(stack, mob, slot)))
 			{
@@ -168,7 +164,7 @@ class BaubleRegistries {
 				res.add(entry.bauble());
 			}
 		}
-		for (var entry: MULTIPLE_REGISTRY.values())
+		for (var entry: MULTIPLE_REGISTRY)
 		{
 			if (entry.predicate().test(itemstack.getItem(), itemstack))
 				res.add(entry.bauble());
@@ -268,11 +264,11 @@ class BaubleRegistries {
 	/**
 	 * Get the whole registry record (i.e. registry value tuple) from multi-item registry for a given IBaubleRegistryEntry object.
 	 */
-	static BaubleRecord.MultiItem getMultiRegistryRecord(IBaubleRegistryEntry entry)
+	static MultiItemBaubleEntry getMultiRegistryRecord(IBaubleRegistryEntry entry)
 	{
 		if (!entry.isMulti())
 			throw new IllegalArgumentException("The entry isn't a multi-item entry.");
-		for (var rec: MULTIPLE_REGISTRY.values())
+		for (var rec: MULTIPLE_REGISTRY)
 		{
 			if (rec.bauble() == entry)
 				return rec;
@@ -282,8 +278,9 @@ class BaubleRegistries {
 
 	record RawEntry(IBaubleRegistryEntry bauble, BaubleEquippingCondition equippingCondition) {}
 
-	public record SingleItemBaubleEntry(double priority, ResourceLocation key, IBaubleRegistryEntry bauble, BaubleEquippingCondition equippingCondition) {}
+	record SingleItemBaubleEntry(double priority, ResourceLocation key, IBaubleRegistryEntry bauble, BaubleEquippingCondition equippingCondition) {}
 
-	// Multi-item entries use BaubleRecord.MultiItem. Single-item entries defined here because it uses items as key rather than resource location keys.
+	record MultiItemBaubleEntry(BiPredicate<Item, ItemStack> predicate, ResourceLocation key, IBaubleRegistryEntry bauble, BaubleEquippingCondition equippingCondition) {}
+
 
 }
