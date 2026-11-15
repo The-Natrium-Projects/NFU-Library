@@ -189,7 +189,7 @@ public class MobApplicableItemTable
             @Nullable Predicate<ItemStack> unparseable) {
             this.registeredPredicate = Optional.ofNullable(predicateKey)
                 .map(key -> new Tuple2<>(key, NFURegistries.OPERATORS.getValue(key)))
-                .filter(pair -> pair.getB() != null && pair.getB().isPredicate())
+                .filter(pair -> pair.getB() != null && pair.getB().isSimplePredicate())
                 .map(pair -> new Tuple2<>(pair.getA(), pair.getB().castParamAndReturnClasses(ItemStack.class, Boolean.class)))
                 .filter(pair -> pair.getB() != null)
                 .orElse(null);
@@ -297,7 +297,7 @@ public class MobApplicableItemTable
         public ItemStackCriteria setRegistrablePredicate(@Nullable ResourceLocation key) {
             this.registeredPredicate = Optional.ofNullable(key)
                 .map(k -> new Tuple2<>(k, NFURegistries.OPERATORS.getValue(k)))
-                .filter(pair -> pair.getB() != null && pair.getB().isPredicate())
+                .filter(pair -> pair.getB() != null && pair.getB().isSimplePredicate())
                 .map(pair -> new Tuple2<>(pair.getA(), pair.getB().castParamAndReturnClasses(ItemStack.class, Boolean.class)))
                 .filter(pair -> pair.getB() != null)
                 .orElse(null);
@@ -324,7 +324,7 @@ public class MobApplicableItemTable
             res = res || this.tags.stream().anyMatch(itemStack::is);
             // The item must meet both criteria defined by predicates if present
             if (registeredPredicate != null)
-                res = res && registeredPredicate.getB().apply(itemStack);
+                res = res && registeredPredicate.getB().applySimple(itemStack);
             if (unparseablePredicate != null)
                 res = res && unparseablePredicate.test(itemStack);
             return res;
@@ -343,7 +343,7 @@ public class MobApplicableItemTable
             Collection<Item> allItemsToTest = this.items.isEmpty() && this.tags.isEmpty() ?
                 ForgeRegistries.ITEMS.getValues() : getAllItemsAndTags();
             this.allItemsCache = allItemsToTest.stream().filter(i -> {
-                if (registeredPredicate != null && !registeredPredicate.getB().apply(i.getDefaultInstance()))
+                if (registeredPredicate != null && !registeredPredicate.getB().applySimple(i.getDefaultInstance()))
                     return false;
                 else if (unparseablePredicate != null && !unparseablePredicate.test(i.getDefaultInstance()))
                     return false;
@@ -566,6 +566,8 @@ public class MobApplicableItemTable
 					.map(f -> f.castParamAndReturnClasses(Mob.class, Double.class))
 					.map(f -> Tuple2.of(k, f)))
 				.orElse(null);
+            if (this.registered != null && this.registered.getB() != null && !this.registered.getB().isSimpleFunction())
+                throw new IllegalArgumentException(functionKey + " is not a simple function.");
 			this.unparseableFunction = unparseableFunction;
 		}
 
@@ -629,7 +631,7 @@ public class MobApplicableItemTable
 			if (!Double.isNaN(this.singleNumber)) return this.singleNumber;
 			if (range != null) return range.getValue(mob.getRandom());
 			if (randomSelection != null) return randomSelection.select(mob.getRandom());
-			if (registered != null) return registered.getB().apply(mob);
+			if (registered != null) return registered.getB().applySimple(mob);
 			if (unparseableFunction != null) return unparseableFunction.apply(mob);
 			return 0d;
 		}
@@ -662,6 +664,8 @@ public class MobApplicableItemTable
 					.map(f -> f.castParamAndReturnClasses(Mob.class, Integer.class))
 					.map(f -> Tuple2.of(k, f)))
 				.orElse(null);
+            if (this.registered != null && this.registered.getB() != null && !this.registered.getB().isSimpleFunction())
+                throw new IllegalArgumentException(functionKey + " is not a simple function.");
 			this.unparseableFunction = unparseableFunction;
 		}
 
@@ -725,7 +729,7 @@ public class MobApplicableItemTable
 			if (this.singleNumber.isPresent()) return this.singleNumber.get();
 			if (range != null) return range.getValue(mob.getRandom());
 			if (randomSelection != null) return randomSelection.select(mob.getRandom());
-			if (registered != null) return registered.getB().apply(mob);
+			if (registered != null) return registered.getB().applySimple(mob);
 			if (unparseableFunction != null) return unparseableFunction.apply(mob);
 			return 0;
 		}

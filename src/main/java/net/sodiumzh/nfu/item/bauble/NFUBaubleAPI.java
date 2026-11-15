@@ -129,7 +129,7 @@ public class NFUBaubleAPI
 	 * Get a mapping for single item baubles from each item to its associated bauble entries. This operation is
 	 * faster than {@link NFUBaubleAPI#getSingleItemBaubles} and is preferred for calling on tick.
 	 */
-	public static Map<Item, List<BaubleRecord.ItemKeyedSingleItem>> getItemKeyedSingleItemBaubles() {
+	public static Map<Item, List<BaubleRegistries.SingleItemBaubleEntry>> getItemKeyedSingleItemBaubles() {
 		return Collections.unmodifiableMap(BaubleRegistries.SINGLE_REGISTRY);
 	}
 
