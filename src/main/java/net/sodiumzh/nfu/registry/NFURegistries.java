@@ -11,7 +11,6 @@ import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListing;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListingCollection;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeRegistry;
 import net.sodiumzh.nfu.function.NFUOperator;
-import net.sodiumzh.nfu.object.NFUJsonParser;
 import net.sodiumzh.nfu.item.bauble.IBaubleRegistryEntry;
 import net.sodiumzh.nfu.math.IFieldPattern3D;
 import net.sodiumzh.nfu.math.IInequalityPattern3D;
