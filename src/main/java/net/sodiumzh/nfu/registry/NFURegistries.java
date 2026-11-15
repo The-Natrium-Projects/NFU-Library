@@ -39,12 +39,8 @@ public class NFURegistries {
                     .setSide(AvailableSide.SERVER)
                     .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP);
 
-    public static final NFURegistry<NFUJsonParser<?>> JSON_PARSERS =
-        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "json_parsers"));
-
     public static final NFURegistry<NFUOperator<?, ?>> OPERATORS =
-        new NFURegistry<NFUOperator<?, ?>>(new ResourceLocation(NFULibrary.MOD_ID, "operators"))
-            .setLoadAfter(JSON_PARSERS);
+        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "operators"));
 
     /**
      * Registry for trade listing (from vanilla trade system). A trade listing is a generator for providing random trade offers
