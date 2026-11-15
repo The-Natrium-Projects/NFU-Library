@@ -15,6 +15,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.server.ServerLifecycleHooks;
+import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.function.NFUOperator;
 import net.sodiumzh.nfu.math.RandomSelection;
@@ -190,7 +191,7 @@ public class MobApplicableItemTable
             this.registeredPredicate = Optional.ofNullable(predicateKey)
                 .map(key -> new Tuple2<>(key, NFURegistries.OPERATORS.getValue(key)))
                 .filter(pair -> pair.getB() != null && pair.getB().isSimplePredicate())
-                .map(pair -> new Tuple2<>(pair.getA(), pair.getB().castParamAndReturnClasses(ItemStack.class, Boolean.class)))
+                .map(pair -> new Tuple2<>(pair.getA(), pair.getB().castSubjectAndResultClasses(ItemStack.class, Boolean.class)))
                 .filter(pair -> pair.getB() != null)
                 .orElse(null);
             this.unparseablePredicate = unparseable;
@@ -298,7 +299,7 @@ public class MobApplicableItemTable
             this.registeredPredicate = Optional.ofNullable(key)
                 .map(k -> new Tuple2<>(k, NFURegistries.OPERATORS.getValue(k)))
                 .filter(pair -> pair.getB() != null && pair.getB().isSimplePredicate())
-                .map(pair -> new Tuple2<>(pair.getA(), pair.getB().castParamAndReturnClasses(ItemStack.class, Boolean.class)))
+                .map(pair -> new Tuple2<>(pair.getA(), pair.getB().castSubjectAndResultClasses(ItemStack.class, Boolean.class)))
                 .filter(pair -> pair.getB() != null)
                 .orElse(null);
             return this;
@@ -563,7 +564,7 @@ public class MobApplicableItemTable
 			this.randomSelection = randomSelection;
 			this.registered = Optional.ofNullable(functionKey)
 				.flatMap(k -> NFURegistries.OPERATORS.getOptionalValue(k)
-					.map(f -> f.castParamAndReturnClasses(Mob.class, Double.class))
+					.map(f -> f.castSubjectAndResultClasses(Mob.class, Double.class))
 					.map(f -> Tuple2.of(k, f)))
 				.orElse(null);
             if (this.registered != null && this.registered.getB() != null && !this.registered.getB().isSimpleFunction())
@@ -661,7 +662,7 @@ public class MobApplicableItemTable
 			this.randomSelection = randomSelection;
 			this.registered = Optional.ofNullable(functionKey)
 				.flatMap(k -> NFURegistries.OPERATORS.getOptionalValue(k)
-					.map(f -> f.castParamAndReturnClasses(Mob.class, Integer.class))
+					.map(f -> f.castSubjectAndResultClasses(Mob.class, Integer.class))
 					.map(f -> Tuple2.of(k, f)))
 				.orElse(null);
             if (this.registered != null && this.registered.getB() != null && !this.registered.getB().isSimpleFunction())

@@ -1,11 +1,18 @@
 package net.sodiumzh.nfu.function;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
+import net.sodiumzh.nfu.object.NFUJsonParser;
 import net.sodiumzh.nfu.registry.NFURegistries;
+import net.sodiumzh.nfu.util.NFUResourceLocation;
 
 import javax.annotation.Nullable;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -13,38 +20,209 @@ import java.util.function.Predicate;
 /**
  * An operator receiving a subject and variable arguments read from JSON. NFU-registrable.
  * <p>This class is for data-driven function call, and arguments should be able to get loaded from data.
- * @param <T> Operator subject type.
+ * @param <S> Operator subject type.
  * @param <R> Operator result type.
  */
-public class NFUOperator<T, R> implements Function<T, R> {
+public class NFUOperator<S, R> implements BiFunction<S, Map<String, Object>, R> {
 
-    private final Function<T, R> function;
-    private final Class<T> paramClass;
+    private final BiFunction<S, Map<String, Object>, R> function;
+    private final Map<String, NFUJsonParser<?>> argParserMap;
+    private final Class<S> subjectClass;
     private final Class<R> resultClass;
 
-    public NFUOperator(Class<T> paramClass, Class<R> resultClass, Function<T, R> function) {
-        this.paramClass = paramClass;
+    public NFUOperator(Class<S> subjectClass, Class<R> resultClass, Map<String, NFUJsonParser<?>> argParserMap,
+                       BiFunction<S, Map<String, Object>, R> function) {
+        this.subjectClass = subjectClass;
         this.resultClass = resultClass;
+        this.argParserMap = Map.copyOf(argParserMap);
         this.function = function;
+        if (argParserMap.containsKey("operator") || argParserMap.containsKey("function"))
+            throw new IllegalArgumentException("\"operator\" and \"function\" are reserved keywords, and cannot be used as an argument name.");
+    }
+
+    /**
+     * Create a simple function without args.
+     */
+    public static <S, T> NFUOperator<S, T> simpleFunction(Class<S> subjectClass, Class<T> resultClass, Function<S, T> function) {
+        return new NFUOperator<>(subjectClass, resultClass, Map.of(), (s, m) -> function.apply(s));
+    }
+
+    /**
+     * Create a predicate (boolean-valued function) with varargs.
+     */
+    public static <S> NFUOperator<S, Boolean> predicate(Class<S> subjectClass, Map<String, NFUJsonParser<?>> argParserMap,
+                                                        BiPredicate<S, Map<String, Object>> predicate) {
+        return new NFUOperator<>(subjectClass, Boolean.class, argParserMap, predicate::test);
+    }
+
+    /**
+     * Create a simple predicate without args.
+     */
+    public static <S> NFUOperator<S, Boolean> simplePredicate(Class<S> subjectClass, Predicate<S> predicate) {
+        return new NFUOperator<>(subjectClass, Boolean.class, Map.of(), (s, map) -> predicate.test(s));
+    }
+
+    private Map<String, Object> parseArgs(JsonElement data) {
+        if (argParserMap.size() == 0) return Map.of();
+        // For operators with only one argument, allow to directly use primitive
+        if (argParserMap.size() == 1 && data.isJsonPrimitive()) {
+            var onlyEntry = argParserMap.entrySet().stream().findAny().get();
+            var value = onlyEntry.getValue().parse(data);
+            return value != null ? Map.of(onlyEntry.getKey(), value) : Map.of();
+        }
+        // Otherwise a json object is required
+        else if (!data.isJsonObject()) return Map.of();
+        Map<String, Object> res = new HashMap<>();
+        JsonObject jsonObject = data.getAsJsonObject();
+        for (var entry: this.argParserMap.entrySet()) {
+            JsonElement entryElem = jsonObject.get(entry.getKey());
+            if (entryElem != null) {
+                Object value = entry.getValue().parse(entryElem);
+                if (value != null) res.put(entry.getKey(), value);
+            }
+        }
+        return res;
     }
 
     /**
      * Apply the operator with an argument map.
      */
     @Override
-    public R apply(T subject) {
-        return function.apply(subject);
+    public R apply(S subject, Map<String, Object> args) {
+        try {
+            if (!this.subjectClass.isAssignableFrom(subject.getClass()))
+                throw new IllegalArgumentException("Input subject class " + subject.getClass().getName() + " doesn't match required class " + this.subjectClass.getName() + ".");
+            return function.apply(subject, args);
+        } catch (RuntimeException e) {
+            LogUtils.getLogger().error("Data-driven operator " + this.getRegistryKeyString() + " invocation failed. Return null.", e);
+            return null;
+        }
+    }
+
+    /**
+     * Apply the operator with all arguments null. Mainly for invoking simple functions.
+     */
+    public R applySimple(S subject) {
+        return this.apply(subject, Map.of());
+    }
+
+    private R applyUnsafe(Object subject, Map<String, Object> args) {
+        return this.apply((S)subject, args);
+    }
+
+    public R applyByData(S subject, JsonElement element) {
+        return this.apply(subject, this.parseArgs(element));
+    }
+
+    private R applyByDataUnsafe(Object subject, JsonElement element) {
+        return this.applyByData((S) subject, element);
+    }
+
+    public boolean isSimpleFunction() {
+        return this.argParserMap.isEmpty();
+    }
+
+    public Function<S, R> asSimpleFunction() {
+        if (this.isSimpleFunction())
+            return s -> this.function.apply(s, Map.of());
+        else throw new IllegalCallerException("Operator " + NFURegistries.OPERATORS.getOptionalKey(this).map(ResourceLocation::toString).orElse("(MISSING)")
+            + " is not a simple function.");
     }
 
     public boolean isPredicate() {
         return this.resultClass.equals(Boolean.class);
     }
 
-    public Predicate<T> asPredicate() {
+    public BiPredicate<S, Map<String, Object>> asPredicate() {
         if (this.isPredicate())
-            return (t) -> (Boolean) (this.function.apply(t));
+            return (s, map) -> (Boolean) (this.function.apply(s, map));
         else throw new IllegalCallerException("Operator " + this.getRegistryKeyString()
             + " is not a predicate.");
+    }
+
+    public boolean isSimplePredicate() {
+        return isSimpleFunction() && isPredicate();
+    }
+
+    public Predicate<S> asSimplePredicate() {
+        if (this.isSimplePredicate())
+            return (s) -> (Boolean) (this.function.apply(s, Map.of()));
+        else throw new IllegalCallerException("Operator " + this.getRegistryKeyString()
+            + " is not a simple predicate.");
+    }
+
+    /**
+     * Parse a json element describing an operator and its argument map, and output as a function.
+     * <p>The operator's input and output classes must be subclasses of the argument classes. Mismatching = return null.
+     */
+    @Nullable
+    public static <T, R> Function<T, R> getOperatorAsFunctionByData(JsonElement json, Class<T> inClass, Class<R> resultClass) {
+        try {
+            if (json.isJsonPrimitive()) {
+                ResourceLocation operatorKey = NFUResourceLocation.of(json.getAsString());
+                NFUOperator<?, ?> operator = NFURegistries.OPERATORS.getOptionalValue(operatorKey)
+                    .orElseThrow(() -> new JsonParseException("Missing operator " + operatorKey));
+                if (inClass.isAssignableFrom(operator.subjectClass) && resultClass.isAssignableFrom(operator.resultClass))
+                    return subject -> (R)(operator.applyUnsafe(subject, Map.of()));
+                else return null;
+            } else if (json.isJsonObject()) {
+                JsonObject jo = json.getAsJsonObject();
+                // Get operator
+                String operatorKeyString = null;
+                if (jo.has("operator"))
+                    operatorKeyString = jo.get("operator").getAsString();
+                else if (jo.has("function"))
+                    operatorKeyString = jo.get("function").getAsString();
+                else throw new IllegalArgumentException("Missing operator " + operatorKeyString);
+                ResourceLocation operatorKey = NFUResourceLocation.of(operatorKeyString);
+                NFUOperator<?, ?> operator = NFURegistries.OPERATORS.getValue(operatorKey);
+                if (operator == null) throw new IllegalArgumentException("Missing operator" + operatorKey);
+                // Then create function
+                if (inClass.isAssignableFrom(operator.subjectClass) && resultClass.isAssignableFrom(operator.resultClass))
+                    return subject -> (R)(operator.applyUnsafe(subject, Map.of()));
+                else return null;
+            } else throw new IllegalArgumentException("Illegal json format for operator parse.");
+        } catch (RuntimeException e) {
+            LogUtils.getLogger().error("Data-driven operator parse failed. Return null.", e);
+            return null;
+        }
+    }
+
+
+    /**
+     * Parse a json element describing an operator and its argument map, and output as a function.
+     */
+    @Nullable
+    public static Function<Object, Object> getOperatorAsFunctionByData(JsonElement json) {
+        return getOperatorAsFunctionByData(json, Object.class, Object.class);
+    }
+
+    /**
+     * Parse an operator and its argument map from a json, then apply it to a given subject.
+     */
+    public static <T, R> R invokeOperatorByData(T subject, JsonElement json, Class<R> resultClass) {
+        Function<T, R> function = getOperatorAsFunctionByData(json, (Class<T>)(subject.getClass()), resultClass);
+        try {
+            return function != null ? function.apply(subject) : null;
+        } catch (RuntimeException e) {
+            LogUtils.getLogger().error("Data-driven operator invocation failed. Return null.", e);
+            return null;
+        }
+    }
+
+    /**
+     * Parse an operator and its argument map from a json, then apply it to a given subject.
+     */
+    public static Object invokeOperatorByData(Object subject, JsonElement json){
+        return invokeOperatorByData(subject, json, Object.class);
+    }
+
+    public Class<S> getSubjectClass() {
+        return subjectClass;
+    }
+
+    public Class<R> getResultClass() {
+        return resultClass;
     }
 
     private String getRegistryKeyString() {
@@ -54,9 +232,8 @@ public class NFUOperator<T, R> implements Function<T, R> {
     /**
      * Cast the subject generic class to the given if compatible. Null if not compatible.
      */
-    @Nullable
-    public <S1> NFUOperator<S1, R> castParamClass(Class<S1> castParamClass) {
-        if (this.paramClass.isAssignableFrom(castParamClass))
+    public <S1> NFUOperator<S1, R> castSubjectClass(Class<S1> castSubjectClass) {
+        if (this.subjectClass.isAssignableFrom(castSubjectClass))
             return (NFUOperator<S1, R>)this;
         else return null;
     }
@@ -64,19 +241,17 @@ public class NFUOperator<T, R> implements Function<T, R> {
     /**
      * Cast the result generic class to the given if compatible. Null if not compatible.
      */
-    @Nullable
-    public <R1> NFUOperator<T, R1> castReturnClass(Class<R1> castReturnClass) {
-        if (this.resultClass.isAssignableFrom(castReturnClass))
-            return (NFUOperator<T, R1>)this;
+    public <R1> NFUOperator<S, R1> castResultClass(Class<R1> castResultClass) {
+        if (this.resultClass.isAssignableFrom(castResultClass))
+            return (NFUOperator<S, R1>)this;
         else return null;
     }
 
     /**
      * Cast the subject and result generic class to the given if compatible. Null if not compatible.
      */
-    @Nullable
-    public <S1, R1> NFUOperator<S1, R1> castParamAndReturnClasses(Class<S1> castParamClass, Class<R1> castReturnClass) {
-        if (this.paramClass.isAssignableFrom(castParamClass) && this.resultClass.isAssignableFrom(castReturnClass))
+    public <S1, R1> NFUOperator<S1, R1> castSubjectAndResultClasses(Class<S1> castSubjectClass, Class<R1> castResultClass) {
+        if (this.subjectClass.isAssignableFrom(castSubjectClass) && this.resultClass.isAssignableFrom(castResultClass))
             return (NFUOperator<S1, R1>)this;
         else return null;
     }

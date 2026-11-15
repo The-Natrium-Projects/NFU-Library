@@ -11,6 +11,8 @@ import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListing;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeListingCollection;
 import net.sodiumzh.nfu.entity.vanillatrade.VanillaTradeRegistry;
 import net.sodiumzh.nfu.function.NFUOperator;
+import net.sodiumzh.nfu.object.NFUJsonParser;
+import net.sodiumzh.nfu.item.bauble.IBaubleRegistryEntry;
 import net.sodiumzh.nfu.math.IFieldPattern3D;
 import net.sodiumzh.nfu.math.IInequalityPattern3D;
 import net.sodiumzh.nfu.network.AvailableSide;
@@ -37,8 +39,12 @@ public class NFURegistries {
                     .setSide(AvailableSide.SERVER)
                     .setLoadTiming(NFURegistry.LoadTiming.SIDE_SETUP);
 
+    public static final NFURegistry<NFUJsonParser<?>> JSON_PARSERS =
+        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "json_parsers"));
+
     public static final NFURegistry<NFUOperator<?, ?>> OPERATORS =
-        new NFURegistry<>(new ResourceLocation(NFULibrary.MOD_ID, "operators"));
+        new NFURegistry<NFUOperator<?, ?>>(new ResourceLocation(NFULibrary.MOD_ID, "operators"))
+            .setLoadAfter(JSON_PARSERS);
 
     /**
      * Registry for trade listing (from vanilla trade system). A trade listing is a generator for providing random trade offers
