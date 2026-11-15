@@ -8,10 +8,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * An operator receiving a subject and variable arguments read from JSON. NFU-registrable.
- * <p>This class is for data-driven function call, and arguments should be able to get loaded from data.
- * @param <S> Operator subject type.
- * @param <R> Operator result type.
+ * NFU registrable function. Should be registered in {@link NFURegistries#OPERATORS}.
+ * @param <S> Operator parameter type.
+ * @param <R> Operator return type.
  */
 public class NFUOperator<S, R> implements Function<S, R> {
 
@@ -64,30 +63,33 @@ public class NFUOperator<S, R> implements Function<S, R> {
     }
 
     /**
-     * Cast the subject generic class to the given if compatible. Null if not compatible.
+     * Cast the parameter generic class to the given if compatible. Null if not compatible.
      */
     public <S1> NFUOperator<S1, R> castParamClass(Class<S1> castParamClass) {
-        if (this.paramClass.isAssignableFrom(castParamClass))
+        if (castParamClass.isAssignableFrom(this.paramClass))
             return (NFUOperator<S1, R>)this;
         else return null;
     }
 
     /**
-     * Cast the result generic class to the given if compatible. Null if not compatible.
+     * Cast the return generic class to the given if compatible. Null if not compatible.
      */
     public <R1> NFUOperator<S, R1> castReturnClass(Class<R1> castReturnClass) {
-        if (this.returnClass.isAssignableFrom(castReturnClass))
+        if (castReturnClass.isAssignableFrom(this.returnClass))
             return (NFUOperator<S, R1>)this;
         else return null;
     }
 
     /**
-     * Cast the subject and result generic class to the given if compatible. Null if not compatible.
+     * Cast the parameter and return generic class to the given if compatible. Null if not compatible.
      */
     public <S1, R1> NFUOperator<S1, R1> castParamAndReturnClasses(Class<S1> castParamClass, Class<R1> castReturnClass) {
-        if (this.paramClass.isAssignableFrom(castParamClass) && this.returnClass.isAssignableFrom(castReturnClass))
+        if (castParamClass.isAssignableFrom(this.paramClass) && castParamClass.isAssignableFrom(this.returnClass))
             return (NFUOperator<S1, R1>)this;
         else return null;
     }
 
+    public ResourceLocation getRegistryKey() {
+        return NFURegistries.OPERATORS.getOptionalKey(this).orElseThrow(() -> new IllegalStateException("NFU Operator missing registry key. Unregistered?"));
+    }
 }
