@@ -3,13 +3,10 @@ package net.sodiumzh.nfu.item.bauble;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.sodiumzh.nfu.container.CastableMap;
 import net.sodiumzh.nfu.item.NFUItem;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.BiPredicate;
 
 /**
@@ -17,8 +14,6 @@ import java.util.function.BiPredicate;
  */
 public abstract class DedicatedBaubleItem extends NFUItem implements IBaubleRegistryEntry
 {
-
-	protected final CastableMap<String, Object> metaData = new CastableMap<>();
 
 	public DedicatedBaubleItem(Properties pProperties)
 	{
@@ -55,10 +50,5 @@ public abstract class DedicatedBaubleItem extends NFUItem implements IBaubleRegi
 	@Override
 	@Nullable
 	public BaubleAttributeModifier[] getUnrepeatableModifiers(Mob mob) {return null;}
-
-	@Override
-	@Nonnull
-	public CastableMap<String, Object> getMetaDataMap() {
-		return this.metaData;
-	}
+	
 }

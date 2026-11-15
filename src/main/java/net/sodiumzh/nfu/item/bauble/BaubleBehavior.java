@@ -3,14 +3,9 @@ package net.sodiumzh.nfu.item.bauble;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.sodiumzh.nfu.container.CastableMap;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.BiPredicate;
 
 /**
@@ -26,7 +21,7 @@ public abstract class BaubleBehavior implements IBaubleRegistryEntry
 	protected final BaubleEquippingCondition equippingCondition;
 	protected double priority = 1d;
 	protected boolean blockLowerPriorities = false;
-	protected final CastableMap<String, Object> metaData = new CastableMap<>();
+	
 	
 	protected BaubleBehavior(ResourceLocation key, 
 			@Nullable Item item, @Nullable BiPredicate<Item, ItemStack> multiItemCondition, 
@@ -122,9 +117,5 @@ public abstract class BaubleBehavior implements IBaubleRegistryEntry
 		return equippingCondition;
 	}
 
-	@Override
-	@Nonnull
-	public CastableMap<String, Object> getMetaDataMap() {
-		return this.metaData;
-	}
+	
 }
