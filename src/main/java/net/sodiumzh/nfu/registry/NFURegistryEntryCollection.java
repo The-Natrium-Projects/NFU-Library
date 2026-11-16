@@ -32,14 +32,24 @@ public class NFURegistryEntryCollection<T>
     }
 
     /**
-     * Register an object to the collection.
-     * This is the same as {@code put}, but returns the input value itself
-     * so that you can assign the value to a static field together with registering.
-     * <p>Synchronized: serializes with {@link #merge()}/{@link #mergeIfAbsent()} on the shared table.
+     * Register a server-specific object to the collection. This entry will be deleted on server stop.
+     * <p>Only used when you're collecting server-only data from datapacks.
+     */
+    public synchronized void registerServerSpecificEntry(@Nonnull String key, @Nonnull Supplier<? extends T> value)
+    {
+        NFURegistry.Entry<? extends T> entry = new NFURegistry.ServerSpecificEntry<>(registry, value, new ResourceLocation(namespace, key));
+        NFURegistry.Accessor<? extends T> accessor = new NFURegistry.Accessor<>(entry);
+        accessor.validated = false;
+        this.table.put(new ResourceLocation(namespace, key), new Tuple2<>(entry, accessor));
+    }
+
+    /**
+     * Register a server-specific object to the collection. This entry will be deleted on server stop.
+     * <p>Only used when you're collecting server-only data from datapacks.
      */
     public synchronized <U extends T> NFURegistry.Accessor<U> register(@Nonnull String key, @Nonnull Supplier<U> value)
     {
-        NFURegistry.Entry<U> entry = new NFURegistry.Entry<>(registry, value, new ResourceLocation(namespace, key));
+        NFURegistry.Entry<U> entry = new NFURegistry.ServerSpecificEntry<>(registry, value, new ResourceLocation(namespace, key));
         NFURegistry.Accessor<U> accessor = new NFURegistry.Accessor<>(entry);
         accessor.validated = false;
         this.table.put(new ResourceLocation(namespace, key), new Tuple2<>(entry, accessor));
@@ -69,8 +79,10 @@ public class NFURegistryEntryCollection<T>
     public synchronized void mergeIfAbsent() {
         this.table.forEach((key, value) -> {
             var acc = value.getB();
-            acc.validated = true;
-            this.registry.registerRaw(key, value.getA());
+            if (!this.registry.containsKey(key)) {
+                acc.validated = true;
+                this.registry.registerRaw(key, value.getA());
+            }
         });
     }
 }
