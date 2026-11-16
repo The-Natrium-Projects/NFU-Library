@@ -49,7 +49,7 @@ public class NFURegistryEntryCollection<T>
      */
     public synchronized <U extends T> NFURegistry.Accessor<U> register(@Nonnull String key, @Nonnull Supplier<U> value)
     {
-        NFURegistry.Entry<U> entry = new NFURegistry.ServerSpecificEntry<>(registry, value, new ResourceLocation(namespace, key));
+        NFURegistry.Entry<U> entry = new NFURegistry.Entry<>(registry, value, new ResourceLocation(namespace, key));
         NFURegistry.Accessor<U> accessor = new NFURegistry.Accessor<>(entry);
         accessor.validated = false;
         this.table.put(new ResourceLocation(namespace, key), new Tuple2<>(entry, accessor));
