@@ -4,8 +4,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.sodiumzh.nfu.container.CastableMap;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -13,7 +11,7 @@ import java.util.function.BiPredicate;
 
 /**
  * A {@code ClonedBaubleBehavior} is a {@link BaubleBehavior} of which all behaviors are copied from another {@link IBaubleRegistryEntry},
- * but having its own {@code Item} target, equipping equippingCondition and registry key.
+ * but having its own {@code Item} target, equipping condition and registry key.
  * It's used to copy a registry entry behavior to other baubles, or extend a registry entry for other type of equippers that cannot 
  * be defined by extending its {@code BaubleEquippingCondition}.
  */
@@ -90,8 +88,5 @@ public class ClonedBaubleBehavior extends BaubleBehavior
 		return source.getRepeatableModifiers(args);
 	}
 
-	@Override
-	public @Nonnull CastableMap<String, Object> getMetaDataMap() {
-		return source.getMetaDataMap();
-	}
+
 }

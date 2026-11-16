@@ -5,11 +5,9 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.sodiumzh.nfu.annotation.DontOverride;
-import net.sodiumzh.nfu.container.CastableMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Map;
 import java.util.function.BiPredicate;
 
 /**
@@ -19,10 +17,10 @@ public interface IBaubleRegistryEntry
 {
 
 	/**
-	 * ResourceLocation as a unique identifier of this entry. On registration, this key will be the registry key.
+	 * ResourceLocation as a unique identifier of this entry.
 	 */
 	public ResourceLocation getBaubleRegistryKey();
-
+	
 	/**
 	 * The item used as the bauble.
 	 * <p> If using {@code getMultiItemCondition}, set this null, otherwise it won't work.
@@ -32,7 +30,7 @@ public interface IBaubleRegistryEntry
 
 	/**
 	 * Modify this <b>ONLY</b> when trying to add a series of items (defined by predicate, e.g. all pickaxes) as bauble.
-	 * <p>Every such entry will increase the resource cost <b>on tick</b> because the equippingCondition check must be performed every tick on every item,
+	 * <p>Every such entry will increase the resource cost <b>on tick</b> because the condition check must be performed every tick on every item,
 	 * so keep it null unless necessary.
 	 */
 	@Nullable
@@ -63,7 +61,7 @@ public interface IBaubleRegistryEntry
 	}
 	
 	/**
-	 * The overall equippingCondition if this bauble should be equippable and apply effect.
+	 * The overall condition if this bauble should be equippable and apply effect.
 	 */
 	@Nonnull
 	public BaubleEquippingCondition getEquippingCondition();
@@ -113,14 +111,7 @@ public interface IBaubleRegistryEntry
 	 */
 	@Nullable
 	public BaubleAttributeModifier[] getRepeatableModifiers(BaubleProcessingArgs args);
-
-	/**
-	 * Gets additional metadata map for this entry.
-	 * <p>The returned map must be <b>modifiable</b>. {@code getMetaDataMap().put(...)} should be a valid syntax.
-	 */
-	@Nonnull
-	public CastableMap<String, Object> getMetaDataMap();
-
+	
 	// Utilities
 	
 	/**

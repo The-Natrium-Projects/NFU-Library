@@ -6,34 +6,42 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.event.IModBusEvent;
-import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.container.Tuple4;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 /**
  * Fired after {@link RegisterBaublesEvent} and bauble registry clear-up, allowing to modify bauble behaviors after registration.
  */
-public class ModifyBaubleRegistriesEvent extends Event
+public class ModifyBaubleRegistriesEvent extends Event implements IModBusEvent
 {
 	/** Get entry from the Single Bauble Registry (i.e. baubles for specific items). Null if not found. */
 	@Nullable
-	private static Tuple2<Item, BaubleRegistries.SingleItemBaubleEntry> getSingleEntry(ResourceLocation key)
+	private static Tuple4<Double, ResourceLocation, IBaubleRegistryEntry, BaubleEquippingCondition> getSingleEntry(ResourceLocation key)
 	{
-		return BaubleRegistries.SINGLE_REGISTRY.entrySet().stream()
-			.flatMap(itemEntry -> itemEntry.getValue().stream().map(entry -> new Tuple2<>(itemEntry.getKey(), entry)))
-			.findAny().orElse(null);
+		for (Item item: BaubleRegistries.SINGLE_REGISTRY.keySet())
+		{
+			for (var entry: BaubleRegistries.SINGLE_REGISTRY.get(item))
+			{
+				if (entry.b.equals(key))
+					return entry;
+			}
+		}
+		return null;
 	}
 	
 	/** Get entry from the Multiple Bauble Registry (i.e. baubles defined by predicates). Null if not found. */
 	@Nullable
-	private static BaubleRecord.MultiItem getMultipleEntry(ResourceLocation key)
+	private static Tuple4<BiPredicate<Item, ItemStack>, ResourceLocation, IBaubleRegistryEntry, BaubleEquippingCondition> getMultipleEntry(ResourceLocation key)
 	{
-		return BaubleRegistries.MULTIPLE_REGISTRY.get(key);
+		for (var entry: BaubleRegistries.MULTIPLE_REGISTRY)
+		{
+			if (entry.b.equals(key))
+				return entry;
+		}
+		return null;
 	}
 	
 	/**
@@ -41,16 +49,13 @@ public class ModifyBaubleRegistriesEvent extends Event
 	 */
 	public void modifyPriority(ResourceLocation entryKey, UnaryOperator<Double> operator)
 	{
-		Tuple2<Item, BaubleRegistries.SingleItemBaubleEntry> entry = getSingleEntry(entryKey);
+		var entry = getSingleEntry(entryKey);
 		if (entry == null)
 		{
-			LogUtils.getLogger().warn("NFU Bauble System: Single Bauble Entry \"" + entryKey.toString() + "\" not found. Modification is skipped.");
+			LogUtils.getLogger().warn("BM Bauble System: Single Bauble Entry \"" + entryKey.toString() + "\" not found. Modification is skipped.");
 			return;
 		}
-		BaubleRegistries.SINGLE_REGISTRY.get(entry.getA()).remove(entry.getB());
-		BaubleRegistries.SingleItemBaubleEntry newEntry =
-			new BaubleRegistries.SingleItemBaubleEntry(operator.apply(entry.getB().priority()), entry.getB().key(), entry.getB().bauble(), entry.getB().equippingCondition());
-		BaubleRegistries.SINGLE_REGISTRY.get(entry.getA()).add(newEntry);
+		entry.a = operator.apply(entry.a);
 	}
 	
 	/**
@@ -62,23 +67,23 @@ public class ModifyBaubleRegistriesEvent extends Event
 	}
 	
 	/**
-	 * Modify a bauble registry entry's equipping equippingCondition.
+	 * Modify a bauble registry entry's equipping condition.
 	 */
 	public void modifyEquippingCondition(ResourceLocation entryKey, Consumer<BaubleEquippingCondition> modification)
 	{
 		var singleEntry = getSingleEntry(entryKey);
 		if (singleEntry != null)
 		{
-			modification.accept(singleEntry.getB().equippingCondition());
+			modification.accept(singleEntry.d);
 			return;
 		}
 		var multipleEntry = getMultipleEntry(entryKey);
 		if (multipleEntry != null)
 		{
-			modification.accept(multipleEntry.equippingCondition());
+			modification.accept(multipleEntry.d);
 			return;
 		}
-		LogUtils.getLogger().warn("NFU Bauble System: Bauble Entry \"" + entryKey.toString() + "\" not found. Modification is skipped.");
+		LogUtils.getLogger().warn("BM Bauble System: Bauble Entry \"" + entryKey.toString() + "\" not found. Modification is skipped.");
 	}
 	
 	/**
@@ -89,13 +94,12 @@ public class ModifyBaubleRegistriesEvent extends Event
 		var multipleEntry = getMultipleEntry(entryKey);
 		if (multipleEntry != null)
 		{
-			var old = multipleEntry.predicate();
-			BaubleRecord.MultiItem newEntry = new BaubleRecord.MultiItem (old.or(extendedDefinition), multipleEntry.bauble(), multipleEntry.equippingCondition());
-			BaubleRegistries.MULTIPLE_REGISTRY.put(entryKey, newEntry);
+			var old = multipleEntry.a;
+			multipleEntry.a = old.or(extendedDefinition);
 		}
 		else
 		{
-			LogUtils.getLogger().warn("NFU Bauble System: Multiple Bauble Entry \"" + entryKey.toString() + "\" not found. Modification is skipped.");
+			LogUtils.getLogger().warn("BM Bauble System: Multiple Bauble Entry \"" + entryKey.toString() + "\" not found. Modification is skipped.");
 		}
 	}
 	
@@ -107,13 +111,12 @@ public class ModifyBaubleRegistriesEvent extends Event
 		var multipleEntry = getMultipleEntry(entryKey);
 		if (multipleEntry != null)
 		{
-			var old = multipleEntry.predicate();
-			BaubleRecord.MultiItem newEntry = new BaubleRecord.MultiItem(old.and(additionalDefinitionCheck), multipleEntry.bauble(), multipleEntry.equippingCondition());
-			BaubleRegistries.MULTIPLE_REGISTRY.put(entryKey, newEntry);
+			var old = multipleEntry.a;
+			multipleEntry.a = old.and(additionalDefinitionCheck);
 		}
 		else
 		{
-			LogUtils.getLogger().warn("NFU Bauble System: Multiple Bauble Entry \"" + entryKey.toString() + "\" not found. Modification is skipped.");
+			LogUtils.getLogger().warn("BM Bauble System: Multiple Bauble Entry \"" + entryKey.toString() + "\" not found. Modification is skipped.");
 		}
 	}
 }

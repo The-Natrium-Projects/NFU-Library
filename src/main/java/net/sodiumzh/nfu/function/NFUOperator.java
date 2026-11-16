@@ -1,30 +1,26 @@
 package net.sodiumzh.nfu.function;
 
-import com.google.gson.JsonElement;
+import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.sodiumzh.nfu.registry.NFURegistries;
 
-import javax.annotation.Nullable;
-import java.util.Map;
-import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * An operator receiving a subject and variable arguments read from JSON. NFU-registrable.
- * <p>This class is for data-driven function call, and arguments should be able to get loaded from data.
- * @param <T> Operator subject type.
- * @param <R> Operator result type.
+ * NFU registrable function. Should be registered in {@link NFURegistries#OPERATORS}.
+ * @param <S> Operator parameter type.
+ * @param <R> Operator return type.
  */
-public class NFUOperator<T, R> implements Function<T, R> {
+public class NFUOperator<S, R> implements Function<S, R> {
 
-    private final Function<T, R> function;
-    private final Class<T> paramClass;
-    private final Class<R> resultClass;
+    private final Function<S, R> function;
+    private final Class<S> paramClass;
+    private final Class<R> returnClass;
 
-    public NFUOperator(Class<T> paramClass, Class<R> resultClass, Function<T, R> function) {
+    public NFUOperator(Class<S> paramClass, Class<R> resultClass, Function<S, R> function) {
         this.paramClass = paramClass;
-        this.resultClass = resultClass;
+        this.returnClass = resultClass;
         this.function = function;
     }
 
@@ -32,19 +28,34 @@ public class NFUOperator<T, R> implements Function<T, R> {
      * Apply the operator with an argument map.
      */
     @Override
-    public R apply(T subject) {
-        return function.apply(subject);
+    public R apply(S subject) {
+        try {
+            if (!this.paramClass.isAssignableFrom(subject.getClass()))
+                throw new IllegalArgumentException("Input subject class " + subject.getClass().getName() + " doesn't match required class " + this.paramClass.getName() + ".");
+            return function.apply(subject);
+        } catch (RuntimeException e) {
+            LogUtils.getLogger().error("Data-driven operator " + this.getRegistryKeyString() + " invocation failed. Return null.", e);
+            return null;
+        }
     }
 
     public boolean isPredicate() {
-        return this.resultClass.equals(Boolean.class);
+        return this.returnClass.equals(Boolean.class);
     }
 
-    public Predicate<T> asPredicate() {
+    public Predicate<S> asPredicate() {
         if (this.isPredicate())
-            return (t) -> (Boolean) (this.function.apply(t));
+            return (s) -> (Boolean) (this.function.apply(s));
         else throw new IllegalCallerException("Operator " + this.getRegistryKeyString()
             + " is not a predicate.");
+    }
+
+    public Class<S> getParamClass() {
+        return paramClass;
+    }
+
+    public Class<R> getReturnClass() {
+        return returnClass;
     }
 
     private String getRegistryKeyString() {
@@ -52,33 +63,33 @@ public class NFUOperator<T, R> implements Function<T, R> {
     }
 
     /**
-     * Cast the subject generic class to the given if compatible. Null if not compatible.
+     * Cast the parameter generic class to the given if compatible. Null if not compatible.
      */
-    @Nullable
     public <S1> NFUOperator<S1, R> castParamClass(Class<S1> castParamClass) {
-        if (this.paramClass.isAssignableFrom(castParamClass))
+        if (castParamClass.isAssignableFrom(this.paramClass))
             return (NFUOperator<S1, R>)this;
         else return null;
     }
 
     /**
-     * Cast the result generic class to the given if compatible. Null if not compatible.
+     * Cast the return generic class to the given if compatible. Null if not compatible.
      */
-    @Nullable
-    public <R1> NFUOperator<T, R1> castReturnClass(Class<R1> castReturnClass) {
-        if (this.resultClass.isAssignableFrom(castReturnClass))
-            return (NFUOperator<T, R1>)this;
+    public <R1> NFUOperator<S, R1> castReturnClass(Class<R1> castReturnClass) {
+        if (castReturnClass.isAssignableFrom(this.returnClass))
+            return (NFUOperator<S, R1>)this;
         else return null;
     }
 
     /**
-     * Cast the subject and result generic class to the given if compatible. Null if not compatible.
+     * Cast the parameter and return generic class to the given if compatible. Null if not compatible.
      */
-    @Nullable
     public <S1, R1> NFUOperator<S1, R1> castParamAndReturnClasses(Class<S1> castParamClass, Class<R1> castReturnClass) {
-        if (this.paramClass.isAssignableFrom(castParamClass) && this.resultClass.isAssignableFrom(castReturnClass))
+        if (castParamClass.isAssignableFrom(this.paramClass) && castParamClass.isAssignableFrom(this.returnClass))
             return (NFUOperator<S1, R1>)this;
         else return null;
     }
 
+    public ResourceLocation getRegistryKey() {
+        return NFURegistries.OPERATORS.getOptionalKey(this).orElseThrow(() -> new IllegalStateException("NFU Operator missing registry key. Unregistered?"));
+    }
 }

@@ -1,5 +1,6 @@
 package net.sodiumzh.nfu.function;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class NFUPredicate<T> extends NFUOperator<T, Boolean> implements Predicate<T> {

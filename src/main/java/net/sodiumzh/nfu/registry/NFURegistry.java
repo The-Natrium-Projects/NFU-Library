@@ -17,12 +17,9 @@ import net.sodiumzh.nfu.exception.MissingRegistryEntryException;
 import net.sodiumzh.nfu.network.AvailableSide;
 import net.sodiumzh.nfu.network.NFUDataSerializer;
 import net.sodiumzh.nfu.object.DirectedGraphNode;
-import net.sodiumzh.nfu.object.LimitedMutable;
-import net.sodiumzh.nfu.util.NFUDebugStatics;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -420,7 +417,7 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
     }
 
     /**
-     * Invoked only on server stop, invalid cached objects, so that they can re-load on next server startup.
+     * Invoked only on server stop, invalidate cached objects and server-specific entries, so that they can re-load on next server startup.
      */
     @ApiStatus.Internal
     private synchronized void resetOnServerStop() {
@@ -430,6 +427,9 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
             entry.cachedValue = null;
         }
         this.reverseMap = null;
+        this.table.entrySet().stream()
+            .filter(entry -> entry.getValue() instanceof ServerSpecificEntry)
+            .toList().forEach(entry -> this.table.remove(entry.getKey()));
     }
 
     static class Entry<T>
@@ -501,6 +501,12 @@ public class NFURegistry<T> implements DirectedGraphNode<NFURegistry<?>>
             return this.cachedValue != null;
         }
 
+    }
+
+    static class ServerSpecificEntry<T> extends Entry<T> {
+        public ServerSpecificEntry(@Nonnull NFURegistry<? super T> registry, @Nonnull Supplier<T> supplier, ResourceLocation key) {
+            super(registry, supplier, key);
+        }
     }
 
     /**

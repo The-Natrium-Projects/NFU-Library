@@ -15,6 +15,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.server.ServerLifecycleHooks;
+import net.sodiumzh.nfu.NFULibrary;
 import net.sodiumzh.nfu.container.Tuple2;
 import net.sodiumzh.nfu.function.NFUOperator;
 import net.sodiumzh.nfu.math.RandomSelection;
